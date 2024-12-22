@@ -1,4 +1,4 @@
-#include <chad_vis/engine.hpp>
+#include <chad_vis/core/engine.hpp>
 
 int main() {
     Engine engine;

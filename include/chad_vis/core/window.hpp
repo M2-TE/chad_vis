@@ -2,16 +2,11 @@
 #include <print>
 #include <cstdint>
 #include <SFML/Window.hpp>
+#include <SFML/Window/Event.hpp>
 #include <vulkan/vulkan.hpp>
 
 struct Window {
-    auto init(unsigned int width, unsigned int height, std::string name) -> vk::Instance {
-        // check availability of vulkan before all else
-        if (!sf::Vulkan::isAvailable(true)) {
-            std::println("Vulkan is not available");
-            exit(1);
-        }
-
+    void init(unsigned int width, unsigned int height, std::string name) {
         // check availability of required vulkan instance extensions
         auto extensions_required = sf::Vulkan::getGraphicsRequiredInstanceExtensions();
         auto extensions_available = vk::enumerateInstanceExtensionProperties();
@@ -55,28 +50,26 @@ struct Window {
         };
         vk::InstanceCreateInfo info_instance {
             .pApplicationInfo = &info_app,
-            .enabledLayerCount = (uint32_t)layers.size(),
+            .enabledLayerCount = static_cast<uint32_t>(layers.size()),
             .ppEnabledLayerNames = layers.data(),
-            .enabledExtensionCount = (uint32_t)extensions_required.size(),
+            .enabledExtensionCount = static_cast<uint32_t>(extensions_required.size()),
             .ppEnabledExtensionNames = extensions_required.data()
         };
-        vk::Instance instance = vk::createInstance(info_instance);
+        _instance = vk::createInstance(info_instance);
 
         // create actual window
-        sf::Window window { sf::VideoMode({width, height}), name, sf::Style::Default };
+        _window = { sf::VideoMode({width, height}, 32), name, sf::Style::Default };
         VkSurfaceKHR surface;
-        if (!window.createVulkanSurface(instance, surface)) {
+        if (!_window.createVulkanSurface(_instance, surface)) {
             std::println("Failed to create vulkan surface");
             exit(1);
         }
-        _surface = (vk::SurfaceKHR)surface;
-
-        return instance;
+        _surface = static_cast<vk::SurfaceKHR>(surface);
     }
     void destroy() {
     }
-    void run() {}
 
     sf::Window _window;
+    vk::Instance _instance;
     vk::SurfaceKHR _surface;
 };
