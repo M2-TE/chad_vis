@@ -15,8 +15,8 @@ FetchContent_Declare(libsimdpp
     GIT_REPOSITORY "https://github.com/p12tic/libsimdpp.git"
     GIT_TAG "v2.1"
     GIT_SHALLOW ON
-    OVERRIDE_FIND_PACKAGE)
-FetchContent_Populate(libsimdpp)
+    SOURCE_SUBDIR "disabled")
+FetchContent_MakeAvailable(libsimdpp)
 list(APPEND CMAKE_MODULE_PATH "${libsimdpp_SOURCE_DIR}/cmake/")
 include(SimdppMultiarch)
 simdpp_get_runnable_archs(ARCHS)

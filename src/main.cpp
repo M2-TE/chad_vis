@@ -1,5 +1,8 @@
-#include <print>
+#include <chad_vis/engine.hpp>
 
 int main() {
-    std::println("hello hello");
+    Engine engine;
+    engine.init();
+    engine.run();
+    engine.destroy();
 }

@@ -6,4 +6,4 @@ FetchContent_Declare(sfml
     EXCLUDE_FROM_ALL
     SYSTEM)
 FetchContent_MakeAvailable(sfml)
-target_link_libraries(${PROJECT_NAME} PRIVATE SFML::Graphics)
+target_link_libraries(${PROJECT_NAME} PRIVATE SFML::Window)

@@ -20,7 +20,7 @@ FetchContent_Declare(smaa
     GIT_REPOSITORY "https://github.com/iryoku/smaa.git"
     GIT_TAG "master"
     GIT_SHALLOW ON)
-FetchContent_Populate(smaa)
+FetchContent_MakeAvailable(smaa)
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE "${smaa_SOURCE_DIR}/Textures")
 
 # SPVRC for shader compilation and embedding
