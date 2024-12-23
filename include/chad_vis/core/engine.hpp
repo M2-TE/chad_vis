@@ -2,6 +2,7 @@
 #include <print>
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.hpp>
+#include "chad_vis/core/input.hpp"
 #include "chad_vis/core/window.hpp"
 #include "chad_vis/core/renderer.hpp"
 #include "chad_vis/core/swapchain.hpp"
@@ -126,27 +127,32 @@ struct Engine {
         _window.destroy();
     }
     void run() {
-        while (true) {
-            if (!_rendering) {
-                _window.delay(50);
-                return;
-            }
-            if (_swapchain._resize_requested) {
-                resize();
-                return;
-            }
-            // handle_inputs();
+        while (_window._sfml_window.isOpen()) {
+            if (!_rendering) _window.delay(50);
+            if (_swapchain._resize_requested) resize();
+            handle_events();
 
             // _scene.update_safe();
             // _renderer.wait(_device);
             // _scene.update(_vmalloc);
             // _renderer.render(_device, _swapchain, _queues);
-            // Input::flush();
-            break;
+            Input::flush();
         }
     }
 
 private:
+    void handle_events() {
+        while (const std::optional event = _window._sfml_window.pollEvent()) {
+            Input::handle_event(event);
+            if (event->is<sf::Event::Closed>()) {
+                _window._sfml_window.close();
+                _rendering = false;
+            }
+            else if (event->is<sf::Event::Resized>()) _swapchain._resize_requested = true;
+            else if (event->is<sf::Event::FocusLost>()) _swapchain.set_target_framerate(_fps_background);
+            else if (event->is<sf::Event::FocusGained>()) _swapchain.set_target_framerate(_fps_foreground);
+        }
+    }
     void resize() {
         _device.waitIdle();
         // _scene._camera.resize(_window.size());

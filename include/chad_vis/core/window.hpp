@@ -2,7 +2,6 @@
 #include <print>
 #include <cstdint>
 #include <SFML/Window.hpp>
-#include <SFML/Window/Event.hpp>
 #include <vulkan/vulkan.hpp>
 
 struct Window {
