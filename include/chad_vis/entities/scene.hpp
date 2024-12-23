@@ -3,7 +3,8 @@
 #include <vk_mem_alloc.hpp>
 #include "chad_vis/device/queues.hpp"
 #include "chad_vis/entities/camera.hpp"
-#include "chad_vis/entities/mesh/mesh.hpp"
+#include "chad_vis/entities/extra/grid.hpp"
+#include "chad_vis/entities/extra/plymesh.hpp"
 
 struct Scene {
     void init(vma::Allocator vmalloc, dv::Queues& queues) {
@@ -23,9 +24,6 @@ struct Scene {
     }
 
     Camera _camera;
-    struct Vertex {
-        glm::vec3 pos;
-        glm::vec3 color;
-    };
-    Mesh<Vertex> _mesh;
+    Plymesh _mesh;
+    Grid _grid;
 };
