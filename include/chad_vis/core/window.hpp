@@ -33,11 +33,11 @@ struct Window {
             bool available = false;
             for (auto& layer: layer_props) {
                 auto res = std::strcmp(layer.layerName, validation_layer.data());
-                fmt::println("{}", std::string(layer.layerName));
+                std::println("{}", std::string(layer.layerName));
                 if (res) available = true;
             }
             if (available) layers.push_back(validation_layer.data());
-            else fmt::println("Validation layers requested but not present");
+            else std::println("Validation layers requested but not present");
 #       endif
 
         // create vulkan instance
@@ -68,7 +68,14 @@ struct Window {
     }
     void destroy() {
     }
-
+    auto size() -> vk::Extent2D {
+        auto size = _sfml_window.getSize();
+        return { size.x, size.y };
+    }
+    void delay(std::size_t ms) {
+        sf::sleep(sf::milliseconds(ms));
+    }
+    
     sf::Window _sfml_window;
     vk::Instance _instance;
     vk::SurfaceKHR _surface;

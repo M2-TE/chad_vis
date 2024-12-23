@@ -3,13 +3,14 @@
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.hpp>
 #include "chad_vis/core/window.hpp"
-#include "chad_vis/device/selector.hpp"
+#include "chad_vis/core/renderer.hpp"
+#include "chad_vis/core/swapchain.hpp"
 #include "chad_vis/device/image.hpp"
+#include "chad_vis/device/queues.hpp"
+#include "chad_vis/device/pipeline.hpp"
+#include "chad_vis/device/selector.hpp"
 
 struct Engine {
-    void init_instance() {
-
-    }
     void init() {
         // dynamic dispatcher init 1/3
         VULKAN_HPP_DEFAULT_DISPATCHER.init();
@@ -105,23 +106,63 @@ struct Engine {
 
         // set the global format for depth stencil images
         dv::DepthStencil::set_format(_phys_device);
+        dv::PipelineBase::set_module_deprecation(_phys_device);
 
+        // set up swapchain, resize request will be fulfilled later
+        _swapchain.set_target_framerate(_fps_foreground);
+        _swapchain._resize_requested = true;
+        _rendering = true;
     }
     void destroy() {
-        _queues.destroy(_device);
+        _device.waitIdle();
+        //
+        _renderer.destroy(_device, _vmalloc);
         _vmalloc.destroy();
+        //
+        _queues.destroy(_device);
+        _swapchain.destroy(_device);
         _device.destroy();
+        //
         _window.destroy();
     }
     void run() {
         while (true) {
+            if (!_rendering) {
+                _window.delay(50);
+                return;
+            }
+            if (_swapchain._resize_requested) {
+                resize();
+                return;
+            }
+            // handle_inputs();
+
+            // _scene.update_safe();
+            // _renderer.wait(_device);
+            // _scene.update(_vmalloc);
+            // _renderer.render(_device, _swapchain, _queues);
+            // Input::flush();
             break;
         }
     }
 
+private:
+    void resize() {
+        _device.waitIdle();
+        // _scene._camera.resize(_window.size());
+        _renderer.resize(_device, _vmalloc, _queues, _window.size());
+        _swapchain.resize(_phys_device, _device, _window, _queues);
+    }
+
     Window _window;
+    Swapchain _swapchain;
+    Renderer _renderer;
     dv::Queues _queues;
     vma::Allocator _vmalloc;
     vk::PhysicalDevice _phys_device;
     vk::Device _device;
+    //
+    uint32_t _fps_foreground = 0;
+    uint32_t _fps_background = 5;
+    bool _rendering;
 };
