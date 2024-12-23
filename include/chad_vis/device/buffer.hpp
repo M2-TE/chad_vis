@@ -5,7 +5,7 @@
 
 namespace dv {
 struct Buffer {
-	struct BufferCreateInfo {
+	struct CreateInfo {
 		vma::Allocator vmalloc;
 		vk::DeviceSize size;
 		vk::DeviceSize alignment = 0;
@@ -13,7 +13,7 @@ struct Buffer {
 		const vk::ArrayProxy<uint32_t>& queue_families;
 		bool host_accessible = false;
 	};
-	void init(const BufferCreateInfo& info) {
+	void init(const CreateInfo& info) {
 		vk::BufferCreateInfo info_buffer {
 			.size = info.size,
 			.usage = info.usage,
@@ -59,6 +59,12 @@ struct Buffer {
 		vmalloc.destroyBuffer(_data, _allocation);
 	}
 
+	void read(vma::Allocator vmalloc, void* data_p, size_t byte_count) {
+		if (_require_staging) std::println("ReBAR required, staging buffer not yet implemented");
+		void* map_p = vmalloc.mapMemory(_allocation);
+		std::memcpy(data_p, map_p, byte_count);
+		vmalloc.unmapMemory(_allocation);
+	}
 	void write(vma::Allocator vmalloc, void* data_p, size_t byte_count) {
 		if (_require_staging) std::println("ReBAR required, staging buffer not yet implemented");
 		void* map_p = vmalloc.mapMemory(_allocation);
@@ -66,17 +72,11 @@ struct Buffer {
 		vmalloc.unmapMemory(_allocation);
 		if (_require_flushing) vmalloc.flushAllocation(_allocation, 0, byte_count);
 	}
-	void read(vma::Allocator vmalloc, void* data_p, size_t byte_count) {
-		if (_require_staging) std::println("ReBAR required, staging buffer not yet implemented");
-		void* map_p = vmalloc.mapMemory(_allocation);
-		std::memcpy(data_p, map_p, byte_count);
-		vmalloc.unmapMemory(_allocation);
+	template<typename T> void read(vma::Allocator vmalloc, T& data) {
+		read(vmalloc, &data, sizeof(T));
 	}
 	template<typename T> void write(vma::Allocator vmalloc, T& data) {
 		write(vmalloc, &data, sizeof(T));
-	}
-	template<typename T> void read(vma::Allocator vmalloc, T& data) {
-		read(vmalloc, &data, sizeof(T));
 	}
 	// void resize(vma::Allocator vmalloc, vk::DeviceSize new_size, bool preserve = true) {
 	// 	vmalloc.destroyBuffer(_data, _allocation);
