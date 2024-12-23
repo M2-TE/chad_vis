@@ -168,32 +168,27 @@ private:
         }
 
         // handle mouse grab
-        if (Input::Keys::down(sf::Keyboard::Scan::LAlt)) {
-            // dont perform unnecessary mouse state changes
-            if (Input::Mouse::captured()) {
-                _window._sfml_window.setMouseCursorGrabbed(false);
-                _window._sfml_window.setMouseCursorVisible(true);
-                Input::register_capture(false);
-                _mouse_alt_freed = true;
-            }
+        if (Input::Keys::pressed(sf::Keyboard::Scan::LAlt)) {
+            _window._sfml_window.setMouseCursorGrabbed(false);
+            _window._sfml_window.setMouseCursorVisible(true);
+            Input::register_capture(false);
         }
         else {
             // while alt is not held, allow grab via click and ungrab via escape
-            if (Input::Mouse::captured() && Input::Keys::down(sf::Keyboard::Scan::Escape)) {
+            if (Input::Mouse::captured() && Input::Keys::pressed(sf::Keyboard::Scan::Escape)) {
                 _window._sfml_window.setMouseCursorGrabbed(false);
                 _window._sfml_window.setMouseCursorVisible(true);
                 Input::register_capture(false);
             }
-            else if (!Input::Mouse::captured() && Input::Mouse::down(sf::Mouse::Button::Left)) {
+            else if (!Input::Mouse::captured() && Input::Mouse::pressed(sf::Mouse::Button::Left)) {
                 _window._sfml_window.setMouseCursorGrabbed(true);
                 _window._sfml_window.setMouseCursorVisible(false);
                 Input::register_capture(true);
             }
-            else if (_mouse_alt_freed) {
+            else if (!Input::Mouse::captured() && Input::Keys::released(sf::Keyboard::Scan::LAlt)) {
                 _window._sfml_window.setMouseCursorGrabbed(true);
                 _window._sfml_window.setMouseCursorVisible(false);
                 Input::register_capture(true);
-                _mouse_alt_freed = false;
             }
         }
     }
@@ -217,5 +212,4 @@ private:
     uint32_t _fps_foreground = 0;
     uint32_t _fps_background = 5;
     bool _rendering;
-    bool _mouse_alt_freed = false;
 };

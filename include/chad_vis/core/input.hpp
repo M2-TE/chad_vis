@@ -20,8 +20,8 @@ namespace Input {
             static Data instance;
             return instance;
         }
-		std::set<sf::Keyboard::Scan> keys_pressed, keys_down, keys_released;
-		std::set<sf::Mouse::Button> buttons_pressed, buttons_down, buttons_released;
+		std::set<sf::Keyboard::Scan> keys_pressed, keys_held, keys_released;
+		std::set<sf::Mouse::Button> buttons_pressed, buttons_held, buttons_released;
 		sf::Vector2i mouse_position;
 		sf::Vector2i mouse_delta;
 		bool mouse_captured;
@@ -35,12 +35,12 @@ namespace Input {
 		// check if (logical) key was pressed in this frame
 		bool static inline pressed(char character) noexcept { return pressed(sf::Keyboard::delocalize(static_cast<sf::Keyboard::Key>(std::tolower(character)))); }
 
-		// check if (physical) key is being held down
-		bool static inline down(sf::Keyboard::Scan code) noexcept { return Data::get().keys_down.contains(code); }
-		// check if (logical) key is being held down
-		bool static inline down(sf::Keyboard::Key code) noexcept { return down(sf::Keyboard::delocalize(code)); }
-		// check if (logical) key is being held down
-		bool static inline down(char character) noexcept { return down(sf::Keyboard::delocalize(static_cast<sf::Keyboard::Key>(std::tolower(character)))); }
+		// check if (physical) key is being held
+		bool static inline held(sf::Keyboard::Scan code) noexcept { return Data::get().keys_held.contains(code); }
+		// check if (logical) key is being held
+		bool static inline held(sf::Keyboard::Key code) noexcept { return held(sf::Keyboard::delocalize(code)); }
+		// check if (logical) key is being held
+		bool static inline held(char character) noexcept { return held(sf::Keyboard::delocalize(static_cast<sf::Keyboard::Key>(std::tolower(character)))); }
 		
 		// check if (physical) key was released in this frame
 		bool static inline released(sf::Keyboard::Scan code) noexcept { return Data::get().keys_released.contains(code); }
@@ -52,8 +52,8 @@ namespace Input {
 	struct Mouse {
 		// check if mouse button was pressed in this frame
 		bool static inline pressed(sf::Mouse::Button button) noexcept { return Data::get().buttons_pressed.contains(button); }
-		// check if mouse button is being held down
-		bool static inline down(sf::Mouse::Button button) noexcept { return Data::get().buttons_down.contains(button); }
+		// check if mouse button is being held held
+		bool static inline held(sf::Mouse::Button button) noexcept { return Data::get().buttons_held.contains(button); }
 		// check if mouse button was released in this frame
 		bool static inline released(sf::Mouse::Button button) noexcept { return Data::get().buttons_released.contains(button); }
 
@@ -78,28 +78,28 @@ namespace Input {
 		if (event->is<sf::Event::FocusLost>()) {
 			// throw away all keyboard states when focus is lost
 			flush();
-			Data::get().keys_down.clear();
-			Data::get().buttons_down.clear();
+			Data::get().keys_held.clear();
+			Data::get().buttons_held.clear();
 		}
 		else if (const auto* keys_pressed = event->getIf<sf::Event::KeyPressed>()) {
 			if (IMGUI_CAPTURE_KBD) return;
 			Data::get().keys_pressed.insert(keys_pressed->scancode);
-			Data::get().keys_down.insert(keys_pressed->scancode);
+			Data::get().keys_held.insert(keys_pressed->scancode);
 		}
 		else if (const auto* keys_released = event->getIf<sf::Event::KeyReleased>()) {
 			if (IMGUI_CAPTURE_KBD) return;
 			Data::get().keys_released.insert(keys_released->scancode);
-			Data::get().keys_down.erase(keys_released->scancode);
+			Data::get().keys_held.erase(keys_released->scancode);
 		}
 		else if (const auto* button_pressed = event->getIf<sf::Event::MouseButtonPressed>()) {
 			if (IMGUI_CAPTURE_MOUSE) return;
 			Data::get().buttons_pressed.insert(button_pressed->button);
-			Data::get().buttons_down.insert(button_pressed->button);
+			Data::get().buttons_held.insert(button_pressed->button);
 		}
 		else if (const auto* button_released = event->getIf<sf::Event::MouseButtonReleased>()) {
 			if (IMGUI_CAPTURE_MOUSE) return;
 			Data::get().buttons_released.insert(button_released->button);
-			Data::get().buttons_down.erase(button_released->button);
+			Data::get().buttons_held.erase(button_released->button);
 		}
 		#ifdef INPUT_DISABLE_RAW_MOUSE
 		else if (const auto* mouse_moved = event->getIf<sf::Event::MouseMoved>()) {
