@@ -128,23 +128,27 @@ struct Engine {
     }
     void run() {
         while (_window._sfml_window.isOpen()) {
-            if (!_rendering) _window.delay(50);
-            if (_swapchain._resize_requested) resize();
             handle_events();
+            if (!_rendering) _window.delay(50);
+            if (!_rendering) continue;
+            if (_swapchain._resize_requested) resize();
 
             // _scene.update_safe();
-            // _renderer.wait(_device);
+            _renderer.wait(_device);
             // _scene.update(_vmalloc);
-            // _renderer.render(_device, _swapchain, _queues);
-            Input::flush();
+            _renderer.render(_device, _swapchain, _queues);
         }
     }
 
 private:
     void handle_events() {
+        // flush inputs from last frame
+        Input::flush();
+        // handle all events from the SFML window
         while (const std::optional event = _window._sfml_window.pollEvent()) {
             Input::handle_event(event);
             if (event->is<sf::Event::Closed>()) {
+                _device.waitIdle();
                 _window._sfml_window.close();
                 _rendering = false;
             }
