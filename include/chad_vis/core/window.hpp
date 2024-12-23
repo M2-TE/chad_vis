@@ -58,9 +58,9 @@ struct Window {
         _instance = vk::createInstance(info_instance);
 
         // create actual window
-        _window = { sf::VideoMode({width, height}, 32), name, sf::Style::Default };
+        _sfml_window = { sf::VideoMode({width, height}, 32), name, sf::Style::Default };
         VkSurfaceKHR surface;
-        if (!_window.createVulkanSurface(_instance, surface)) {
+        if (!_sfml_window.createVulkanSurface(_instance, surface)) {
             std::println("Failed to create vulkan surface");
             exit(1);
         }
@@ -69,7 +69,7 @@ struct Window {
     void destroy() {
     }
 
-    sf::Window _window;
+    sf::Window _sfml_window;
     vk::Instance _instance;
     vk::SurfaceKHR _surface;
 };

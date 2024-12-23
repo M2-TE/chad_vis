@@ -4,6 +4,7 @@
 #include <vk_mem_alloc.hpp>
 #include "chad_vis/core/window.hpp"
 #include "chad_vis/device/selector.hpp"
+#include "chad_vis/device/image.hpp"
 
 struct Engine {
     void init_instance() {
@@ -77,6 +78,9 @@ struct Engine {
         // dynamic dispatcher init 3/3
         VULKAN_HPP_DEFAULT_DISPATCHER.init(_device);
 
+        // create device queues
+        _queues.init(_device, queue_mappings);
+
         // create vulkan memory allocator
         vma::VulkanFunctions vk_funcs {
             .vkGetInstanceProcAddr = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetInstanceProcAddr,
@@ -98,17 +102,26 @@ struct Engine {
             .vulkanApiVersion = vk::ApiVersion13,
         };
         _vmalloc = vma::createAllocator(info_vmalloc);
+
+        // set the global format for depth stencil images
+        dv::DepthStencil::set_format(_phys_device);
+
     }
     void destroy() {
-        std::println("bye bye");
+        _queues.destroy(_device);
+        _vmalloc.destroy();
+        _device.destroy();
+        _window.destroy();
     }
     void run() {
         while (true) {
+            break;
         }
     }
 
     Window _window;
+    dv::Queues _queues;
+    vma::Allocator _vmalloc;
     vk::PhysicalDevice _phys_device;
     vk::Device _device;
-    vma::Allocator _vmalloc;
 };
