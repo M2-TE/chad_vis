@@ -66,7 +66,7 @@ namespace Input {
 	};
 	
 	// clear single-frame events
-    void static flush() noexcept {
+    void inline flush() noexcept {
 		Data::get().keys_pressed.clear();
 		Data::get().keys_released.clear();
 		Data::get().buttons_pressed.clear();
@@ -74,7 +74,7 @@ namespace Input {
 		Data::get().mouse_delta = {0, 0};
 	}
 	// pass an SDL event to the input system
-	void static handle_event(const std::optional<sf::Event> event) noexcept {
+	void inline handle_event(const std::optional<sf::Event> event) noexcept {
 		if (event->is<sf::Event::FocusLost>()) {
 			// throw away all keyboard states when focus is lost
 			flush();
@@ -116,7 +116,7 @@ namespace Input {
 		#endif
 	}
 	// update the current capture state of the mouse
-	void static register_capture(bool captured) noexcept {
+	void inline register_capture(bool captured) noexcept {
 		Data::get().mouse_captured = captured;
 	}
 }

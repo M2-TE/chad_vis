@@ -123,16 +123,15 @@ private:
             vk::SpecializationMapEntry { .constantID = 0, .offset = 0, .size = 4 },
             vk::SpecializationMapEntry { .constantID = 1, .offset = 4, .size = 4 },
         };
-        vk::SpecializationInfo image_spec_info = {
-            .mapEntryCount = image_spec_entries.size(),
-            .pMapEntries = image_spec_entries.data(),
-            .dataSize = sizeof(image_size),
-            .pData = &image_size
-        };
         _pipe_wip.init({
             .device = device,
             .cs_path = "defaults/gradient.comp",
-            .spec_info = &image_spec_info
+            .spec_info {
+                .mapEntryCount = image_spec_entries.size(),
+                .pMapEntries = image_spec_entries.data(),
+                .dataSize = sizeof(image_size),
+                .pData = &image_size
+            }
         });
         _pipe_wip.write_descriptor(device, 0, 0, _storage, vk::DescriptorType::eStorageImage);
     }

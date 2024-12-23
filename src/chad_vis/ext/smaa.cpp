@@ -84,47 +84,59 @@ void SMAA::init_pipelines(vk::Device device, vk::Extent2D extent, dv::Image& col
     };
     _pipe_edges.init({
         .device = device, .extent = extent,
-        .color_formats = { _img_edges._format },
-        .stencil_format = depth_stencil._format,
-        .stencil_test = vk::True,
-        .stencil_ops_front = {
-            .failOp = vk::StencilOp::eKeep,
-            .passOp = vk::StencilOp::eReplace,
-            .compareOp = vk::CompareOp::eAlways,
-            .compareMask = 0xff,
-            .writeMask = 0xff,
-            .reference = 1,
+        .color {
+            .formats = _img_edges._format,
         },
-        .vs_path = "smaa/edges.vert", .vs_spec = &smaa_spec_info,
-        .fs_path = "smaa/edges.frag", .fs_spec = &smaa_spec_info,
+        .stencil {
+            .format = depth_stencil._format,
+            .test = vk::True,
+            .front = {
+                .failOp = vk::StencilOp::eKeep,
+                .passOp = vk::StencilOp::eReplace,
+                .compareOp = vk::CompareOp::eAlways,
+                .compareMask = 0xff,
+                .writeMask = 0xff,
+                .reference = 1,
+            }
+        },
+        .vs_path = "smaa/edges.vert", .vs_spec = smaa_spec_info,
+        .fs_path = "smaa/edges.frag", .fs_spec = smaa_spec_info,
     });
     _pipe_weights.init({
         .device = device, .extent = extent,
-        .color_formats = { _img_weights._format },
-        .stencil_format = depth_stencil._format,
-        .stencil_test = vk::True,
-        .stencil_ops_front = {
-            .failOp = vk::StencilOp::eKeep,
-            .passOp = vk::StencilOp::eKeep,
-            .compareOp = vk::CompareOp::eEqual,
-            .compareMask = 0xff,
-            .writeMask = 0xff,
-            .reference = 1,
+        .color {
+            .formats = _img_weights._format,
         },
-        .vs_path = "smaa/weights.vert", .vs_spec = &smaa_spec_info,
-        .fs_path = "smaa/weights.frag", .fs_spec = &smaa_spec_info,
+        .stencil {
+            .format = depth_stencil._format,
+            .test = vk::True,
+            .front = {
+                .failOp = vk::StencilOp::eKeep,
+                .passOp = vk::StencilOp::eKeep,
+                .compareOp = vk::CompareOp::eEqual,
+                .compareMask = 0xff,
+                .writeMask = 0xff,
+                .reference = 1,
+            },
+        },
+        .vs_path = "smaa/weights.vert", .vs_spec = smaa_spec_info,
+        .fs_path = "smaa/weights.frag", .fs_spec = smaa_spec_info,
     });
     _pipe_blending.init({
         .device = device, .extent = extent,
-        .color_formats = { color._format },
-        .vs_path = "smaa/blending.vert", .vs_spec = &smaa_spec_info,
-        .fs_path = "smaa/blending.frag", .fs_spec = &smaa_spec_info,
+        .color {
+            .formats = color._format,
+        },
+        .vs_path = "smaa/blending.vert", .vs_spec = smaa_spec_info,
+        .fs_path = "smaa/blending.frag", .fs_spec = smaa_spec_info,
     });
     // update SMAA input texture descriptors
     _pipe_edges.write_descriptor(device, 0, 0, color, vk::DescriptorType::eCombinedImageSampler);
+    //
     _pipe_weights.write_descriptor(device, 0, 0, _img_area, vk::DescriptorType::eCombinedImageSampler);
     _pipe_weights.write_descriptor(device, 0, 1, _img_search, vk::DescriptorType::eCombinedImageSampler);
     _pipe_weights.write_descriptor(device, 0, 2, _img_edges, vk::DescriptorType::eCombinedImageSampler);
+    //
     _pipe_blending.write_descriptor(device, 0, 0, _img_weights, vk::DescriptorType::eCombinedImageSampler);
     _pipe_blending.write_descriptor(device, 0, 1, color, vk::DescriptorType::eCombinedImageSampler);
 }

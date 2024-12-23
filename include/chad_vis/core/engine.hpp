@@ -10,6 +10,7 @@
 #include "chad_vis/device/queues.hpp"
 #include "chad_vis/device/pipeline.hpp"
 #include "chad_vis/device/selector.hpp"
+#include "chad_vis/entities/scene.hpp"
 
 struct Engine {
     void init() {
@@ -113,10 +114,14 @@ struct Engine {
         _swapchain.set_target_framerate(_fps_foreground);
         _swapchain._resize_requested = true;
         _rendering = true;
+
+        // create scene with renderable entities
+        _scene.init(_vmalloc, _queues);
     }
     void destroy() {
         _device.waitIdle();
         //
+        _scene.destroy(_vmalloc);
         _renderer.destroy(_device, _vmalloc);
         _vmalloc.destroy();
         //
@@ -131,11 +136,11 @@ struct Engine {
             handle_events();
             if (!_rendering) _window.delay(50);
             if (!_rendering) continue;
-            if (_swapchain._resize_requested) resize();
+            if (_swapchain._resize_requested) handle_resize();
 
-            // _scene.update_safe();
+            _scene.update_safe();
             _renderer.wait(_device);
-            // _scene.update(_vmalloc);
+            _scene.update(_vmalloc);
             _renderer.render(_device, _swapchain, _queues);
         }
     }
@@ -155,24 +160,46 @@ private:
             }
             else if (event->is<sf::Event::Resized>()) _swapchain._resize_requested = true;
             else if (event->is<sf::Event::FocusLost>()) _swapchain.set_target_framerate(_fps_background);
-            else if (event->is<sf::Event::FocusGained>()) _swapchain.set_target_framerate(_fps_foreground);
+            else if (event->is<sf::Event::FocusGained>()) {
+                _swapchain.set_target_framerate(_fps_foreground);
+                _window._sfml_window.setMouseCursorGrabbed(Input::Mouse::captured());
+                _window._sfml_window.setMouseCursorVisible(!Input::Mouse::captured());
+            }
         }
 
-        // handle inputs
-        if (Input::Keys::down(sf::Keyboard::Scan::LAlt) || Input::Keys::down(sf::Keyboard::Scan::RAlt)) {
-            _window._sfml_window.setMouseCursorGrabbed(false);
-            _window._sfml_window.setMouseCursorVisible(true);
-            Input::register_capture(false);
+        // handle mouse grab
+        if (Input::Keys::down(sf::Keyboard::Scan::LAlt)) {
+            // dont perform unnecessary mouse state changes
+            if (Input::Mouse::captured()) {
+                _window._sfml_window.setMouseCursorGrabbed(false);
+                _window._sfml_window.setMouseCursorVisible(true);
+                Input::register_capture(false);
+                _mouse_alt_freed = true;
+            }
         }
         else {
-            _window._sfml_window.setMouseCursorGrabbed(true);
-            _window._sfml_window.setMouseCursorVisible(false);
-            Input::register_capture(true);
+            // while alt is not held, allow grab via click and ungrab via escape
+            if (Input::Mouse::captured() && Input::Keys::down(sf::Keyboard::Scan::Escape)) {
+                _window._sfml_window.setMouseCursorGrabbed(false);
+                _window._sfml_window.setMouseCursorVisible(true);
+                Input::register_capture(false);
+            }
+            else if (!Input::Mouse::captured() && Input::Mouse::down(sf::Mouse::Button::Left)) {
+                _window._sfml_window.setMouseCursorGrabbed(true);
+                _window._sfml_window.setMouseCursorVisible(false);
+                Input::register_capture(true);
+            }
+            else if (_mouse_alt_freed) {
+                _window._sfml_window.setMouseCursorGrabbed(true);
+                _window._sfml_window.setMouseCursorVisible(false);
+                Input::register_capture(true);
+                _mouse_alt_freed = false;
+            }
         }
     }
-    void resize() {
+    void handle_resize() {
         _device.waitIdle();
-        // _scene._camera.resize(_window.size());
+        _scene._camera.resize(_window.size());
         _renderer.resize(_device, _vmalloc, _queues, _window.size());
         _swapchain.resize(_phys_device, _device, _window, _queues);
     }
@@ -180,6 +207,8 @@ private:
     Window _window;
     Swapchain _swapchain;
     Renderer _renderer;
+    Scene _scene;
+    //
     dv::Queues _queues;
     vma::Allocator _vmalloc;
     vk::PhysicalDevice _phys_device;
@@ -188,4 +217,5 @@ private:
     uint32_t _fps_foreground = 0;
     uint32_t _fps_background = 5;
     bool _rendering;
+    bool _mouse_alt_freed = false;
 };
