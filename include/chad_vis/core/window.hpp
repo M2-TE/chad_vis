@@ -25,14 +25,13 @@ struct Window {
 
         // optionally enable debug layers
         std::vector<const char*> layers;
-#       ifdef VULKAN_VALIDATION_LAYERS
+#       ifdef VULKAN_ENABLE_VALIDATION_LAYERS
             std::string validation_layer = "VK_LAYER_KHRONOS_validation";
             // only request if validation layers are available
             auto layer_props = vk::enumerateInstanceLayerProperties();
             bool available = false;
             for (auto& layer: layer_props) {
                 auto res = std::strcmp(layer.layerName, validation_layer.data());
-                std::println("{}", std::string(layer.layerName));
                 if (res) available = true;
             }
             if (available) layers.push_back(validation_layer.data());
