@@ -144,6 +144,7 @@ private:
     void handle_events() {
         // flush inputs from last frame
         Input::flush();
+
         // handle all events from the SFML window
         while (const std::optional event = _window._sfml_window.pollEvent()) {
             Input::handle_event(event);
@@ -155,6 +156,18 @@ private:
             else if (event->is<sf::Event::Resized>()) _swapchain._resize_requested = true;
             else if (event->is<sf::Event::FocusLost>()) _swapchain.set_target_framerate(_fps_background);
             else if (event->is<sf::Event::FocusGained>()) _swapchain.set_target_framerate(_fps_foreground);
+        }
+
+        // handle inputs
+        if (Input::Keys::down(sf::Keyboard::Scan::LAlt) || Input::Keys::down(sf::Keyboard::Scan::RAlt)) {
+            _window._sfml_window.setMouseCursorGrabbed(false);
+            _window._sfml_window.setMouseCursorVisible(true);
+            Input::register_capture(false);
+        }
+        else {
+            _window._sfml_window.setMouseCursorGrabbed(true);
+            _window._sfml_window.setMouseCursorVisible(false);
+            Input::register_capture(true);
         }
     }
     void resize() {
