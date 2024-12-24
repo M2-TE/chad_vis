@@ -56,7 +56,13 @@ struct Window {
         _instance = vk::createInstance(info_instance);
 
         // create actual window
-        _sfml_window = { sf::VideoMode({width, height}, 32), name, sf::Style::Default };
+        _sfml_window = { sf::VideoMode({width, height}), name, sf::Style::Default };
+        
+        // set icon to be invisible
+        std::vector<std::uint8_t> pixels(16 * 16 * 4, 0);
+        _sfml_window.setIcon({16, 16}, pixels.data());
+
+        // create vulkan surface from window
         VkSurfaceKHR surface;
         if (!_sfml_window.createVulkanSurface(_instance, surface)) {
             std::println("Failed to create vulkan surface");
