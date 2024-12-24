@@ -60,20 +60,11 @@ struct Engine {
 
         // create logical device
         void* tail_p = nullptr;
-        vk::PhysicalDeviceMaintenance5FeaturesKHR maintenance5 {
-            .pNext = tail_p,
-            .maintenance5 = vk::True,
-        };
+        vk::PhysicalDeviceMaintenance5FeaturesKHR maintenance5 { .pNext = tail_p, .maintenance5 = vk::True };
         if (device_selector.check_extension(_phys_device, vk::KHRMaintenance5ExtensionName)) tail_p = &maintenance5;
-        vk::PhysicalDeviceMemoryPriorityFeaturesEXT memory_priority {
-            .pNext = tail_p,
-            .memoryPriority = vk::True,
-        };
+        vk::PhysicalDeviceMemoryPriorityFeaturesEXT memory_priority { .pNext = tail_p, .memoryPriority = vk::True };
         if (device_selector.check_extension(_phys_device, vk::EXTMemoryPriorityExtensionName)) tail_p = &memory_priority;
-        vk::PhysicalDevicePageableDeviceLocalMemoryFeaturesEXT pageable_memory {
-            .pNext = tail_p,
-            .pageableDeviceLocalMemory = vk::True,
-        };
+        vk::PhysicalDevicePageableDeviceLocalMemoryFeaturesEXT pageable_memory {.pNext = tail_p, .pageableDeviceLocalMemory = vk::True };
         if (device_selector.check_extension(_phys_device, vk::EXTPageableDeviceLocalMemoryExtensionName)) tail_p = &pageable_memory;
         std::vector<uint32_t> queue_mappings;
         std::tie(_device, queue_mappings) = device_selector.create_logical_device(_phys_device, tail_p);
