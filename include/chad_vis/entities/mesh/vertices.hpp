@@ -13,6 +13,7 @@ struct Vertices {
 			.size = sizeof(Vertex) * vertex_data.size(),
 			.usage = vk::BufferUsageFlagBits::eVertexBuffer,
 			.queue_families = queues,
+			.host_accessible = true,
 		};
 		_buffer.init(info);
 		_buffer.write(vmalloc, vertex_data.data(), sizeof(Vertex) * vertex_data.size());

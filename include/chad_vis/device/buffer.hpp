@@ -78,17 +78,6 @@ struct Buffer {
 	template<typename T> void write(vma::Allocator vmalloc, T& data) {
 		write(vmalloc, &data, sizeof(T));
 	}
-	// void resize(vma::Allocator vmalloc, vk::DeviceSize new_size, bool preserve = true) {
-	// 	vmalloc.destroyBuffer(_data, _allocation);
-	// 	_size = new_size;
-	// 	init({
-	// 		.vmalloc = vmalloc,
-	// 		.size = new_size,
-	// 		.usage = vk::BufferUsageFlagBits::eUniformBuffer,
-	// 		.queue_families = {0},
-	// 		.host_accessible = false,
-	// 	});
-	// }
 
 	vk::Buffer _data;
 	vma::Allocation _allocation;

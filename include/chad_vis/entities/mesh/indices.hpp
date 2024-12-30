@@ -14,6 +14,7 @@ struct Indices {
 			.size = sizeof(Index) * index_data.size(),
 			.usage = vk::BufferUsageFlagBits::eIndexBuffer,
 			.queue_families = queues,
+			.host_accessible = true,
 		};
 		_buffer.init(info);
 		_buffer.write(vmalloc, index_data.data(), sizeof(Index) * index_data.size());
