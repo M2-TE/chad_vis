@@ -1,5 +1,4 @@
 #pragma once
-#include <print>
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.hpp>
 
@@ -21,18 +20,17 @@ struct Buffer {
 			.queueFamilyIndexCount = info.queue_families.size(),
 			.pQueueFamilyIndices = info.queue_families.data(),
 		};
+		// add flags to allow host access if requested (ReBAR if available)
 		vma::AllocationCreateInfo info_allocation {
+			.flags = !info.host_accessible ? vma::AllocationCreateFlagBits{} :
+				vma::AllocationCreateFlagBits::eHostAccessSequentialWrite,
 			.usage = vma::MemoryUsage::eAutoPreferDevice,
 			.requiredFlags = vk::MemoryPropertyFlagBits::eDeviceLocal,
-		};
-		// add flags to allow host access if requested (ReBAR if available)
-		if (info.host_accessible) {
-			info_allocation.flags = 
-				vma::AllocationCreateFlagBits::eHostAccessSequentialWrite;
-			info_allocation.preferredFlags = 
+			.preferredFlags = !info.host_accessible ? vk::MemoryPropertyFlags{} :
+				vk::MemoryPropertyFlagBits::eHostCached |
 				vk::MemoryPropertyFlagBits::eHostVisible |
-				vk::MemoryPropertyFlagBits::eHostCoherent;
-		}
+				vk::MemoryPropertyFlagBits::eHostCoherent,
+		};
 		// create buffer
 		if (info.alignment > 0) {
 			std::tie(_data, _allocation) = info.vmalloc.createBufferWithAlignment(info_buffer, info_allocation, info.alignment);

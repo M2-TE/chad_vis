@@ -1,6 +1,4 @@
 #pragma once
-#include <print>
-#include <cstdint>
 #include <SFML/Window.hpp>
 #include <vulkan/vulkan.hpp>
 

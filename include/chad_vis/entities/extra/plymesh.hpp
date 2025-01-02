@@ -1,7 +1,4 @@
 #pragma once
-#include <print>
-#include <vector>
-#include <fstream>
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.hpp>
 #include <glm/glm.hpp>
@@ -54,15 +51,6 @@ struct Plymesh {
             typedef std::pair<glm::vec3, glm::vec3> RawVertex;
             std::vector<RawVertex> raw_vertices(vert_n);
             file.read(reinterpret_cast<char*>(raw_vertices.data()), sizeof(RawVertex) * raw_vertices.size());
-            // flip y and swap y with z and insert into full vertex vector
-            std::vector<Vertex> vertices;
-            vertices.reserve(vert_n);
-            for (auto& vertex: raw_vertices) {
-                glm::vec4 pos { vertex.first.x, -vertex.first.z, vertex.first.y, 1 };
-                glm::vec4 norm { vertex.second.x, vertex.second.y, vertex.second.z, 0 };
-                glm::vec4 col = color.has_value() ? glm::vec4(color.value(), 1) : norm;
-                vertices.emplace_back(pos, norm, col);
-            }
 
             // read little endian faces into indices
             std::vector<uint32_t> raw_indices;
@@ -76,11 +64,21 @@ struct Plymesh {
             }
             file.close();
 
-            // convert indices to Index type
+            // flip y and swap y with z and insert into full vertex vector
+            std::vector<Vertex> vertices;
+            vertices.reserve(vert_n);
+            for (auto& vertex: raw_vertices) {
+                glm::vec4 pos { vertex.first.x, -vertex.first.z, vertex.first.y, 1 };
+                glm::vec4 norm { vertex.second.x, vertex.second.y, vertex.second.z, 0 };
+                glm::vec4 col = color.has_value() ? glm::vec4(color.value(), 1) : norm;
+                vertices.emplace_back(pos, norm, col);
+            }
+
+            // convert raw indices to Index type
             std::vector<Index> indices;
             indices.resize(raw_indices.size());
             for (size_t i = 0; i < raw_indices.size(); i++) {
-                indices[i] = raw_indices[i];
+                indices[i] = (Index)raw_indices[i];
             }
             
             // create actual mesh from raw data

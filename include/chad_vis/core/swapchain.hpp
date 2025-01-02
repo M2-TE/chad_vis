@@ -1,6 +1,4 @@
 #pragma once
-#include <chrono>
-#include <thread>
 #include <vulkan/vulkan.hpp>
 #include "chad_vis/core/window.hpp"
 #include "chad_vis/device/image.hpp"

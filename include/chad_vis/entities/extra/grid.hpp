@@ -1,7 +1,4 @@
 #pragma once
-#include <fstream>
-#include <vector>
-#include <array>
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.hpp>
 #include <glm/glm.hpp>

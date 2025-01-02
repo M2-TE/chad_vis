@@ -1,6 +1,3 @@
-#include <map>
-#include <span>
-#include <print>
 #include <spirv_reflect.h>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_to_string.hpp>

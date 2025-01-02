@@ -1,6 +1,4 @@
 #pragma once
-#include <print>
-#include <string_view>
 #include <vulkan/vulkan.hpp>
 #include <spvrc/spvrc.hpp>
 #include "chad_vis/device/image.hpp"
@@ -231,7 +229,7 @@ struct Graphics: public PipelineBase {
 			};
 		}
 		vk::PipelineInputAssemblyStateCreateInfo info_input_assembly {
-			.topology = info.primitive_topology,			
+			.topology = info.primitive_topology,
 			.primitiveRestartEnable = info.primitive_restart,
 		};
 		vk::Viewport viewport {

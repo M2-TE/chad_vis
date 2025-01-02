@@ -1,9 +1,7 @@
 #pragma once
-#include <cstdint>
 #include <vk_mem_alloc.hpp>
 #include <vulkan/vulkan.hpp>
 #include "chad_vis/device/buffer.hpp"
-
 
 template<typename Index>
 struct Indices {

@@ -1,5 +1,4 @@
 #pragma once
-#include <print>
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.hpp>
 #include "chad_vis/core/input.hpp"

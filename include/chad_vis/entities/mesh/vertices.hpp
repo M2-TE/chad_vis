@@ -1,5 +1,4 @@
 #pragma once
-#include <cstdint>
 #include <vk_mem_alloc.hpp>
 #include <vulkan/vulkan.hpp>
 #include "chad_vis/device/buffer.hpp"
@@ -16,7 +15,7 @@ struct Vertices {
 			.host_accessible = true,
 		};
 		_buffer.init(info);
-		_buffer.write(vmalloc, vertex_data.data(), sizeof(Vertex) * vertex_data.size());
+		_buffer.write(vmalloc, vertex_data.data(), info.size);
 		_count = (uint32_t)vertex_data.size();
     }
     void destroy(vma::Allocator vmalloc) {

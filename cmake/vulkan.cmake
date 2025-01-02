@@ -54,12 +54,10 @@ khronos_validation.gpuav_debug_validate_instrumented_shaders = true
 # Filter out certain messages
 # 601872502 -> info about validation layers being enabled
 # -2001217138 -> outdated swapchain (its properly handled already)
-# 11102936 -> memory priority missing (imgui backend does not set these)
-# -954943182 -> not reusing allocations (imgui rebuild triggers this)
 # -920984000 -> bound vertex buffer wasnt used (imgui again)
 # -488404154 -> lod clamping (imgui sets -1000 to 1000 clamping)
-# -855582553 -> use of primitive restart is not recommended (we dont care)
-khronos_validation.message_id_filter = 601872502,-2001217138,11102936,-954943182,-920984000,-488404154,-855582553
+# -855582553 -> use of primitive restart is not recommended (dont care)
+khronos_validation.message_id_filter = 601872502,-2001217138,-920984000,-488404154,-855582553
 
 # Set report flags to include info, warnings, errors, and performance issues
 khronos_validation.report_flags = info,warn,error,perf")

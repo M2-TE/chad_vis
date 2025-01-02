@@ -1,9 +1,6 @@
 #pragma once
-#include <cstdint>
-#include <cmath>
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.hpp>
-#include <fmt/base.h>
 #include <glm/glm.hpp>
 #include "chad_vis/core/swapchain.hpp"
 #include "chad_vis/device/image.hpp"
@@ -122,29 +119,15 @@ private:
         // create graphics pipelines
         _pipe_default.init({
             .device = device, .extent = extent,
-            .color = {
-                .formats = _color._format,
-            },
+            .color = { .formats = _color._format },
             .depth = {
                 .format = _depth_stencil._format,
                 .write = vk::True,
                 .test = vk::True,
             },
-            .cull_mode = vk::CullModeFlagBits::eNone,
+            .cull_mode = vk::CullModeFlagBits::eBack,
             .vs_path = "defaults/default.vert", .fs_path = "defaults/default.frag",
         });
-        // _pipe_cells.init({
-        //     .device = device, .extent = extent,
-        //     .color_formats = { _color._format },
-        //     .depth_format = _depth_stencil._format,
-        //     .blend_enabled = vk::True,
-        //     .depth_write = vk::False, .depth_test = vk::True,
-        //     .poly_mode = vk::PolygonMode::eLine,
-        //     .primitive_topology = vk::PrimitiveTopology::eLineStrip,
-        //     .primitive_restart = true,
-        //     .cull_mode = vk::CullModeFlagBits::eNone,
-        //     .vs_path = "extra/cells.vert", .fs_path = "extra/cells.frag",
-        // });
         // write camera descriptor to pipelines
         _pipe_default.write_descriptor(device, 0, 0, scene._camera._buffer, vk::DescriptorType::eUniformBuffer);
         // _pipe_cells.write_descriptor(device, 0, 0, scene._camera._buffer, vk::DescriptorType::eUniformBuffer);
@@ -227,5 +210,5 @@ private:
     dv::Graphics _pipe_default;
 
     SMAA _smaa;
-    bool _smaa_enabled = true;
+    bool _smaa_enabled = false;
 };

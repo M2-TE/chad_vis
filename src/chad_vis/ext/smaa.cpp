@@ -1,4 +1,3 @@
-#include <span>
 #include <vulkan/vulkan.hpp>
 #include <glm/glm.hpp>
 #include "AreaTex.h"

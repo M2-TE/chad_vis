@@ -1,7 +1,4 @@
 #pragma once
-#include <set>
-#include <cctype>
-#include <optional>
 #include <SFML/Window/Event.hpp>
 // conditional includes in case imgui is available
 #if __has_include(<imgui.h>)
