@@ -42,7 +42,7 @@ struct Camera {
 
 		// only control camera when mouse is captured
 		if (Mouse::captured()) {
-			_rot += glm::aligned_vec3(-Mouse::delta().y, +Mouse::delta().x, 0) * 0.005f;
+			_rot += glm::aligned_vec3(-Mouse::delta().y, +Mouse::delta().x, 0) * 0.001f;
 		}
 
 		// merge rotation and projection matrices

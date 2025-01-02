@@ -108,7 +108,7 @@ namespace Input {
 		else if (const auto* mouse_moved = event->getIf<sf::Event::MouseMovedRaw>()) {
 			if (IMGUI_CAPTURE_MOUSE) return;
 			Data::get().mouse_position += mouse_moved->delta;
-			Data::get().mouse_delta = mouse_moved->delta;
+			Data::get().mouse_delta += mouse_moved->delta;
 		}
 		#endif
 	}
