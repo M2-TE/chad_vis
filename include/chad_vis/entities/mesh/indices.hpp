@@ -13,6 +13,7 @@ struct Indices {
 			.usage = vk::BufferUsageFlagBits::eIndexBuffer,
 			.queue_families = queues,
 			.host_accessible = true,
+			.dedicated_memory = true,
 		};
 		_buffer.init(info);
 		_buffer.write(vmalloc, index_data.data(), info.size);

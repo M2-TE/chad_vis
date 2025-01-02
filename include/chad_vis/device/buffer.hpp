@@ -11,6 +11,7 @@ struct Buffer {
 		vk::BufferUsageFlags usage = vk::BufferUsageFlagBits::eUniformBuffer;
 		const vk::ArrayProxy<uint32_t>& queue_families;
 		bool host_accessible = false;
+		bool dedicated_memory = false;
 	};
 	void init(const CreateInfo& info) {
 		vk::BufferCreateInfo info_buffer {
@@ -31,6 +32,8 @@ struct Buffer {
 				vk::MemoryPropertyFlagBits::eHostVisible |
 				vk::MemoryPropertyFlagBits::eHostCoherent,
 		};
+		// add dedicated memory requirement if requested
+		if (info.dedicated_memory) info_allocation.flags |= vma::AllocationCreateFlagBits::eDedicatedMemory;
 		// create buffer
 		if (info.alignment > 0) {
 			std::tie(_data, _allocation) = info.vmalloc.createBufferWithAlignment(info_buffer, info_allocation, info.alignment);
