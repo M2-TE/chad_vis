@@ -41,17 +41,9 @@ struct Buffer {
 		_size = info.size;
 
 		// check for host coherency and visibility
-		if (info.host_accessible) {
-			vk::MemoryPropertyFlags props = info.vmalloc.getAllocationMemoryProperties(_allocation);
-			if (props & vk::MemoryPropertyFlagBits::eHostVisible) _require_staging = false;
-			else _require_staging = true;
-			if (props & vk::MemoryPropertyFlagBits::eHostCoherent) _require_flushing = false;
-			else _require_flushing = true;
-		}
-		else {
-			_require_staging = false;
-			_require_flushing = false;
-		}
+		vk::MemoryPropertyFlags props = info.vmalloc.getAllocationMemoryProperties(_allocation);
+		_require_staging  = info.host_accessible && !static_cast<bool>(props & vk::MemoryPropertyFlagBits::eHostVisible);
+		_require_flushing = info.host_accessible && !static_cast<bool>(props & vk::MemoryPropertyFlagBits::eHostCoherent);
 	}
 	void destroy(vma::Allocator vmalloc) {
 		vmalloc.destroyBuffer(_data, _allocation);
