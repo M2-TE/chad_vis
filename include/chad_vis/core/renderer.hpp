@@ -10,10 +10,11 @@
 #include "chad_vis/device/queues.hpp"
 #include "chad_vis/device/pipeline.hpp"
 #include "chad_vis/ext/smaa.hpp"
+#include "chad_vis/entities/scene.hpp"
 
 class Renderer {
 public:
-    void init(vk::Device device, vma::Allocator vmalloc, dv::Queues& queues, vk::Extent2D extent) {
+    void init(vk::Device device, vma::Allocator vmalloc, dv::Queues& queues, Scene& scene, vk::Extent2D extent) {
         // allocate single command pool and buffer pair
         _command_pool = device.createCommandPool({ .queueFamilyIndex = queues._universal_i });
         vk::CommandBufferAllocateInfo bufferInfo {
@@ -33,7 +34,7 @@ public:
         
         // create images and pipelines
         init_images(device, vmalloc, extent);
-        init_pipelines(device, extent);
+        init_pipelines(device, extent, scene);
         _smaa.init(device, vmalloc, extent, queues, _color, _depth_stencil);
     }
     void destroy(vk::Device device, vma::Allocator vmalloc) {
@@ -44,6 +45,7 @@ public:
         _depth_stencil.destroy(device, vmalloc);
         // destroy pipelines
         _pipe_wip.destroy(device);
+        _pipe_default.destroy(device);
         // destroy command pools
         device.destroyCommandPool(_command_pool);
         // destroy synchronization objects
@@ -52,17 +54,17 @@ public:
         device.destroySemaphore(_ready_to_read);
     }
     
-    void resize(vk::Device device, vma::Allocator vmalloc, dv::Queues& queues, vk::Extent2D extent) {
+    void resize(vk::Device device, vma::Allocator vmalloc, dv::Queues& queues, Scene& scene, vk::Extent2D extent) {
         destroy(device, vmalloc);
-        init(device, vmalloc, queues, extent);
+        init(device, vmalloc, queues, scene, extent);
     }
     // record command buffer and submit it to the universal queue. wait() needs to have been called before this
-    void render(vk::Device device, Swapchain& swapchain, dv::Queues& queues) {
+    void render(vk::Device device, Swapchain& swapchain, dv::Queues& queues, Scene& scene) {
         // reset and record command buffer
         device.resetCommandPool(_command_pool, {});
         vk::CommandBuffer cmd = _command_buffer;
         cmd.begin({ .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
-        execute_pipes(cmd);
+        execute_pipes(cmd, scene);
 
         // optionally run SMAA
         if (_smaa_enabled) _smaa.execute(cmd, _color, _depth_stencil);
@@ -116,7 +118,37 @@ private:
         // create depth stencil with depth/stencil format picked by driver
         _depth_stencil.init(device, vmalloc, { extent.width, extent.height, 1 });
     }
-    void init_pipelines(vk::Device device, vk::Extent2D extent) {
+    void init_pipelines(vk::Device device, vk::Extent2D extent, Scene& scene) {
+        // create graphics pipelines
+        _pipe_default.init({
+            .device = device, .extent = extent,
+            .color = {
+                .formats = _color._format,
+            },
+            .depth = {
+                .format = _depth_stencil._format,
+                .write = vk::True,
+                .test = vk::True,
+            },
+            .cull_mode = vk::CullModeFlagBits::eNone,
+            .vs_path = "defaults/default.vert", .fs_path = "defaults/default.frag",
+        });
+        // _pipe_cells.init({
+        //     .device = device, .extent = extent,
+        //     .color_formats = { _color._format },
+        //     .depth_format = _depth_stencil._format,
+        //     .blend_enabled = vk::True,
+        //     .depth_write = vk::False, .depth_test = vk::True,
+        //     .poly_mode = vk::PolygonMode::eLine,
+        //     .primitive_topology = vk::PrimitiveTopology::eLineStrip,
+        //     .primitive_restart = true,
+        //     .cull_mode = vk::CullModeFlagBits::eNone,
+        //     .vs_path = "extra/cells.vert", .fs_path = "extra/cells.frag",
+        // });
+        // write camera descriptor to pipelines
+        _pipe_default.write_descriptor(device, 0, 0, scene._camera._buffer, vk::DescriptorType::eUniformBuffer);
+        // _pipe_cells.write_descriptor(device, 0, 0, scene._camera._buffer, vk::DescriptorType::eUniformBuffer);
+        
         // create main compute pipeline
         glm::uvec2 image_size = { extent.width, extent.height };
         std::array<vk::SpecializationMapEntry, 2> image_spec_entries {
@@ -135,7 +167,7 @@ private:
         });
         _pipe_wip.write_descriptor(device, 0, 0, _storage, vk::DescriptorType::eStorageImage);
     }
-    void execute_pipes(vk::CommandBuffer cmd) {
+    void execute_pipes(vk::CommandBuffer cmd, Scene& scene) {
         // prepare for storage via compute shader
         _storage.transition_layout({
             .cmd = cmd,
@@ -163,6 +195,19 @@ private:
             .dst_access = vk::AccessFlagBits2::eTransferWrite
         });
         _color.blit(cmd, _storage);
+
+        // draw scene data
+        _color.transition_layout({
+            .cmd = cmd,
+            .new_layout = vk::ImageLayout::eAttachmentOptimal,
+            .dst_stage = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            .dst_access = vk::AccessFlagBits2::eColorAttachmentRead | vk::AccessFlagBits2::eColorAttachmentWrite });
+        _depth_stencil.transition_layout({
+            .cmd = cmd,
+            .new_layout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
+            .dst_stage = vk::PipelineStageFlagBits2::eEarlyFragmentTests,
+            .dst_access = vk::AccessFlagBits2::eDepthStencilAttachmentRead | vk::AccessFlagBits2::eDepthStencilAttachmentWrite});
+        _pipe_default.execute(cmd, _color, vk::AttachmentLoadOp::eLoad, _depth_stencil, vk::AttachmentLoadOp::eClear, scene._mesh._mesh);
     }
 
 private:
@@ -179,6 +224,7 @@ private:
     dv::Image _storage;
     // pipelines
     dv::Compute _pipe_wip;
+    dv::Graphics _pipe_default;
 
     SMAA _smaa;
     bool _smaa_enabled = true;

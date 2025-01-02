@@ -75,9 +75,16 @@ struct Plymesh {
                 raw_indices.insert(raw_indices.end(), indices_face.cbegin(), indices_face.cend());
             }
             file.close();
+
+            // convert indices to Index type
+            std::vector<Index> indices;
+            indices.resize(raw_indices.size());
+            for (size_t i = 0; i < raw_indices.size(); i++) {
+                indices[i] = raw_indices[i];
+            }
             
             // create actual mesh from raw data
-            _mesh.init(vmalloc, queues, vertices, raw_indices);
+            _mesh.init(vmalloc, queues, vertices, indices);
         }
         else {
             std::println("failed to load ply file: {}", path_full);

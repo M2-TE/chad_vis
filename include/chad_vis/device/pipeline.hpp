@@ -5,6 +5,7 @@
 #include <spvrc/spvrc.hpp>
 #include "chad_vis/device/image.hpp"
 #include "chad_vis/device/buffer.hpp"
+#include "chad_vis/entities/mesh/mesh.hpp"
 
 namespace dv
 {
@@ -388,6 +389,97 @@ struct Graphics: public PipelineBase {
 			cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, _pipeline_layout, 0, _desc_sets, {});
 		}
 		cmd.draw(3, 1, 0, 0);
+		cmd.endRendering();
+	}
+
+	// draw mesh
+	template<typename Vertex, typename Index>
+	auto execute(vk::CommandBuffer cmd,
+		dv::Image& color, vk::AttachmentLoadOp color_load,
+		dv::DepthStencil& depth_stencil, vk::AttachmentLoadOp depth_stencil_load,
+		Mesh<Vertex, Index>& mesh)
+	-> void {
+		vk::RenderingAttachmentInfo info_color {
+			.imageView = color._view,
+			.imageLayout = color._last_layout,
+			.resolveMode = 	vk::ResolveModeFlagBits::eNone,
+			.loadOp = color_load,
+			.storeOp = vk::AttachmentStoreOp::eStore,
+			.clearValue { .color { std::array<float, 4>{ 0, 0, 0, 0 } } }
+		};
+		vk::RenderingAttachmentInfo info_depth_stencil {
+			.imageView = depth_stencil._view,
+			.imageLayout = depth_stencil._last_layout,
+			.resolveMode = 	vk::ResolveModeFlagBits::eNone,
+			.loadOp = depth_stencil_load,
+			.storeOp = vk::AttachmentStoreOp::eStore,
+			.clearValue = { .depthStencil { .depth = 1.0f, .stencil = 0 } },
+		};
+		vk::RenderingInfo info_render {
+			.renderArea = _render_area,
+			.layerCount = 1,
+			.colorAttachmentCount = 1,
+			.pColorAttachments = &info_color,
+			.pDepthAttachment = _depth_enabled ? &info_depth_stencil : nullptr,
+			.pStencilAttachment = _stencil_enabled ? &info_depth_stencil : nullptr,
+		};
+		cmd.beginRendering(info_render);
+		cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, _pipeline);
+		if (_desc_sets.size() > 0) {
+			cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, _pipeline_layout, 0, _desc_sets, {});
+		}
+		// draw beg //
+		if (mesh._indices._count > 0) {
+			cmd.bindVertexBuffers(0, mesh._vertices._buffer._data, { 0 });
+			cmd.bindIndexBuffer(mesh._indices._buffer._data, 0, mesh._indices.get_type());
+			cmd.drawIndexed(mesh._indices._count, 1, 0, 0, 0);
+		}
+		else {
+			cmd.bindVertexBuffers(0, mesh._vertices._buffer._data, { 0 });
+			cmd.draw(mesh._vertices._count, 1, 0, 0);
+		}
+		// draw end //
+		cmd.endRendering();
+	}
+
+	// draw mesh without depth attachment
+	template<typename Vertex, typename Index>
+	auto execute(vk::CommandBuffer cmd,
+		dv::Image& color_dst, vk::AttachmentLoadOp color_load,
+		Mesh<Vertex, Index>& mesh)
+	-> void {
+		vk::RenderingAttachmentInfo info_color_attach {
+			.imageView = color_dst._view,
+			.imageLayout = color_dst._last_layout,
+			.resolveMode = 	vk::ResolveModeFlagBits::eNone,
+			.loadOp = color_load,
+			.storeOp = vk::AttachmentStoreOp::eStore,
+			.clearValue { .color { std::array<float, 4>{ 0, 0, 0, 0 } } }
+		};
+		vk::RenderingInfo info_render {
+			.renderArea = _render_area,
+			.layerCount = 1,
+			.colorAttachmentCount = 1,
+			.pColorAttachments = &info_color_attach,
+			.pDepthAttachment = nullptr,
+			.pStencilAttachment = nullptr,
+		};
+		cmd.beginRendering(info_render);
+		cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, _pipeline);
+		if (_desc_sets.size() > 0) {
+			cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, _pipeline_layout, 0, _desc_sets, {});
+		}
+		// draw beg //
+		if (mesh._indices._count > 0) {
+			cmd.bindVertexBuffers(0, mesh._vertices._buffer._data, { 0 });
+			cmd.bindIndexBuffer(mesh._indices._buffer._data, 0, mesh._indices.get_type());
+			cmd.drawIndexed(mesh._indices._count, 1, 0, 0, 0);
+		}
+		else {
+			cmd.bindVertexBuffers(0, mesh._vertices._buffer._data, { 0 });
+			cmd.draw(mesh._vertices._vertex_n, 1, 0, 0);
+		}
+		// draw end //
 		cmd.endRendering();
 	}
 

@@ -132,7 +132,7 @@ struct Engine {
             _scene.update_safe();
             _renderer.wait(_device);
             _scene.update(_vmalloc);
-            _renderer.render(_device, _swapchain, _queues);
+            _renderer.render(_device, _swapchain, _queues, _scene);
         }
     }
 
@@ -186,7 +186,7 @@ private:
     void handle_resize() {
         _device.waitIdle();
         _scene._camera.resize(_window.size());
-        _renderer.resize(_device, _vmalloc, _queues, _window.size());
+        _renderer.resize(_device, _vmalloc, _queues, _scene, _window.size());
         _swapchain.resize(_phys_device, _device, _window, _queues);
     }
 

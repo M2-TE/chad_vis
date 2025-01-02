@@ -17,8 +17,8 @@ struct Indices {
 			.host_accessible = true,
 		};
 		_buffer.init(info);
-		_buffer.write(vmalloc, index_data.data(), sizeof(Index) * index_data.size());
-        count = (uint32_t)index_data.size();
+		_buffer.write(vmalloc, index_data.data(), info.size);
+        _count = (uint32_t)index_data.size();
     }
     void destroy(vma::Allocator vmalloc) {
 		_buffer.destroy(vmalloc);
@@ -28,5 +28,5 @@ struct Indices {
 	}
 
 	dv::Buffer _buffer;
-	uint32_t count;
+	uint32_t _count;
 };

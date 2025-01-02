@@ -17,12 +17,12 @@ struct Vertices {
 		};
 		_buffer.init(info);
 		_buffer.write(vmalloc, vertex_data.data(), sizeof(Vertex) * vertex_data.size());
-		count = (uint32_t)vertex_data.size();
+		_count = (uint32_t)vertex_data.size();
     }
     void destroy(vma::Allocator vmalloc) {
 		_buffer.destroy(vmalloc);
     }
 
 	dv::Buffer _buffer;
-	uint32_t count;
+	uint32_t _count;
 };

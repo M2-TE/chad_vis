@@ -12,7 +12,7 @@ struct Scene {
 
         // load mesh and grid objects
         _mesh.init(vmalloc, queues._universal_i, "data/v2/mesh.ply");
-        _grid.init(vmalloc, queues._universal_i, "data/v2/hashgrid.grid");
+        // _grid.init(vmalloc, queues._universal_i, "data/v2/hashgrid.grid");
     }
     void destroy(vma::Allocator vmalloc) {
         _camera.destroy(vmalloc);
