@@ -68,9 +68,9 @@ struct Plymesh {
             std::vector<Vertex> vertices;
             vertices.reserve(vert_n);
             for (auto& vertex: raw_vertices) {
-                glm::vec4 pos { vertex.first.x, -vertex.first.z, vertex.first.y, 1 };
-                glm::vec4 norm { vertex.second.x, vertex.second.y, vertex.second.z, 0 };
-                glm::vec4 col = color.has_value() ? glm::vec4(color.value(), 1) : norm;
+                glm::vec3 pos { vertex.first.x, -vertex.first.z, vertex.first.y };
+                glm::vec3 norm { vertex.second.x, -vertex.second.z, vertex.second.y };
+                glm::vec3 col = color.has_value() ? glm::vec4(color.value(), 1) : vertex.second;
                 vertices.emplace_back(pos, norm, col);
             }
 
@@ -93,9 +93,9 @@ struct Plymesh {
     }
 
     struct Vertex {
-        glm::vec4 pos;
-        glm::vec4 norm;
-        glm::vec4 color;
+        glm::vec3 pos;
+        glm::vec3 norm;
+        glm::vec3 color;
     };
     typedef uint32_t Index;
     Mesh<Vertex, Index> _mesh;

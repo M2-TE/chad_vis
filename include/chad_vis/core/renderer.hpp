@@ -125,7 +125,7 @@ private:
                 .write = vk::True,
                 .test = vk::True,
             },
-            .cull_mode = vk::CullModeFlagBits::eBack,
+            .cull_mode = vk::CullModeFlagBits::eNone,
             .vs_path = "defaults/default.vert", .fs_path = "defaults/default.frag",
         });
         // write camera descriptor to pipelines

@@ -238,8 +238,8 @@ struct DepthBuffer: public Image {
         std::vector<vk::Format> formats = {
             vk::Format::eD32Sfloat,
             vk::Format::eD24UnormS8Uint,
-            vk::Format::eD32SfloatS8Uint,
             vk::Format::eD16UnormS8Uint,
+            vk::Format::eD32SfloatS8Uint,
         };
         // set depth format to first supported format
         for (auto& format: formats) {
@@ -307,8 +307,8 @@ struct DepthStencil: public Image {
         // depth stencil formats in order of preference
         std::vector<vk::Format> formats = {
             vk::Format::eD24UnormS8Uint,
-            vk::Format::eD32SfloatS8Uint,
             vk::Format::eD16UnormS8Uint,
+            vk::Format::eD32SfloatS8Uint,
         };
         // set depth stencil format to first supported format
         for (auto& format: formats) {
