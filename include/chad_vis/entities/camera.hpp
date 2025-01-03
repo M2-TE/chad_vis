@@ -28,17 +28,17 @@ struct Camera {
 	void update(vma::Allocator vmalloc) {
 		// read input for movement and rotation
 		float speed = 0.05;
-		if (Keys::held(sf::Keyboard::Scan::LControl)) speed /= 8.0;
-		if (Keys::held(sf::Keyboard::Scan::LShift)) speed *= 8.0;
+		if (Keys::held(sf::Keyboard::Scan::LControl)) speed /= 4.0;
+		if (Keys::held(sf::Keyboard::Scan::LShift)) speed *= 4.0;
 
 		// move in direction relative to camera
 		glm::qua<float, glm::aligned_highp> q_rot(_rot);
-		if (Keys::held('w')) _pos += q_rot * glm::aligned_vec3(0, 0, +speed);
-		if (Keys::held('s')) _pos += q_rot * glm::aligned_vec3(0, 0, -speed);
-		if (Keys::held('d')) _pos += q_rot * glm::aligned_vec3(+speed, 0, 0);
-		if (Keys::held('a')) _pos += q_rot * glm::aligned_vec3(-speed, 0, 0);
-		if (Keys::held('q')) _pos += q_rot * glm::aligned_vec3(0, +speed, 0);
-		if (Keys::held('e')) _pos += q_rot * glm::aligned_vec3(0, -speed, 0);
+		if (Keys::held(sf::Keyboard::Key::W)) _pos += q_rot * glm::aligned_vec3(0, 0, +speed);
+		if (Keys::held(sf::Keyboard::Key::S)) _pos += q_rot * glm::aligned_vec3(0, 0, -speed);
+		if (Keys::held(sf::Keyboard::Key::D)) _pos += q_rot * glm::aligned_vec3(+speed, 0, 0);
+		if (Keys::held(sf::Keyboard::Key::A)) _pos += q_rot * glm::aligned_vec3(-speed, 0, 0);
+		if (Keys::held(sf::Keyboard::Key::Q)) _pos += q_rot * glm::aligned_vec3(0, +speed, 0);
+		if (Keys::held(sf::Keyboard::Key::E)) _pos += q_rot * glm::aligned_vec3(0, -speed, 0);
 
 		// only control camera when mouse is captured
 		if (Mouse::captured()) {

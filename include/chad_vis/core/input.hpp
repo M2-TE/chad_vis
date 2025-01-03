@@ -17,7 +17,7 @@ namespace Input {
             static Data instance;
             return instance;
         }
-		std::set<sf::Keyboard::Scan> keys_pressed, keys_held, keys_released;
+		std::set<sf::Keyboard::Key> keys_pressed, keys_held, keys_released;
 		std::set<sf::Mouse::Button> buttons_pressed, buttons_held, buttons_released;
 		sf::Vector2i mouse_position;
 		sf::Vector2i mouse_delta;
@@ -25,26 +25,20 @@ namespace Input {
 	};
 
 	struct Keys {
+		// check if (logical) key was pressed in this frame
+		bool static inline pressed(sf::Keyboard::Key code) noexcept { return Data::get().keys_pressed.contains(code); }
 		// check if (physical) key was pressed in this frame
-		bool static inline pressed(sf::Keyboard::Scan code) noexcept { return Data::get().keys_pressed.contains(code); }
-		// check if (logical) key was pressed in this frame
-		bool static inline pressed(sf::Keyboard::Key code) noexcept { return pressed(sf::Keyboard::delocalize(code)); }
-		// check if (logical) key was pressed in this frame
-		bool static inline pressed(char character) noexcept { return pressed(sf::Keyboard::delocalize(static_cast<sf::Keyboard::Key>(std::tolower(character)))); }
+		bool static inline pressed(sf::Keyboard::Scan code) noexcept { return pressed(sf::Keyboard::localize(code)); }
 
+		// check if (logical) key is being held
+		bool static inline held(sf::Keyboard::Key code) noexcept { return Data::get().keys_held.contains(code); }
 		// check if (physical) key is being held
-		bool static inline held(sf::Keyboard::Scan code) noexcept { return Data::get().keys_held.contains(code); }
-		// check if (logical) key is being held
-		bool static inline held(sf::Keyboard::Key code) noexcept { return held(sf::Keyboard::delocalize(code)); }
-		// check if (logical) key is being held
-		bool static inline held(char character) noexcept { return held(sf::Keyboard::delocalize(static_cast<sf::Keyboard::Key>(std::tolower(character)))); }
+		bool static inline held(sf::Keyboard::Scan code) noexcept { return held(sf::Keyboard::localize(code)); }
 		
+		// check if (logical) key was released in this frame
+		bool static inline released(sf::Keyboard::Key code) noexcept { return Data::get().keys_released.contains(code); }
 		// check if (physical) key was released in this frame
-		bool static inline released(sf::Keyboard::Scan code) noexcept { return Data::get().keys_released.contains(code); }
-		// check if (logical) key was released in this frame
-		bool static inline released(sf::Keyboard::Key code) noexcept { return released(sf::Keyboard::delocalize(code)); }
-		// check if (logical) key was released in this frame
-		bool static inline released(char character) noexcept { return released(sf::Keyboard::delocalize(static_cast<sf::Keyboard::Key>(std::tolower(character)))); }
+		bool static inline released(sf::Keyboard::Scan code) noexcept { return released(sf::Keyboard::localize(code)); }
     };
 	struct Mouse {
 		// check if mouse button was pressed in this frame
@@ -80,13 +74,13 @@ namespace Input {
 		}
 		else if (const auto* keys_pressed = event->getIf<sf::Event::KeyPressed>()) {
 			if (IMGUI_CAPTURE_KBD) return;
-			Data::get().keys_pressed.insert(keys_pressed->scancode);
-			Data::get().keys_held.insert(keys_pressed->scancode);
+			Data::get().keys_pressed.insert(keys_pressed->code);
+			Data::get().keys_held.insert(keys_pressed->code);
 		}
 		else if (const auto* keys_released = event->getIf<sf::Event::KeyReleased>()) {
 			if (IMGUI_CAPTURE_KBD) return;
-			Data::get().keys_released.insert(keys_released->scancode);
-			Data::get().keys_held.erase(keys_released->scancode);
+			Data::get().keys_released.insert(keys_released->code);
+			Data::get().keys_held.erase(keys_released->code);
 		}
 		else if (const auto* button_pressed = event->getIf<sf::Event::MouseButtonPressed>()) {
 			if (IMGUI_CAPTURE_MOUSE) return;

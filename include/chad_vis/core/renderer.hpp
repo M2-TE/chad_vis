@@ -210,5 +210,5 @@ private:
     dv::Graphics _pipe_default;
 
     SMAA _smaa;
-    bool _smaa_enabled = false;
+    bool _smaa_enabled = true;
 };
