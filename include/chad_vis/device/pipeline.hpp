@@ -94,9 +94,8 @@ struct Compute: public PipelineBase {
 	struct CreateInfo {
 		vk::Device device;
 		//
-		std::string_view cs_path;
-		vk::SpecializationInfo spec_info = {};
-		//
+		std::string_view cs_path; vk::SpecializationInfo spec_info = {};
+		// TODO: deprecate this one
 		SamplerInfos sampler_infos = {};
 	};
 	void init(const CreateInfo& info) {
@@ -146,6 +145,9 @@ struct Graphics: public PipelineBase {
 		vk::Device device;
 		vk::Extent2D extent;
 		//
+		std::string_view vs_path; vk::SpecializationInfo vs_spec = {};
+		std::string_view fs_path; vk::SpecializationInfo fs_spec = {};
+		//
 		struct Color {
 			vk::ArrayProxy<vk::Format> formats;
 			vk::Bool32 blend = false;
@@ -162,16 +164,8 @@ struct Graphics: public PipelineBase {
 			vk::StencilOpState back = {};
 		} stencil = {};
 		//
-		vk::PolygonMode poly_mode = vk::PolygonMode::eFill;
-		vk::PrimitiveTopology primitive_topology = vk::PrimitiveTopology::eTriangleList;
-		vk::Bool32 primitive_restart = false;
-		vk::CullModeFlags cull_mode = vk::CullModeFlagBits::eBack;
-		//
-		std::string_view vs_path;
-		vk::SpecializationInfo vs_spec = {};
-		std::string_view fs_path;
-		vk::SpecializationInfo fs_spec = {};
-		//
+		vk::ArrayProxy<vk::DynamicState> dynamic_states = {};
+		// TODO: deprecate this one
 		SamplerInfos sampler_infos = {};
 	};
 	void init(const CreateInfo& info) {
@@ -229,14 +223,17 @@ struct Graphics: public PipelineBase {
 			};
 		}
 		vk::PipelineInputAssemblyStateCreateInfo info_input_assembly {
-			.topology = info.primitive_topology,
-			.primitiveRestartEnable = info.primitive_restart,
+			.topology = vk::PrimitiveTopology::eTriangleList,
+			.primitiveRestartEnable = vk::False,
+		};
+		vk::PipelineTessellationStateCreateInfo info_tessellation {
+			.patchControlPoints = 0, // not using tesselation
 		};
 		vk::Viewport viewport {
 			.x = 0, .y = 0,
 			.width = (float)info.extent.width,
 			.height = (float)info.extent.height,
-			.minDepth = 0.0,	
+			.minDepth = 0.0,
 			.maxDepth = 1.0,
 		};
 		vk::Rect2D scissor({0, 0}, info.extent);
@@ -249,11 +246,11 @@ struct Graphics: public PipelineBase {
 		vk::PipelineRasterizationStateCreateInfo info_rasterization {
 			.depthClampEnable = false,
 			.rasterizerDiscardEnable = false,
-			.polygonMode = info.poly_mode,
-			.cullMode = info.cull_mode,
+			.polygonMode = vk::PolygonMode::eFill,
+			.cullMode = vk::CullModeFlagBits::eBack,
 			.frontFace = vk::FrontFace::eClockwise,
 			.depthBiasEnable = false,
-			.lineWidth = info.poly_mode == vk::PolygonMode::eLine ? 3.0f : 1.0f,
+			.lineWidth = 1.0,
 		};
 		vk::PipelineMultisampleStateCreateInfo info_multisampling {
 			.sampleShadingEnable = false,
@@ -288,6 +285,10 @@ struct Graphics: public PipelineBase {
 			.pAttachments = &info_blend_attach,	
 			.blendConstants = std::array<float, 4>{ 1.0, 1.0, 1.0, 1.0 },
 		};
+		vk::PipelineDynamicStateCreateInfo info_dynamic_state {
+			.dynamicStateCount = (uint32_t)info.dynamic_states.size(),
+			.pDynamicStates = info.dynamic_states.data(),
+		};
 
 		// create pipeline
 		vk::PipelineRenderingCreateInfo renderInfo {
@@ -302,13 +303,13 @@ struct Graphics: public PipelineBase {
 			.pStages = shader_stages.data(),
 			.pVertexInputState = &info_vertex_input,
 			.pInputAssemblyState = &info_input_assembly,
-			.pTessellationState = nullptr,
+			.pTessellationState = &info_tessellation,
 			.pViewportState = &info_viewport,
 			.pRasterizationState = &info_rasterization,
 			.pMultisampleState = &info_multisampling,
 			.pDepthStencilState = &info_depth_stencil,
 			.pColorBlendState = &info_blend_state,
-			.pDynamicState = nullptr,
+			.pDynamicState = &info_dynamic_state,
 			.layout = _pipeline_layout,
 		};
 		auto [result, pipeline] = info.device.createGraphicsPipeline(nullptr, pipeInfo);

@@ -82,7 +82,10 @@ void SMAA::init_pipelines(vk::Device device, vk::Extent2D extent, dv::Image& col
         .pData = &SMAA_RT_METRICS
     };
     _pipe_edges.init({
-        .device = device, .extent = extent,
+        .device = device,
+        .extent = extent,
+        .vs_path = "smaa/edges.vert", .vs_spec = smaa_spec_info,
+        .fs_path = "smaa/edges.frag", .fs_spec = smaa_spec_info,
         .color {
             .formats = _img_edges._format,
         },
@@ -98,11 +101,12 @@ void SMAA::init_pipelines(vk::Device device, vk::Extent2D extent, dv::Image& col
                 .reference = 1,
             }
         },
-        .vs_path = "smaa/edges.vert", .vs_spec = smaa_spec_info,
-        .fs_path = "smaa/edges.frag", .fs_spec = smaa_spec_info,
     });
     _pipe_weights.init({
-        .device = device, .extent = extent,
+        .device = device,
+        .extent = extent,
+        .vs_path = "smaa/weights.vert", .vs_spec = smaa_spec_info,
+        .fs_path = "smaa/weights.frag", .fs_spec = smaa_spec_info,
         .color {
             .formats = _img_weights._format,
         },
@@ -118,16 +122,15 @@ void SMAA::init_pipelines(vk::Device device, vk::Extent2D extent, dv::Image& col
                 .reference = 1,
             },
         },
-        .vs_path = "smaa/weights.vert", .vs_spec = smaa_spec_info,
-        .fs_path = "smaa/weights.frag", .fs_spec = smaa_spec_info,
     });
     _pipe_blending.init({
-        .device = device, .extent = extent,
+        .device = device,
+        .extent = extent,
+        .vs_path = "smaa/blending.vert", .vs_spec = smaa_spec_info,
+        .fs_path = "smaa/blending.frag", .fs_spec = smaa_spec_info,
         .color {
             .formats = color._format,
         },
-        .vs_path = "smaa/blending.vert", .vs_spec = smaa_spec_info,
-        .fs_path = "smaa/blending.frag", .fs_spec = smaa_spec_info,
     });
     // update SMAA input texture descriptors
     _pipe_edges.write_descriptor(device, 0, 0, color, vk::DescriptorType::eCombinedImageSampler);

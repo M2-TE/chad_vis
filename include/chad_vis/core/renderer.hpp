@@ -118,19 +118,22 @@ private:
     void init_pipelines(vk::Device device, vk::Extent2D extent, Scene& scene) {
         // create graphics pipelines
         _pipe_default.init({
-            .device = device, .extent = extent,
+            .device = device,
+            .extent = extent,
+            .vs_path = "defaults/default.vert",
+            .fs_path = "defaults/default.frag",
             .color = { .formats = _color._format },
             .depth = {
                 .format = _depth_stencil._format,
                 .write = vk::True,
                 .test = vk::True,
             },
-            .cull_mode = vk::CullModeFlagBits::eNone,
-            .vs_path = "defaults/default.vert", .fs_path = "defaults/default.frag",
+            .dynamic_states = {
+                vk::DynamicState::eCullMode,
+            },
         });
         // write camera descriptor to pipelines
         _pipe_default.write_descriptor(device, 0, 0, scene._camera._buffer, vk::DescriptorType::eUniformBuffer);
-        // _pipe_cells.write_descriptor(device, 0, 0, scene._camera._buffer, vk::DescriptorType::eUniformBuffer);
         
         // create main compute pipeline
         glm::uvec2 image_size = { extent.width, extent.height };
@@ -190,6 +193,7 @@ private:
             .new_layout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
             .dst_stage = vk::PipelineStageFlagBits2::eEarlyFragmentTests,
             .dst_access = vk::AccessFlagBits2::eDepthStencilAttachmentRead | vk::AccessFlagBits2::eDepthStencilAttachmentWrite});
+        cmd.setCullMode(vk::CullModeFlagBits::eNone); // no culling needed here
         _pipe_default.execute(cmd, _color, vk::AttachmentLoadOp::eLoad, _depth_stencil, vk::AttachmentLoadOp::eClear, scene._mesh._mesh);
     }
 

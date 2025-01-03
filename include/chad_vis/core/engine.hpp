@@ -148,7 +148,6 @@ private:
                 _window._sfml_window.close();
                 _rendering = false;
             }
-            else if (event->is<sf::Event::Resized>()) _swapchain._resize_requested = true;
             else if (event->is<sf::Event::FocusLost>()) _swapchain.set_target_framerate(_fps_background);
             else if (event->is<sf::Event::FocusGained>()) {
                 _swapchain.set_target_framerate(_fps_foreground);

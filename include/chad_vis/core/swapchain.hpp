@@ -149,18 +149,18 @@ public:
         // acquire image from swapchain
         uint32_t swap_index = 0;
         for (auto result = vk::Result::eTimeout; result == vk::Result::eTimeout;) {
-            std::tie(result, swap_index) = device.acquireNextImageKHR(_swapchain, UINT64_MAX, frame._ready_to_write);
-            // mark swapchain for resize, but still continue to present
-            if (result == vk::Result::eSuboptimalKHR) {
-                std::println("Swapchain image suboptimal");
-                _resize_requested = true;
+            try {
+                std::tie(result, swap_index) = device.acquireNextImageKHR(_swapchain, UINT64_MAX, frame._ready_to_write);
             }
-            // abort if swapchain is out of date
-            else
-            if (result == vk::Result::eErrorOutOfDateKHR) {
-                std::println("Swapchain image out of date");
+            catch (const vk::OutOfDateKHRError& e) {
+                std::println("Swapchain out of date ({})", e.what());
                 _resize_requested = true;
                 return;
+            }
+            if (result == vk::Result::eSuboptimalKHR) {
+                // mark swapchain for resize, but still continue to present
+                std::println("Swapchain image suboptimal");
+                _resize_requested = true;
             }
         }
         
@@ -215,7 +215,7 @@ public:
             }
         }
         catch (const vk::OutOfDateKHRError& e) {
-            std::println("Swapchain out of date");
+            std::println("Swapchain out of date ({})", e.what());
             _resize_requested = true;
             return;
         }
