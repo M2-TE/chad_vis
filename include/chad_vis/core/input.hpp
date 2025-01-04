@@ -92,19 +92,11 @@ namespace Input {
 			Data::get().buttons_released.insert(button_released->button);
 			Data::get().buttons_held.erase(button_released->button);
 		}
-		#ifdef INPUT_DISABLE_RAW_MOUSE
-		else if (const auto* mouse_moved = event->getIf<sf::Event::MouseMoved>()) {
-			if (IMGUI_CAPTURE_MOUSE) return;
-			Data::get().mouse_delta = Data::get().mouse_position - mouse_moved->position;
-			Data::get().mouse_position += mouse_moved->position;
-		}
-		#else
 		else if (const auto* mouse_moved = event->getIf<sf::Event::MouseMovedRaw>()) {
 			if (IMGUI_CAPTURE_MOUSE) return;
 			Data::get().mouse_position += mouse_moved->delta;
 			Data::get().mouse_delta += mouse_moved->delta;
 		}
-		#endif
 	}
 	// update the current capture state of the mouse
 	void inline register_capture(bool captured) noexcept {

@@ -9,7 +9,7 @@ namespace dv
 {
 struct PipelineBase {
 public:
-	typedef std::vector<std::tuple<uint32_t /*set*/, uint32_t /*binding*/, vk::SamplerCreateInfo>> SamplerInfos;
+	typedef std::vector<std::tuple<uint32_t /*set*/, uint32_t /*binding*/, vk::SamplerCreateInfo>> SamplerInfos; // TODO: deprecate
 	void destroy(vk::Device device) {
 		device.destroyPipeline(_pipeline);
 		device.destroyPipelineLayout(_pipeline_layout);

@@ -96,7 +96,7 @@ struct Engine {
         };
         _vmalloc = vma::createAllocator(info_vmalloc);
 
-        // set the global format for depth stencil images
+        // set the global properties for current physical device
         dv::DepthStencil::set_format(_phys_device);
         dv::PipelineBase::set_module_deprecation(_phys_device);
 
