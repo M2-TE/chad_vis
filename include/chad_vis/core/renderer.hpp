@@ -102,6 +102,7 @@ private:
                 vk::ImageUsageFlagBits::eTransferSrc |
                 vk::ImageUsageFlagBits::eTransferDst |
                 vk::ImageUsageFlagBits::eSampled,
+            .priority = 1.0f,
         });
         // create storage image with same format as _color
         _storage.init({
@@ -110,7 +111,8 @@ private:
             .extent { extent.width, extent.height, 1 },
             .usage = 
                 vk::ImageUsageFlagBits::eTransferSrc |
-                vk::ImageUsageFlagBits::eStorage
+                vk::ImageUsageFlagBits::eStorage,
+            .priority = 1.0f,
         });
         // create depth stencil with depth/stencil format picked by driver
         _depth_stencil.init(device, vmalloc, { extent.width, extent.height, 1 });
