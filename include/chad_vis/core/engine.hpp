@@ -7,7 +7,7 @@
 #include "chad_vis/core/swapchain.hpp"
 #include "chad_vis/device/image.hpp"
 #include "chad_vis/device/queues.hpp"
-#include "chad_vis/device/pipeline.hpp"
+#include "chad_vis/core/pipeline.hpp"
 #include "chad_vis/device/selector.hpp"
 #include "chad_vis/entities/scene.hpp"
 
@@ -97,8 +97,8 @@ struct Engine {
         _vmalloc = vma::createAllocator(info_vmalloc);
 
         // set the global properties for current physical device
+        PipelineBase::set_module_deprecation(_phys_device);
         dv::DepthStencil::set_format(_phys_device);
-        dv::PipelineBase::set_module_deprecation(_phys_device);
 
         // set up swapchain, resize request will be fulfilled later
         _swapchain.set_target_framerate(_fps_foreground);

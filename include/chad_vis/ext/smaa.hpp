@@ -1,7 +1,7 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
 #include "chad_vis/device/image.hpp"
-#include "chad_vis/device/pipeline.hpp"
+#include "chad_vis/core/pipeline.hpp"
 
 class SMAA {
 public:
@@ -72,7 +72,7 @@ private:
     dv::Image _img_weights;
     dv::Image _img_output;
     // pipelines
-    dv::Graphics _pipe_edges;
-    dv::Graphics _pipe_weights;
-    dv::Graphics _pipe_blending;
+    Graphics _pipe_edges;
+    Graphics _pipe_weights;
+    Graphics _pipe_blending;
 };

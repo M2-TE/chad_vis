@@ -5,8 +5,6 @@
 #include "chad_vis/device/buffer.hpp"
 #include "chad_vis/entities/mesh/mesh.hpp"
 
-namespace dv
-{
 struct PipelineBase {
 public:
 	typedef std::vector<std::tuple<uint32_t /*set*/, uint32_t /*binding*/, vk::SamplerCreateInfo>> SamplerInfos; // TODO: deprecate
@@ -487,4 +485,3 @@ private:
 	bool _depth_enabled;
 	bool _stencil_enabled;
 };
-} // namespace Pipeline

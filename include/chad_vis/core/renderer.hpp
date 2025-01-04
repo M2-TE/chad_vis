@@ -5,7 +5,7 @@
 #include "chad_vis/core/swapchain.hpp"
 #include "chad_vis/device/image.hpp"
 #include "chad_vis/device/queues.hpp"
-#include "chad_vis/device/pipeline.hpp"
+#include "chad_vis/core/pipeline.hpp"
 #include "chad_vis/ext/smaa.hpp"
 #include "chad_vis/entities/scene.hpp"
 
@@ -212,8 +212,8 @@ private:
     dv::Image _color;
     dv::Image _storage;
     // pipelines
-    dv::Compute _pipe_wip;
-    dv::Graphics _pipe_default;
+    Compute _pipe_wip;
+    Graphics _pipe_default;
 
     SMAA _smaa;
     bool _smaa_enabled = true;
