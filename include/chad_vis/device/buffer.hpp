@@ -60,6 +60,7 @@ struct Buffer {
 	}
 	void write(vma::Allocator vmalloc, void* data_p, size_t byte_count) {
 		if (_require_staging) std::println("ReBAR required, staging buffer not yet implemented");
+		// TODO: implement staging buffer with HOST_CACHED
 		void* map_p = vmalloc.mapMemory(_allocation);
 		std::memcpy(map_p, data_p, byte_count);
 		vmalloc.unmapMemory(_allocation);

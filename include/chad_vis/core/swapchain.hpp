@@ -77,14 +77,10 @@ public:
         }
 
         // create swapchain
+        if (capabilities.maxImageCount == 0) capabilities.maxImageCount = std::numeric_limits<uint32_t>::max();
         vk::SwapchainCreateInfoKHR info_swapchain {
             .surface = window._surface,
-            .minImageCount = std::clamp<uint32_t>(
-                3,
-                capabilities.minImageCount, 
-                capabilities.maxImageCount == 0
-                    ? std::numeric_limits<uint32_t>::max()
-                    : capabilities.maxImageCount),
+            .minImageCount = std::clamp<uint32_t>(3, capabilities.minImageCount, capabilities.maxImageCount),
             .imageFormat = _format,
             .imageColorSpace = color_space,
             .imageExtent = _extent,
@@ -101,8 +97,8 @@ public:
         };
         vk::SwapchainKHR old_swapchain = _swapchain;
         _swapchain = device.createSwapchainKHR(info_swapchain);
-        if (old_swapchain != vk::SwapchainKHR(nullptr) && _images.size() > 0) device.destroySwapchainKHR(old_swapchain);
-        _images.clear(); // old images were owned by previous swapchain
+        if (_images.size() > 0) device.destroySwapchainKHR(old_swapchain);
+        _images.clear();
 
         // retrieve and wrap swapchain images
         std::vector<vk::Image> images = device.getSwapchainImagesKHR(_swapchain);
