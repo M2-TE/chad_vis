@@ -152,6 +152,7 @@ private:
                 _swapchain.set_target_framerate(_fps_background);
             }
         }
+        // TODO: handle minimize events
 
         // handle mouse grab
         if (Keys::pressed(GLFW_KEY_LEFT_ALT)) Mouse::set_mode(_window._glfw_window_p, false);

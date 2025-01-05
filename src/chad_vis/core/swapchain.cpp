@@ -24,14 +24,17 @@ void Swapchain::init(vk::PhysicalDevice phys_device, vk::Device device, Window& 
         return;
     }
     std::vector<vk::SurfaceFormatKHR> available_formats = available_formats_res.value;
-    for (auto& format: available_formats) {
-        std::println("Available format: {}, {}", vk::to_string(format.format), vk::to_string(format.colorSpace));
-    }
+    // for (auto& format: available_formats) {
+    //     std::println("Available format: {}, {}", vk::to_string(format.format), vk::to_string(format.colorSpace));
+    // }
     std::vector<vk::SurfaceFormatKHR> preferred_formats = {
-        { vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear },
-        { vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear },
-        { vk::Format::eR8G8B8Srgb,   vk::ColorSpaceKHR::eSrgbNonlinear },
-        { vk::Format::eB8G8R8Srgb,   vk::ColorSpaceKHR::eSrgbNonlinear },
+        { vk::Format::eA2R10G10B10UnormPack32,  vk::ColorSpaceKHR::eSrgbNonlinear },
+        { vk::Format::eA2B10G10R10UnormPack32,  vk::ColorSpaceKHR::eSrgbNonlinear },
+        { vk::Format::eR16G16B16A16Sfloat,      vk::ColorSpaceKHR::eSrgbNonlinear },
+        { vk::Format::eR8G8B8A8Srgb,            vk::ColorSpaceKHR::eSrgbNonlinear },
+        { vk::Format::eB8G8R8A8Srgb,            vk::ColorSpaceKHR::eSrgbNonlinear },
+        { vk::Format::eR8G8B8A8Unorm,           vk::ColorSpaceKHR::eSrgbNonlinear },
+        { vk::Format::eB8G8R8A8Unorm,           vk::ColorSpaceKHR::eSrgbNonlinear },
     };
     _format = available_formats.front().format;
     vk::ColorSpaceKHR color_space = available_formats.front().colorSpace;
