@@ -1,19 +1,23 @@
 #pragma once
-#include <SFML/Window.hpp>
 #include <vulkan/vulkan.hpp>
+#include <GLFW/glfw3.h>
 
 struct Window {
     void init(unsigned int width, unsigned int height, std::string name);
     void destroy();
     auto size() -> vk::Extent2D {
-        auto size = _sfml_window.getSize();
-        return { size.x, size.y };
+        int width, height;
+        glfwGetFramebufferSize(_glfw_window_p, &width, &height);
+        return { (uint32_t)width, (uint32_t)height };
+    }
+    auto focused() -> bool {
+        return glfwGetWindowAttrib(_glfw_window_p, GLFW_FOCUSED);
     }
     void delay(std::size_t ms) {
-        sf::sleep(sf::milliseconds(ms));
+        std::this_thread::sleep_for(std::chrono::milliseconds(ms));
     }
     
-    sf::WindowBase _sfml_window;
+    GLFWwindow* _glfw_window_p;
     vk::Instance _instance;
     vk::SurfaceKHR _surface;
 };

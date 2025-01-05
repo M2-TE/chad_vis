@@ -17,7 +17,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 include(FetchContent)
 set(FETCHCONTENT_QUIET OFF) # enable git output for FetchContent steps
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON) # speed up consecutive config runs
-include(sfml)
+include(glfw)
 include(glm)
 include(vulkan)
 include(vma)

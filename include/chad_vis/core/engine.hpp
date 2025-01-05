@@ -19,9 +19,6 @@ struct Engine {
         // create a window, vulkan surface and instance
         _window.init(1280, 720, "CHAD Visualizer");
 
-        // dynamic dispatcher init 2/3
-        VULKAN_HPP_DEFAULT_DISPATCHER.init(_window._instance);
-
         // select physical device
         dv::Selector device_selector {
             ._required_major = 1,
@@ -122,7 +119,7 @@ struct Engine {
         _window.destroy();
     }
     void run() {
-        while (_window._sfml_window.isOpen()) {
+        while (!glfwWindowShouldClose(_window._glfw_window_p)) {
             handle_events();
             if (!_rendering) _window.delay(50);
             if (!_rendering) continue;
@@ -137,48 +134,31 @@ struct Engine {
 
 private:
     void handle_events() {
-        // flush inputs from last frame
+        // flush inputs from last frame before handling new events
         Input::flush();
 
-        // handle all events from the SFML window
-        while (const std::optional event = _window._sfml_window.pollEvent()) {
-            Input::handle_event(event);
-            if (event->is<sf::Event::Closed>()) {
-                _device.waitIdle();
-                _window._sfml_window.close();
-                _rendering = false;
-            }
-            else if (event->is<sf::Event::FocusLost>()) _swapchain.set_target_framerate(_fps_background);
-            else if (event->is<sf::Event::FocusGained>()) {
+        // check for changed window size and focus
+        auto window_size = _window.size();
+        auto window_focus = _window.focused();
+        glfwPollEvents();
+        if (window_size != _window.size()) handle_resize();
+        if (window_focus != _window.focused()) {
+            if (_window.focused()) {
+                Input::Data::get().mouse_delta = {0, 0};
                 _swapchain.set_target_framerate(_fps_foreground);
-                _window._sfml_window.setMouseCursorGrabbed(Input::Mouse::captured());
-                _window._sfml_window.setMouseCursorVisible(!Input::Mouse::captured());
+            }
+            else  {
+                Input::clear();
+                _swapchain.set_target_framerate(_fps_background);
             }
         }
 
         // handle mouse grab
-        if (Input::Keys::pressed(sf::Keyboard::Scan::LAlt)) {
-            _window._sfml_window.setMouseCursorGrabbed(false);
-            _window._sfml_window.setMouseCursorVisible(true);
-            Input::register_capture(false);
-        }
+        if (Keys::pressed(GLFW_KEY_LEFT_ALT)) Mouse::set_mode(_window._glfw_window_p, false);
         else {
-            // while alt is not held, allow grab via click and ungrab via escape
-            if (Input::Mouse::captured() && Input::Keys::pressed(sf::Keyboard::Scan::Escape)) {
-                _window._sfml_window.setMouseCursorGrabbed(false);
-                _window._sfml_window.setMouseCursorVisible(true);
-                Input::register_capture(false);
-            }
-            else if (!Input::Mouse::captured() && Input::Mouse::pressed(sf::Mouse::Button::Left)) {
-                _window._sfml_window.setMouseCursorGrabbed(true);
-                _window._sfml_window.setMouseCursorVisible(false);
-                Input::register_capture(true);
-            }
-            else if (!Input::Mouse::captured() && Input::Keys::released(sf::Keyboard::Scan::LAlt)) {
-                _window._sfml_window.setMouseCursorGrabbed(true);
-                _window._sfml_window.setMouseCursorVisible(false);
-                Input::register_capture(true);
-            }
+            if (Mouse::captured() && Keys::pressed(GLFW_KEY_ESCAPE)) Mouse::set_mode(_window._glfw_window_p, false);
+            else if (!Mouse::captured() && Mouse::pressed(0)) Mouse::set_mode(_window._glfw_window_p, true);
+            else if (!Mouse::captured() && Keys::released(GLFW_KEY_LEFT_ALT)) Mouse::set_mode(_window._glfw_window_p, true);
         }
     }
     void handle_resize() {
@@ -188,6 +168,7 @@ private:
         _swapchain.resize(_phys_device, _device, _window, _queues);
     }
 
+    static Engine engine;
     Window _window;
     Swapchain _swapchain;
     Renderer _renderer;
