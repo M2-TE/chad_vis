@@ -24,13 +24,17 @@ void Swapchain::init(vk::PhysicalDevice phys_device, vk::Device device, Window& 
         return;
     }
     std::vector<vk::SurfaceFormatKHR> available_formats = available_formats_res.value;
+    for (auto& format: available_formats) {
+        std::println("Available format: {}, {}", vk::to_string(format.format), vk::to_string(format.colorSpace));
+    }
     std::vector<vk::SurfaceFormatKHR> preferred_formats = {
         { vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear },
         { vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear },
-        { vk::Format::eR8G8B8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear },
-        { vk::Format::eB8G8R8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear },
+        { vk::Format::eR8G8B8Srgb,   vk::ColorSpaceKHR::eSrgbNonlinear },
+        { vk::Format::eB8G8R8Srgb,   vk::ColorSpaceKHR::eSrgbNonlinear },
     };
-    vk::ColorSpaceKHR color_space = vk::ColorSpaceKHR::eSrgbNonlinear;
+    _format = available_formats.front().format;
+    vk::ColorSpaceKHR color_space = available_formats.front().colorSpace;
     for (auto pref: preferred_formats) {
         if (std::find(available_formats.cbegin(), available_formats.cend(), pref) != available_formats.cend()) {
             _format = pref.format;
@@ -51,10 +55,10 @@ void Swapchain::init(vk::PhysicalDevice phys_device, vk::Device device, Window& 
         vk::PresentModeKHR::eMailbox,
         vk::PresentModeKHR::eImmediate,
     };
-    vk::PresentModeKHR present_mode = vk::PresentModeKHR::eFifo;
-    for (auto mode: preferred_present_modes) {
-        if (std::find(available_present_modes.cbegin(), available_present_modes.cend(), mode) != available_present_modes.cend()) {
-            present_mode = mode;
+    vk::PresentModeKHR present_mode = available_present_modes.front();
+    for (auto pref: preferred_present_modes) {
+        if (std::find(available_present_modes.cbegin(), available_present_modes.cend(), pref) != available_present_modes.cend()) {
+            present_mode = pref;
             break;
         }
     }

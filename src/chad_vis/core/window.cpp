@@ -51,7 +51,11 @@ void Window::init(unsigned int width, unsigned int height, std::string name) {
     _instance = vk::createInstance(info_instance);
 
     // create actual window
-    _sfml_window = { sf::VideoMode({width, height}), name, sf::Style::Default };
+    // auto fullscreen_modes = sf::VideoMode::getFullscreenModes();
+    // for (auto mode: fullscreen_modes) {
+    //     std::println("Fullscreen mode: {}x{}@{}bpp", mode.size.x, mode.size.y, mode.bitsPerPixel);
+    // }
+    _sfml_window.create(sf::VideoMode({width, height}, 32), name, sf::Style::Default, sf::State::Windowed);
     
     // set icon to be invisible
     std::vector<std::uint8_t> pixels(16 * 16 * 4, 0);

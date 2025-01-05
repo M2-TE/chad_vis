@@ -13,7 +13,7 @@ struct Window {
         sf::sleep(sf::milliseconds(ms));
     }
     
-    sf::Window _sfml_window;
+    sf::WindowBase _sfml_window;
     vk::Instance _instance;
     vk::SurfaceKHR _surface;
 };
