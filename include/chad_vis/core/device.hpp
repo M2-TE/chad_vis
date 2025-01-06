@@ -19,7 +19,8 @@ struct Device {
     void init(const CreateInfo& info);
     void destroy();
     auto oneshot_begin() -> vk::CommandBuffer;
-    void oneshot_end(vk::CommandBuffer cmd, const vk::ArrayProxy<vk::Semaphore>& sign_semaphores = {});
+    void oneshot_end(vk::CommandBuffer cmd);
+    void oneshot_end(vk::CommandBuffer cmd, const vk::ArrayProxy<vk::Semaphore>& wait_semaphores, const vk::ArrayProxy<vk::Semaphore>& sign_semaphores);
 
     vk::Device _logical;
     vk::PhysicalDevice _physical;

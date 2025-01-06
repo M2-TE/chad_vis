@@ -27,7 +27,7 @@ public:
         _ready_to_read = device._logical.createSemaphore({});
         // create dummy submission to initialize _ready_to_write
         auto cmd = device.oneshot_begin();
-        device.oneshot_end(cmd, _ready_to_write);
+        device.oneshot_end(cmd, {}, _ready_to_write);
         
         // create images and pipelines
         init_images(device, vmalloc, extent);

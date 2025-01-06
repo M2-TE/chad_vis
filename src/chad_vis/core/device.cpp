@@ -314,6 +314,8 @@ void Device::destroy() {
     _logical.destroy();
 }
 
+// TODO: return oneshot structure with automatic cleanup (waiting on fence(s))
+
 auto Device::oneshot_begin() -> vk::CommandBuffer {
     vk::CommandBufferAllocateInfo info = {
         .commandPool = _universal_pool,
@@ -324,15 +326,27 @@ auto Device::oneshot_begin() -> vk::CommandBuffer {
     cmd.begin({ .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
     return cmd;
 }
-void Device::oneshot_end(vk::CommandBuffer cmd, const vk::ArrayProxy<vk::Semaphore>& sign_semaphores) {
+// end the command buffer and wait for queue to be idle (very bad)
+void Device::oneshot_end(vk::CommandBuffer cmd) {
     cmd.end();
-    vk::SubmitInfo info = {
+    _universal_queue.submit(vk::SubmitInfo {
+        .commandBufferCount = 1,
+        .pCommandBuffers = &cmd,
+    });
+    _universal_queue.waitIdle();
+    _logical.freeCommandBuffers(_universal_pool, cmd);
+}
+// end the command buffer and synchronize via semaphores
+void Device::oneshot_end(vk::CommandBuffer cmd, const vk::ArrayProxy<vk::Semaphore>& wait_semaphores, const vk::ArrayProxy<vk::Semaphore>& sign_semaphores) {
+    cmd.end();
+    _universal_queue.submit(vk::SubmitInfo {
+        .waitSemaphoreCount = (uint32_t)wait_semaphores.size(),
+        .pWaitSemaphores = wait_semaphores.data(),
         .commandBufferCount = 1,
         .pCommandBuffers = &cmd,
         .signalSemaphoreCount = (uint32_t)sign_semaphores.size(),
         .pSignalSemaphores = sign_semaphores.data(),
-    };
-    _universal_queue.submit(info);
-    _universal_queue.waitIdle();
+    });
+    _universal_queue.waitIdle(); // TODO: remove
     _logical.freeCommandBuffers(_universal_pool, cmd);
 }
