@@ -155,13 +155,12 @@ private:
         _swapchain.resize(_device, _window);
     }
 
+    vma::Allocator _vmalloc;
     Window _window;
     Device _device;
     Swapchain _swapchain;
     Renderer _renderer;
     Scene _scene;
-    //
-    vma::Allocator _vmalloc;
     //
     uint32_t _fps_foreground = 0;
     uint32_t _fps_background = 5;

@@ -58,7 +58,8 @@ khronos_validation.gpuav_debug_validate_instrumented_shaders = true
 # -920984000 -> bound vertex buffer wasnt used (imgui again)
 # -488404154 -> lod clamping (imgui sets -1000 to 1000 clamping)
 # -855582553 -> use of primitive restart is not recommended (dont care)
-khronos_validation.message_id_filter = 601872502,-2001217138,-920984000,-488404154,-855582553
+# -1443561624 -> warning about high number of fences
+khronos_validation.message_id_filter = 601872502,-2001217138,-920984000,-488404154,-855582553,-1443561624
 
 # Set report flags to include info, warnings, errors, and performance issues
 khronos_validation.report_flags = info,warn,error,perf")

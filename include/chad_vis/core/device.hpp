@@ -1,6 +1,12 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
 
+enum class QueueType {
+    eUniversal,
+    eGraphics,
+    eCompute,
+    eTransfer,
+};
 struct Device {
     struct CreateInfo {
         vk::Instance _instance;
@@ -18,13 +24,15 @@ struct Device {
     };
     void init(const CreateInfo& info);
     void destroy();
-    auto oneshot_begin() -> vk::CommandBuffer;
-    void oneshot_end(vk::CommandBuffer cmd);
-    void oneshot_end(vk::CommandBuffer cmd, const vk::ArrayProxy<vk::Semaphore>& wait_semaphores, const vk::ArrayProxy<vk::Semaphore>& sign_semaphores);
+    auto oneshot_begin(QueueType queue) -> vk::CommandBuffer;
+    void oneshot_end(QueueType queue, vk::CommandBuffer cmd,
+        const vk::ArrayProxy<vk::Semaphore>& wait_semaphores = {},
+        const vk::ArrayProxy<vk::Semaphore>& sign_semaphores = {});
 
     vk::Device _logical;
     vk::PhysicalDevice _physical;
     uint32_t _universal_i, _graphics_i, _compute_i, _transfer_i;
     vk::Queue _universal_queue, _graphics_queue, _compute_queue, _transfer_queue;
     vk::CommandPool _universal_pool, _graphics_pool, _compute_pool, _transfer_pool;
+    vk::Fence _oneshot_fence;
 };

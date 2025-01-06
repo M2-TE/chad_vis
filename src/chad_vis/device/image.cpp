@@ -96,7 +96,7 @@ namespace dv {
         std::memcpy(mapped_data_p, tex_data.data(), tex_data.size());
         vmalloc.unmapMemory(staging_alloc);
 
-        vk::CommandBuffer cmd = device.oneshot_begin();
+        vk::CommandBuffer cmd = device.oneshot_begin(QueueType::eUniversal);
         // transition image for transfer
         TransitionInfo info_transition {
             .cmd = cmd,
@@ -127,7 +127,7 @@ namespace dv {
             .pRegions = &region,
         };
         cmd.copyBufferToImage2(info_copy);
-        device.oneshot_end(cmd);
+        device.oneshot_end(QueueType::eUniversal, cmd);
         
         // clean up staging buffer
         vmalloc.destroyBuffer(staging_buffer, staging_alloc);

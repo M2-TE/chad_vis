@@ -305,8 +305,12 @@ void Device::init(const Device::CreateInfo& info) {
         .flags = vk::CommandPoolCreateFlagBits::eTransient,
         .queueFamilyIndex = _transfer_i,
     });
+
+    // create fences
+    _oneshot_fence = _logical.createFence({});
 }
 void Device::destroy() {
+    _logical.destroyFence(_oneshot_fence);
     _logical.destroyCommandPool(_universal_pool);
     _logical.destroyCommandPool(_graphics_pool);
     _logical.destroyCommandPool(_compute_pool);
@@ -316,37 +320,51 @@ void Device::destroy() {
 
 // TODO: return oneshot structure with automatic cleanup (waiting on fence(s))
 
-auto Device::oneshot_begin() -> vk::CommandBuffer {
-    vk::CommandBufferAllocateInfo info = {
-        .commandPool = _universal_pool,
+auto Device::oneshot_begin(QueueType queue) -> vk::CommandBuffer {
+    vk::CommandBufferAllocateInfo info {
         .level = vk::CommandBufferLevel::ePrimary,
         .commandBufferCount = 1,
     };
+    switch (queue) {
+        case QueueType::eUniversal: info.commandPool = _universal_pool; break;
+        case QueueType::eGraphics: info.commandPool = _graphics_pool; break;
+        case QueueType::eCompute: info.commandPool = _compute_pool; break;
+        case QueueType::eTransfer: info.commandPool = _transfer_pool; break;
+    }
     vk::CommandBuffer cmd = _logical.allocateCommandBuffers(info)[0];
     cmd.begin({ .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
     return cmd;
 }
-// end the command buffer and wait for queue to be idle (very bad)
-void Device::oneshot_end(vk::CommandBuffer cmd) {
-    cmd.end();
-    _universal_queue.submit(vk::SubmitInfo {
-        .commandBufferCount = 1,
-        .pCommandBuffers = &cmd,
-    });
-    _universal_queue.waitIdle();
-    _logical.freeCommandBuffers(_universal_pool, cmd);
-}
 // end the command buffer and synchronize via semaphores
-void Device::oneshot_end(vk::CommandBuffer cmd, const vk::ArrayProxy<vk::Semaphore>& wait_semaphores, const vk::ArrayProxy<vk::Semaphore>& sign_semaphores) {
+auto Device::oneshot_end(QueueType queue, vk::CommandBuffer cmd,
+    const vk::ArrayProxy<vk::Semaphore>& wait_semaphores,
+    const vk::ArrayProxy<vk::Semaphore>& sign_semaphores)
+-> void {
     cmd.end();
-    _universal_queue.submit(vk::SubmitInfo {
+    vk::SubmitInfo info_submit {
         .waitSemaphoreCount = (uint32_t)wait_semaphores.size(),
         .pWaitSemaphores = wait_semaphores.data(),
         .commandBufferCount = 1,
         .pCommandBuffers = &cmd,
         .signalSemaphoreCount = (uint32_t)sign_semaphores.size(),
         .pSignalSemaphores = sign_semaphores.data(),
-    });
-    _universal_queue.waitIdle(); // TODO: remove
-    _logical.freeCommandBuffers(_universal_pool, cmd);
+    };
+    switch (queue) {
+        case QueueType::eUniversal: _universal_queue.submit(info_submit, _oneshot_fence); break;
+        case QueueType::eGraphics: _graphics_queue.submit(info_submit, _oneshot_fence); break;
+        case QueueType::eCompute: _compute_queue.submit(info_submit, _oneshot_fence); break;
+        case QueueType::eTransfer: _transfer_queue.submit(info_submit, _oneshot_fence); break;
+    }
+    // wait for fence to be signaled, then reset it
+    while (vk::Result::eTimeout == _logical.waitForFences(_oneshot_fence, vk::True, UINT64_MAX));
+    _logical.resetFences(_oneshot_fence);
+
+    // free the command buffer
+    switch (queue) {
+        case QueueType::eUniversal: _logical.freeCommandBuffers(_universal_pool, cmd); break;
+        case QueueType::eGraphics: _logical.freeCommandBuffers(_graphics_pool, cmd); break;
+        case QueueType::eCompute: _logical.freeCommandBuffers(_compute_pool, cmd); break;
+        case QueueType::eTransfer: _logical.freeCommandBuffers(_transfer_pool, cmd); break;
+    }
+    
 }

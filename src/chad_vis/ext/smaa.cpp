@@ -50,7 +50,7 @@ void SMAA::init_images(Device& device, vma::Allocator vmalloc, vk::Extent2D exte
     auto area_tex = std::span(reinterpret_cast<const std::byte*>(areaTexBytes), sizeof(areaTexBytes));
     _img_area.load_texture(device, vmalloc, area_tex);
     // transition smaa textures to their permanent layouts
-    vk::CommandBuffer cmd = device.oneshot_begin();
+    vk::CommandBuffer cmd = device.oneshot_begin(QueueType::eUniversal);
     dv::Image::TransitionInfo info_transition {
         .cmd = cmd,
         .new_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
@@ -59,7 +59,7 @@ void SMAA::init_images(Device& device, vma::Allocator vmalloc, vk::Extent2D exte
     };
     _img_search.transition_layout(info_transition);
     _img_area.transition_layout(info_transition);
-    device.oneshot_end(cmd);
+    device.oneshot_end(QueueType::eUniversal, cmd);
 }
 void SMAA::init_pipelines(Device& device, vk::Extent2D extent, dv::Image& color, dv::DepthStencil& depth_stencil) {
     // create SMAA pipelines

@@ -23,9 +23,9 @@ void Swapchain::init(Device& device, Window& window) {
         return;
     }
     std::vector<vk::SurfaceFormatKHR> available_formats = available_formats_res.value;
-    for (auto& format: available_formats) {
-        std::println("Available format: {}, {}", vk::to_string(format.format), vk::to_string(format.colorSpace));
-    }
+    // for (auto& format: available_formats) {
+    //     std::println("Available format: {}, {}", vk::to_string(format.format), vk::to_string(format.colorSpace));
+    // }
     std::vector<vk::SurfaceFormatKHR> preferred_formats = {
         { vk::Format::eA2R10G10B10UnormPack32,  vk::ColorSpaceKHR::eSrgbNonlinear },
         { vk::Format::eA2B10G10R10UnormPack32,  vk::ColorSpaceKHR::eSrgbNonlinear },
@@ -69,7 +69,7 @@ void Swapchain::init(Device& device, Window& window) {
     if (capabilities.maxImageCount == 0) capabilities.maxImageCount = std::numeric_limits<uint32_t>::max();
     vk::SwapchainCreateInfoKHR info_swapchain {
         .surface = window._surface,
-        .minImageCount = std::clamp<uint32_t>(3, capabilities.minImageCount, capabilities.maxImageCount),
+        .minImageCount = std::min<uint32_t>(capabilities.minImageCount + 1, capabilities.maxImageCount),
         .imageFormat = _format,
         .imageColorSpace = color_space,
         .imageExtent = _extent,
