@@ -4,37 +4,37 @@
 #include <glm/glm.hpp>
 #include "chad_vis/core/swapchain.hpp"
 #include "chad_vis/device/image.hpp"
-#include "chad_vis/device/queues.hpp"
 #include "chad_vis/core/pipeline.hpp"
 #include "chad_vis/ext/smaa.hpp"
 #include "chad_vis/entities/scene.hpp"
 
 class Renderer {
 public:
-    void init(vk::Device device, vma::Allocator vmalloc, dv::Queues& queues, Scene& scene, vk::Extent2D extent) {
+    void init(Device& device, vma::Allocator vmalloc, Scene& scene, vk::Extent2D extent) {
         // allocate single command pool and buffer pair
-        _command_pool = device.createCommandPool({ .queueFamilyIndex = queues._universal_i });
+        std::println("{}", device._universal_i);
+        _command_pool = device._logical.createCommandPool({ .queueFamilyIndex = device._universal_i });
         vk::CommandBufferAllocateInfo bufferInfo {
             .commandPool = _command_pool,
             .level = vk::CommandBufferLevel::ePrimary,
             .commandBufferCount = 1,
         };
-        _command_buffer = device.allocateCommandBuffers(bufferInfo).front();
+        _command_buffer = device._logical.allocateCommandBuffers(bufferInfo).front();
 
         // allocate semaphores and fences
-        _ready_to_record = device.createFence({ .flags = vk::FenceCreateFlagBits::eSignaled });
-        _ready_to_write = device.createSemaphore({});
-        _ready_to_read = device.createSemaphore({});
+        _ready_to_record = device._logical.createFence({ .flags = vk::FenceCreateFlagBits::eSignaled });
+        _ready_to_write = device._logical.createSemaphore({});
+        _ready_to_read = device._logical.createSemaphore({});
         // create dummy submission to initialize _ready_to_write
-        auto cmd = queues.oneshot_begin(device);
-        queues.oneshot_end(device, cmd, _ready_to_write);
+        auto cmd = device.oneshot_begin();
+        device.oneshot_end(cmd, _ready_to_write);
         
         // create images and pipelines
         init_images(device, vmalloc, extent);
         init_pipelines(device, extent, scene);
-        _smaa.init(device, vmalloc, extent, queues, _color, _depth_stencil);
+        _smaa.init(device, vmalloc, extent, _color, _depth_stencil);
     }
-    void destroy(vk::Device device, vma::Allocator vmalloc) {
+    void destroy(Device& device, vma::Allocator vmalloc) {
         _smaa.destroy(device, vmalloc);
         // destroy images
         _color.destroy(device, vmalloc);
@@ -44,21 +44,21 @@ public:
         _pipe_wip.destroy(device);
         _pipe_default.destroy(device);
         // destroy command pools
-        device.destroyCommandPool(_command_pool);
+        device._logical.destroyCommandPool(_command_pool);
         // destroy synchronization objects
-        device.destroyFence(_ready_to_record);
-        device.destroySemaphore(_ready_to_write);
-        device.destroySemaphore(_ready_to_read);
+        device._logical.destroyFence(_ready_to_record);
+        device._logical.destroySemaphore(_ready_to_write);
+        device._logical.destroySemaphore(_ready_to_read);
     }
     
-    void resize(vk::Device device, vma::Allocator vmalloc, dv::Queues& queues, Scene& scene, vk::Extent2D extent) {
+    void resize(Device& device, vma::Allocator vmalloc, Scene& scene, vk::Extent2D extent) {
         destroy(device, vmalloc);
-        init(device, vmalloc, queues, scene, extent);
+        init(device, vmalloc, scene, extent);
     }
     // record command buffer and submit it to the universal queue. wait() needs to have been called before this
-    void render(vk::Device device, Swapchain& swapchain, dv::Queues& queues, Scene& scene) {
+    void render(Device& device, Swapchain& swapchain, Scene& scene) {
         // reset and record command buffer
-        device.resetCommandPool(_command_pool, {});
+        device._logical.resetCommandPool(_command_pool, {});
         vk::CommandBuffer cmd = _command_buffer;
         cmd.begin({ .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
         execute_pipes(cmd, scene);
@@ -78,23 +78,23 @@ public:
             .signalSemaphoreCount = 1,
             .pSignalSemaphores = &_ready_to_read,
         };
-        queues._universal.submit(info_submit, _ready_to_record);
+        device._universal_queue.submit(info_submit, _ready_to_record);
 
         // present drawn image
         dv::Image& _final_image = _smaa_enabled ? _smaa.get_output() : _color;
         swapchain.present(device, _final_image, _ready_to_read, _ready_to_write);
     }
     // wait until device buffers are no longer in use and the command buffers can be recorded again
-    void wait(vk::Device device) {
-        while (vk::Result::eTimeout == device.waitForFences(_ready_to_record, vk::True, UINT64_MAX));
-        device.resetFences(_ready_to_record);
+    void wait(Device& device) {
+        while (vk::Result::eTimeout == device._logical.waitForFences(_ready_to_record, vk::True, UINT64_MAX));
+        device._logical.resetFences(_ready_to_record);
     }
     
 private:
-    void init_images(vk::Device device, vma::Allocator vmalloc, vk::Extent2D extent) {
+    void init_images(Device& device, vma::Allocator vmalloc, vk::Extent2D extent) {
         // create image with 16 bits color depth
         _color.init({
-            .device = device, .vmalloc = vmalloc,
+            .device = device._logical, .vmalloc = vmalloc,
             .format = vk::Format::eR16G16B16A16Sfloat,
             .extent { extent.width, extent.height, 1 },
             .usage = 
@@ -106,7 +106,7 @@ private:
         });
         // create storage image with same format as _color
         _storage.init({
-            .device = device, .vmalloc = vmalloc,
+            .device = device._logical, .vmalloc = vmalloc,
             .format = vk::Format::eR16G16B16A16Sfloat,
             .extent { extent.width, extent.height, 1 },
             .usage = 
@@ -115,12 +115,12 @@ private:
             .priority = 1.0f,
         });
         // create depth stencil with depth/stencil format picked by driver
-        _depth_stencil.init(device, vmalloc, { extent.width, extent.height, 1 });
+        _depth_stencil.init(device._logical, vmalloc, { extent.width, extent.height, 1 });
     }
-    void init_pipelines(vk::Device device, vk::Extent2D extent, Scene& scene) {
+    void init_pipelines(Device& device, vk::Extent2D extent, Scene& scene) {
         // create graphics pipelines
         _pipe_default.init({
-            .device = device,
+            .device = device._logical,
             .extent = extent,
             .vs_path = "defaults/default.vert",
             .fs_path = "defaults/default.frag",
@@ -144,7 +144,7 @@ private:
             vk::SpecializationMapEntry { .constantID = 1, .offset = 4, .size = 4 },
         };
         _pipe_wip.init({
-            .device = device,
+            .device = device._logical,
             .cs_path = "defaults/gradient.comp",
             .spec_info {
                 .mapEntryCount = image_spec_entries.size(),

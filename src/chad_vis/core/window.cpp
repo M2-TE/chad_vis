@@ -62,8 +62,6 @@ void Window::init(unsigned int width, unsigned int height, std::string name) {
         .ppEnabledExtensionNames = extensions_required,
     };
     _instance = vk::createInstance(info_instance);
-
-    // dynamic dispatcher init 2/3
     VULKAN_HPP_DEFAULT_DISPATCHER.init(_instance);
     
     // create window for rendering

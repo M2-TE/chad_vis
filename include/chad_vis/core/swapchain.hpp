@@ -1,27 +1,26 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
+#include "chad_vis/core/device.hpp"
 #include "chad_vis/core/window.hpp"
 #include "chad_vis/device/image.hpp"
-#include "chad_vis/device/queues.hpp"
 
 struct Swapchain {
-    void init(vk::PhysicalDevice phys_device, vk::Device device, Window& window, dv::Queues& queues);
-    void destroy(vk::Device device);
-    void resize(vk::PhysicalDevice physDevice, vk::Device device, Window& window, dv::Queues& queues);
+    void init(Device& device, Window& window);
+    void destroy(Device& device);
+    void resize(Device& device, Window& window);
     void set_target_framerate(std::size_t fps);
-    void present(vk::Device device, dv::Image& src_image, vk::Semaphore src_ready_to_read, vk::Semaphore src_ready_to_write);
+    void present(Device& device, dv::Image& src_image, vk::Semaphore src_ready_to_read, vk::Semaphore src_ready_to_write);
 
     vk::SwapchainKHR _swapchain;
     std::vector<dv::Image> _images;
     vk::Extent2D _extent;
     vk::Format _format;
-    vk::Queue _presentation_queue;
     bool _resize_requested;
 
 private:
     struct SyncFrame {
-        void init(vk::Device device, dv::Queues& queues);
-        void destroy(vk::Device device);
+        void init(Device& device);
+        void destroy(Device& device);
         // command recording
         vk::CommandPool _command_pool;
         vk::CommandBuffer _command_buffer;

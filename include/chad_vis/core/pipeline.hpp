@@ -8,18 +8,18 @@
 struct PipelineBase {
 public:
 	typedef std::vector<std::tuple<uint32_t /*set*/, uint32_t /*binding*/, vk::SamplerCreateInfo>> SamplerInfos; // TODO: deprecate
-	void destroy(vk::Device device) {
-		device.destroyPipeline(_pipeline);
-		device.destroyPipelineLayout(_pipeline_layout);
+	void destroy(Device& device) {
+		device._logical.destroyPipeline(_pipeline);
+		device._logical.destroyPipelineLayout(_pipeline_layout);
 
-		for (auto& layout: _desc_set_layouts) device.destroyDescriptorSetLayout(layout);
-		for (auto& sampler: _immutable_samplers) device.destroySampler(sampler);
-		device.destroyDescriptorPool(_pool);
+		for (auto& layout: _desc_set_layouts) device._logical.destroyDescriptorSetLayout(layout);
+		for (auto& sampler: _immutable_samplers) device._logical.destroySampler(sampler);
+		device._logical.destroyDescriptorPool(_pool);
 		_desc_sets.clear();
 		_desc_set_layouts.clear();
 		_immutable_samplers.clear();
 	}
-	void write_descriptor(vk::Device device, uint32_t set, uint32_t binding, dv::Image& image, vk::DescriptorType type, vk::Sampler sampler = nullptr) {
+	void write_descriptor(Device& device, uint32_t set, uint32_t binding, dv::Image& image, vk::DescriptorType type, vk::Sampler sampler = nullptr) {
 		vk::DescriptorImageInfo info_image {
 			.sampler = sampler,
 			.imageView = image._view,
@@ -43,9 +43,9 @@ public:
 			.descriptorType = type,
 			.pImageInfo = &info_image,
 		};
-		device.updateDescriptorSets(write_image, {});
+		device._logical.updateDescriptorSets(write_image, {});
 	}
-	void write_descriptor(vk::Device device, uint32_t set, uint32_t binding, dv::Buffer& buffer, vk::DescriptorType type, size_t offset = 0) {
+	void write_descriptor(Device& device, uint32_t set, uint32_t binding, dv::Buffer& buffer, vk::DescriptorType type, size_t offset = 0) {
 		vk::DescriptorBufferInfo info_buffer {
 			.buffer = buffer._data,
 			.offset = offset,
@@ -59,7 +59,7 @@ public:
 			.descriptorType = type,
 			.pBufferInfo = &info_buffer
 		};
-		device.updateDescriptorSets(write_buffer, {});
+		device._logical.updateDescriptorSets(write_buffer, {});
 	}
 	auto static get_module_deprecation() -> bool& {
 		static bool _shader_modules_deprecated = true;

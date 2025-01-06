@@ -2,13 +2,12 @@
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.hpp>
 #include "chad_vis/core/input.hpp"
+#include "chad_vis/core/device.hpp"
 #include "chad_vis/core/window.hpp"
 #include "chad_vis/core/renderer.hpp"
+#include "chad_vis/core/pipeline.hpp"
 #include "chad_vis/core/swapchain.hpp"
 #include "chad_vis/device/image.hpp"
-#include "chad_vis/device/queues.hpp"
-#include "chad_vis/core/pipeline.hpp"
-#include "chad_vis/device/selector.hpp"
 #include "chad_vis/entities/scene.hpp"
 
 struct Engine {
@@ -19,8 +18,13 @@ struct Engine {
         // create a window, vulkan surface and instance
         _window.init(1280, 720, "CHAD Visualizer");
 
-        // select physical device
-        dv::Selector device_selector {
+        // select physical device, then create logical device and its queues
+        vk::PhysicalDeviceMaintenance5FeaturesKHR maintenance5 { .maintenance5 = vk::True };
+        vk::PhysicalDeviceMemoryPriorityFeaturesEXT memory_priority { .memoryPriority = vk::True };
+        vk::PhysicalDevicePageableDeviceLocalMemoryFeaturesEXT pageable_memory { .pageableDeviceLocalMemory = vk::True };
+        _device.init({
+            ._instance = _window._instance,
+            ._surface = _window._surface,
             ._required_major = 1,
             ._required_minor = 3,
             ._preferred_device_type = vk::PhysicalDeviceType::eIntegratedGpu,
@@ -45,31 +49,12 @@ struct Engine {
                 .dynamicRendering = true,
                 .maintenance4 = true,
             },
-            ._required_queues {
-                vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute | vk::QueueFlagBits::eTransfer,
-                vk::QueueFlagBits::eGraphics,
-                vk::QueueFlagBits::eCompute,
-                vk::QueueFlagBits::eTransfer,
+            ._optional_features {
+                {&maintenance5, vk::KHRMaintenance5ExtensionName},
+                {&memory_priority, vk::EXTMemoryPriorityExtensionName},
+                {&pageable_memory, vk::EXTPageableDeviceLocalMemoryExtensionName},
             }
-        };
-        _phys_device = device_selector.select_physical_device(_window._instance, _window._surface);
-
-        // create logical device
-        void* tail_p = nullptr;
-        vk::PhysicalDeviceMaintenance5FeaturesKHR maintenance5 { .pNext = tail_p, .maintenance5 = vk::True };
-        if (device_selector.check_extension(_phys_device, vk::KHRMaintenance5ExtensionName)) tail_p = &maintenance5;
-        vk::PhysicalDeviceMemoryPriorityFeaturesEXT memory_priority { .pNext = tail_p, .memoryPriority = vk::True };
-        if (device_selector.check_extension(_phys_device, vk::EXTMemoryPriorityExtensionName)) tail_p = &memory_priority;
-        vk::PhysicalDevicePageableDeviceLocalMemoryFeaturesEXT pageable_memory {.pNext = tail_p, .pageableDeviceLocalMemory = vk::True };
-        if (device_selector.check_extension(_phys_device, vk::EXTPageableDeviceLocalMemoryExtensionName)) tail_p = &pageable_memory;
-        std::vector<uint32_t> queue_mappings;
-        std::tie(_device, queue_mappings) = device_selector.create_logical_device(_phys_device, tail_p);
-
-        // dynamic dispatcher init 3/3
-        VULKAN_HPP_DEFAULT_DISPATCHER.init(_device);
-
-        // create device queues
-        _queues.init(_device, queue_mappings);
+        });
 
         // create vulkan memory allocator
         vma::VulkanFunctions vk_funcs {
@@ -85,8 +70,8 @@ struct Engine {
                 vma::AllocatorCreateFlagBits::eExtMemoryPriority |
                 vma::AllocatorCreateFlagBits::eBufferDeviceAddress |
                 vma::AllocatorCreateFlagBits::eKhrDedicatedAllocation,
-            .physicalDevice = _phys_device,
-            .device = _device,
+            .physicalDevice = _device._physical,
+            .device = _device._logical,
             .pVulkanFunctions = &vk_funcs,
             .instance = _window._instance,
             .vulkanApiVersion = vk::ApiVersion13,
@@ -94,31 +79,32 @@ struct Engine {
         _vmalloc = vma::createAllocator(info_vmalloc);
 
         // set the global properties for current physical device
-        PipelineBase::set_module_deprecation(_phys_device);
-        dv::DepthStencil::set_format(_phys_device);
+        PipelineBase::set_module_deprecation(_device._physical);
+        dv::DepthStencil::set_format(_device._physical);
 
         // set up swapchain, resize request will be fulfilled later
         _swapchain.set_target_framerate(_fps_foreground);
-        _swapchain._resize_requested = true;
-        _rendering = true;
 
         // create scene with renderable entities
-        _scene.init(_vmalloc, _queues);
+        _scene.init(_device, _vmalloc);
+
+        // first resize will set up swapchain and renderer
+        handle_resize();
     }
     void destroy() {
-        _device.waitIdle();
+        _device._logical.waitIdle();
         //
         _scene.destroy(_vmalloc);
         _renderer.destroy(_device, _vmalloc);
         _vmalloc.destroy();
         //
-        _queues.destroy(_device);
         _swapchain.destroy(_device);
         _device.destroy();
         //
         _window.destroy();
     }
     void run() {
+        _rendering = true;
         while (!glfwWindowShouldClose(_window._glfw_window_p)) {
             handle_events();
             if (!_rendering) _window.delay(50);
@@ -128,10 +114,10 @@ struct Engine {
             _scene.update_safe();
             _renderer.wait(_device);
             _scene.update(_vmalloc);
-            _renderer.render(_device, _swapchain, _queues, _scene);
+            _renderer.render(_device, _swapchain, _scene);
         }
     }
-
+    // TODO: create swapchain and stuff immediately
 private:
     void handle_events() {
         // flush inputs from last frame before handling new events
@@ -163,22 +149,19 @@ private:
         }
     }
     void handle_resize() {
-        _device.waitIdle();
+        _device._logical.waitIdle();
         _scene._camera.resize(_window.size());
-        _renderer.resize(_device, _vmalloc, _queues, _scene, _window.size());
-        _swapchain.resize(_phys_device, _device, _window, _queues);
+        _renderer.resize(_device, _vmalloc, _scene, _window.size());
+        _swapchain.resize(_device, _window);
     }
 
-    static Engine engine;
     Window _window;
+    Device _device;
     Swapchain _swapchain;
     Renderer _renderer;
     Scene _scene;
     //
-    dv::Queues _queues;
     vma::Allocator _vmalloc;
-    vk::PhysicalDevice _phys_device;
-    vk::Device _device;
     //
     uint32_t _fps_foreground = 0;
     uint32_t _fps_background = 5;

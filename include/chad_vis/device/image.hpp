@@ -1,7 +1,7 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.hpp>
-#include "chad_vis/device/queues.hpp"
+#include "chad_vis/core/device.hpp"
 
 namespace dv {
 struct Image {
@@ -31,9 +31,9 @@ struct Image {
     // wrap existing image without direct ownership
     void wrap(const WrapInfo& info);
     // destroy device-side resources if owning
-    void destroy(vk::Device device, vma::Allocator vmalloc);
+    void destroy(Device& device, vma::Allocator vmalloc);
     
-    void load_texture(vk::Device device, vma::Allocator vmalloc, dv::Queues& queues, std::span<const std::byte> tex_data);
+    void load_texture(Device& device, vma::Allocator vmalloc, std::span<const std::byte> tex_data);
     void transition_layout(const TransitionInfo& info);
     void blit(vk::CommandBuffer cmd, dv::Image& src_image);
     

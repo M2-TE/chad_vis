@@ -61,21 +61,21 @@ namespace dv {
         _last_stage = vk::PipelineStageFlagBits2::eTopOfPipe;
     }
     // destroy device-side resources if owning
-    void Image::destroy(vk::Device device, vma::Allocator vmalloc) {
+    void Image::destroy(Device& device, vma::Allocator vmalloc) {
         if (_owning) {
             vmalloc.destroyImage(_image, _allocation);
-            device.destroyImageView(_view);
+            device._logical.destroyImageView(_view);
         }
     }
 
-    void Image::load_texture(vk::Device device, vma::Allocator vmalloc, dv::Queues& queues, std::span<const std::byte> tex_data) {
+    void Image::load_texture(Device& device, vma::Allocator vmalloc, std::span<const std::byte> tex_data) {
         // create image data buffer
         vk::BufferCreateInfo info_buffer {
             .size = tex_data.size(),
             .usage = vk::BufferUsageFlagBits::eTransferSrc,
             .sharingMode = vk::SharingMode::eExclusive,
             .queueFamilyIndexCount = 1,
-            .pQueueFamilyIndices = &queues._universal_i,
+            .pQueueFamilyIndices = &device._universal_i,
         };
         vma::AllocationCreateInfo info_allocation {
             .flags = 
@@ -96,7 +96,7 @@ namespace dv {
         std::memcpy(mapped_data_p, tex_data.data(), tex_data.size());
         vmalloc.unmapMemory(staging_alloc);
 
-        vk::CommandBuffer cmd = queues.oneshot_begin(device);
+        vk::CommandBuffer cmd = device.oneshot_begin();
         // transition image for transfer
         TransitionInfo info_transition {
             .cmd = cmd,
@@ -127,7 +127,7 @@ namespace dv {
             .pRegions = &region,
         };
         cmd.copyBufferToImage2(info_copy);
-        queues.oneshot_end(device, cmd);
+        device.oneshot_end(cmd);
         
         // clean up staging buffer
         vmalloc.destroyBuffer(staging_buffer, staging_alloc);

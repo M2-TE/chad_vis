@@ -1,15 +1,16 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
-#include "chad_vis/device/image.hpp"
+#include "chad_vis/core/device.hpp"
 #include "chad_vis/core/pipeline.hpp"
+#include "chad_vis/device/image.hpp"
 
 class SMAA {
 public:
-    void init(vk::Device device, vma::Allocator vmalloc, vk::Extent2D extent, dv::Queues& queues, dv::Image& color, dv::DepthStencil& depth_stencil) {
-        init_images(device, vmalloc, queues, extent, color._format);
+    void init(Device& device, vma::Allocator vmalloc, vk::Extent2D extent, dv::Image& color, dv::DepthStencil& depth_stencil) {
+        init_images(device, vmalloc, extent, color._format);
         init_pipelines(device, extent, color, depth_stencil);
     }
-    void destroy(vk::Device device, vma::Allocator vmalloc) {
+    void destroy(Device& device, vma::Allocator vmalloc) {
         // destroy images
         _img_output.destroy(device, vmalloc);
         _img_weights.destroy(device, vmalloc);
@@ -61,8 +62,8 @@ public:
     }
 
 private:
-    void init_images(vk::Device device, vma::Allocator vmalloc, dv::Queues& queues, vk::Extent2D extent, vk::Format color_format);
-    void init_pipelines(vk::Device device, vk::Extent2D extent, dv::Image& color, dv::DepthStencil& depth_stencil);
+    void init_images(Device& device, vma::Allocator vmalloc, vk::Extent2D extent, vk::Format color_format);
+    void init_pipelines(Device& device, vk::Extent2D extent, dv::Image& color, dv::DepthStencil& depth_stencil);
     
     // static images
     dv::Image _img_area;

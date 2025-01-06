@@ -3,30 +3,29 @@
 #include <vulkan/vulkan_to_string.hpp>
 #include "chad_vis/core/swapchain.hpp"
 
-void Swapchain::init(vk::PhysicalDevice phys_device, vk::Device device, Window& window, dv::Queues& queues) {
+void Swapchain::init(Device& device, Window& window) {
     // query swapchain properties
-    auto capabilities_res = phys_device.getSurfaceCapabilitiesKHR(window._surface);
+    auto capabilities_res = device._physical.getSurfaceCapabilitiesKHR(window._surface);
     if (capabilities_res.result != vk::Result::eSuccess) {
         std::println("Failed to query surface capabilities: {}", vk::to_string(capabilities_res.result));
         return;
     }
     vk::SurfaceCapabilitiesKHR capabilities = capabilities_res.value;
-    _presentation_queue = queues._universal;
-    _extent = window.size();
     // manually clamp extent to capabilities
+    _extent = window.size();
     _extent.width = std::clamp(_extent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
     _extent.height = std::clamp(_extent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
 
     // pick color space and format
-    auto available_formats_res = phys_device.getSurfaceFormatsKHR(window._surface);
+    auto available_formats_res = device._physical.getSurfaceFormatsKHR(window._surface);
     if (available_formats_res.result != vk::Result::eSuccess) {
         std::println("Failed to query surface formats: {}", vk::to_string(available_formats_res.result));
         return;
     }
     std::vector<vk::SurfaceFormatKHR> available_formats = available_formats_res.value;
-    // for (auto& format: available_formats) {
-    //     std::println("Available format: {}, {}", vk::to_string(format.format), vk::to_string(format.colorSpace));
-    // }
+    for (auto& format: available_formats) {
+        std::println("Available format: {}, {}", vk::to_string(format.format), vk::to_string(format.colorSpace));
+    }
     std::vector<vk::SurfaceFormatKHR> preferred_formats = {
         { vk::Format::eA2R10G10B10UnormPack32,  vk::ColorSpaceKHR::eSrgbNonlinear },
         { vk::Format::eA2B10G10R10UnormPack32,  vk::ColorSpaceKHR::eSrgbNonlinear },
@@ -47,7 +46,7 @@ void Swapchain::init(vk::PhysicalDevice phys_device, vk::Device device, Window& 
     }
 
     // pick present mode
-    auto available_present_modes_res = phys_device.getSurfacePresentModesKHR(window._surface);
+    auto available_present_modes_res = device._physical.getSurfacePresentModesKHR(window._surface);
     if (available_present_modes_res.result != vk::Result::eSuccess) {
         std::println("Failed to query surface present modes: {}", vk::to_string(available_present_modes_res.result));
         return;
@@ -78,24 +77,24 @@ void Swapchain::init(vk::PhysicalDevice phys_device, vk::Device device, Window& 
         .imageUsage = vk::ImageUsageFlagBits::eTransferDst,
         .imageSharingMode = vk::SharingMode::eExclusive,
         .queueFamilyIndexCount = 1,
-        .pQueueFamilyIndices = &queues._universal_i,
+        .pQueueFamilyIndices = &device._universal_i,
         .preTransform = capabilities.currentTransform,
         .compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque,
         .presentMode = present_mode,
         .clipped = true,
         .oldSwapchain = _swapchain,
     };
-    auto swapchain_res = device.createSwapchainKHR(info_swapchain);
+    auto swapchain_res = device._logical.createSwapchainKHR(info_swapchain);
     if (swapchain_res.result != vk::Result::eSuccess) {
         std::println("Failed to create swapchain: {}", vk::to_string(swapchain_res.result));
         return;
     }
-    if (_images.size() > 0) device.destroySwapchainKHR(_swapchain);
+    if (_images.size() > 0) device._logical.destroySwapchainKHR(_swapchain);
     _images.clear();
     _swapchain = swapchain_res.value;
 
     // retrieve and wrap swapchain images
-    auto images_res = device.getSwapchainImagesKHR(_swapchain);
+    auto images_res = device._logical.getSwapchainImagesKHR(_swapchain);
     if (images_res.result != vk::Result::eSuccess) {
         std::println("Failed to get swapchain images: {}", vk::to_string(images_res.result));
         return;
@@ -113,7 +112,7 @@ void Swapchain::init(vk::PhysicalDevice phys_device, vk::Device device, Window& 
     // create command pools and buffers
     _sync_frames.resize(images.size());
     for (std::size_t i = 0; i < images.size(); i++) {
-        _sync_frames[i].init(device, queues);
+        _sync_frames[i].init(device);
     }
     _resize_requested = false;
     std::println("Swapchain created: {}x{}, {}, {}, {}",
@@ -122,13 +121,13 @@ void Swapchain::init(vk::PhysicalDevice phys_device, vk::Device device, Window& 
         vk::to_string(color_space),
         vk::to_string(present_mode));
 }
-void Swapchain::destroy(vk::Device device) {
-    if (_images.size() > 0) device.destroySwapchainKHR(_swapchain);
+void Swapchain::destroy(Device& device) {
+    if (_images.size() > 0) device._logical.destroySwapchainKHR(_swapchain);
     for (auto& frame: _sync_frames) frame.destroy(device);
 }
-void Swapchain::resize(vk::PhysicalDevice physDevice, vk::Device device, Window& window, dv::Queues& queues) {
+void Swapchain::resize(Device& device, Window& window) {
     for (auto& frame: _sync_frames) frame.destroy(device);
-    init(physDevice, device, window, queues);
+    init(device, window);
 }
 void Swapchain::set_target_framerate(std::size_t fps) {
     double ns = 0;
@@ -139,16 +138,16 @@ void Swapchain::set_target_framerate(std::size_t fps) {
     }
     _target_frame_time = std::chrono::nanoseconds(static_cast<int64_t>(ns));
 }
-void Swapchain::present(vk::Device device, dv::Image& src_image, vk::Semaphore src_ready_to_read, vk::Semaphore src_ready_to_write) {
+void Swapchain::present(Device& device, dv::Image& src_image, vk::Semaphore src_ready_to_read, vk::Semaphore src_ready_to_write) {
     // wait for this frame's fence to be signaled and reset it
     SyncFrame& frame = _sync_frames[_sync_frame_i++ % _sync_frames.size()];
-    while (vk::Result::eTimeout == device.waitForFences(frame._ready_to_record, vk::True, UINT64_MAX));
-    device.resetFences(frame._ready_to_record);
+    while (vk::Result::eTimeout == device._logical.waitForFences(frame._ready_to_record, vk::True, UINT64_MAX));
+    device._logical.resetFences(frame._ready_to_record);
 
     // acquire image from swapchain
     uint32_t swap_index = 0;
     for (auto result = vk::Result::eTimeout; result == vk::Result::eTimeout;) {
-        std::tie(result, swap_index) = device.acquireNextImageKHR(_swapchain, UINT64_MAX, frame._ready_to_write);
+        std::tie(result, swap_index) = device._logical.acquireNextImageKHR(_swapchain, UINT64_MAX, frame._ready_to_write);
         switch (result) {
             case vk::Result::eSuccess: break;
             case vk::Result::eSuboptimalKHR: {
@@ -171,7 +170,7 @@ void Swapchain::present(vk::Device device, dv::Image& src_image, vk::Semaphore s
     }
     
     // restart command buffer
-    device.resetCommandPool(frame._command_pool);
+    device._logical.resetCommandPool(frame._command_pool);
     vk::CommandBuffer cmd = frame._command_buffer;
     vk::Result res = cmd.begin({ .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
     if (res != vk::Result::eSuccess) std::println("Failed to begin command buffer: {}", vk::to_string(res));
@@ -217,7 +216,7 @@ void Swapchain::present(vk::Device device, dv::Image& src_image, vk::Semaphore s
         .signalSemaphoreCount = (uint32_t)sign_semaphores.size(),
         .pSignalSemaphores = sign_semaphores.data(),
     };
-    res = _presentation_queue.submit(info_submit, frame._ready_to_record);
+    res = device._universal_queue.submit(info_submit, frame._ready_to_record);
     if (res != vk::Result::eSuccess) std::println("Failed to submit command buffer: {}", vk::to_string(res));
 
     // present swapchain image
@@ -239,7 +238,7 @@ void Swapchain::present(vk::Device device, dv::Image& src_image, vk::Semaphore s
     _timestamp = std::chrono::high_resolution_clock::now();
     
     // present swapchain image
-    res = _presentation_queue.presentKHR(presentInfo);
+    res = device._universal_queue.presentKHR(presentInfo);
     switch (res) {
         case vk::Result::eSuccess: break;
         case vk::Result::eErrorOutOfDateKHR: {
@@ -260,9 +259,9 @@ void Swapchain::present(vk::Device device, dv::Image& src_image, vk::Semaphore s
     }
 }
 
-void Swapchain::SyncFrame::init(vk::Device device, dv::Queues& queues) {
+void Swapchain::SyncFrame::init(Device& device) {
     // create command pool for this frame
-    auto command_pool_res = device.createCommandPool({ .queueFamilyIndex = queues._graphics_i });
+    auto command_pool_res = device._logical.createCommandPool({ .queueFamilyIndex = device._universal_i });
     if (command_pool_res.result != vk::Result::eSuccess) {
         std::println("Failed to create command pool: {}", vk::to_string(command_pool_res.result));
         return;
@@ -270,7 +269,7 @@ void Swapchain::SyncFrame::init(vk::Device device, dv::Queues& queues) {
     _command_pool = command_pool_res.value;
     
     // allocate command buffer from command pool
-    auto command_buffer_res = device.allocateCommandBuffers({
+    auto command_buffer_res = device._logical.allocateCommandBuffers({
         .commandPool = _command_pool,
         .level = vk::CommandBufferLevel::ePrimary,
         .commandBufferCount = 1,
@@ -282,19 +281,19 @@ void Swapchain::SyncFrame::init(vk::Device device, dv::Queues& queues) {
     _command_buffer = command_buffer_res.value.front();
 
     // create synchronization objects for this frame
-    auto fence_res = device.createFence({ .flags = vk::FenceCreateFlagBits::eSignaled });
+    auto fence_res = device._logical.createFence({ .flags = vk::FenceCreateFlagBits::eSignaled });
     if (fence_res.result != vk::Result::eSuccess) std::println("Failed to create fence: {}", vk::to_string(fence_res.result));
     _ready_to_record = fence_res.value;
-    auto semaphore_res = device.createSemaphore({});
+    auto semaphore_res = device._logical.createSemaphore({});
     if (semaphore_res.result != vk::Result::eSuccess) std::println("Failed to create semaphore: {}", vk::to_string(semaphore_res.result));
     _ready_to_write = semaphore_res.value;
-    semaphore_res = device.createSemaphore({});
+    semaphore_res = device._logical.createSemaphore({});
     if (semaphore_res.result != vk::Result::eSuccess) std::println("Failed to create semaphore: {}", vk::to_string(semaphore_res.result));
     _ready_to_read = semaphore_res.value;
 }
-void Swapchain::SyncFrame::destroy(vk::Device device) {
-    device.destroyCommandPool(_command_pool);
-    device.destroyFence(_ready_to_record);
-    device.destroySemaphore(_ready_to_write);
-    device.destroySemaphore(_ready_to_read);
+void Swapchain::SyncFrame::destroy(Device& device) {
+    device._logical.destroyCommandPool(_command_pool);
+    device._logical.destroyFence(_ready_to_record);
+    device._logical.destroySemaphore(_ready_to_write);
+    device._logical.destroySemaphore(_ready_to_read);
 }

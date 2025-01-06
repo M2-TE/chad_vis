@@ -4,10 +4,10 @@
 #include "SearchTex.h"
 #include "chad_vis/ext/smaa.hpp"
 
-void SMAA::init_images(vk::Device device, vma::Allocator vmalloc, dv::Queues& queues, vk::Extent2D extent, vk::Format color_format) {
+void SMAA::init_images(Device& device, vma::Allocator vmalloc, vk::Extent2D extent, vk::Format color_format) {
     // create SMAA render targets
     _img_edges.init({
-        .device = device, .vmalloc = vmalloc,
+        .device = device._logical, .vmalloc = vmalloc,
         .format = vk::Format::eR8G8Unorm,
         .extent { extent.width, extent.height, 1 },
         .usage = 
@@ -15,7 +15,7 @@ void SMAA::init_images(vk::Device device, vma::Allocator vmalloc, dv::Queues& qu
             vk::ImageUsageFlagBits::eSampled,
     });
     _img_weights.init({
-        .device = device, .vmalloc = vmalloc,
+        .device = device._logical, .vmalloc = vmalloc,
         .format = vk::Format::eR8G8B8A8Unorm,
         .extent { extent.width, extent.height, 1 },
         .usage = 
@@ -23,7 +23,7 @@ void SMAA::init_images(vk::Device device, vma::Allocator vmalloc, dv::Queues& qu
             vk::ImageUsageFlagBits::eSampled,
     });
     _img_output.init({
-        .device = device, .vmalloc = vmalloc,
+        .device = device._logical, .vmalloc = vmalloc,
         .format = color_format,
         .extent { extent.width, extent.height, 1 },
         .usage = 
@@ -34,23 +34,23 @@ void SMAA::init_images(vk::Device device, vma::Allocator vmalloc, dv::Queues& qu
 
     // load smaa lookup textures
     _img_search.init({
-        .device = device, .vmalloc = vmalloc,
+        .device = device._logical, .vmalloc = vmalloc,
         .format = vk::Format::eR8Unorm,
         .extent = { SEARCHTEX_WIDTH, SEARCHTEX_HEIGHT, 1 },
         .usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
     });
     auto search_tex = std::span(reinterpret_cast<const std::byte*>(searchTexBytes), sizeof(searchTexBytes));
-    _img_search.load_texture(device, vmalloc, queues, search_tex);
+    _img_search.load_texture(device, vmalloc, search_tex);
     _img_area.init({
-        .device = device, .vmalloc = vmalloc,
+        .device = device._logical, .vmalloc = vmalloc,
         .format = vk::Format::eR8G8Unorm,
         .extent = { AREATEX_WIDTH, AREATEX_HEIGHT, 1 },
         .usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
     });
     auto area_tex = std::span(reinterpret_cast<const std::byte*>(areaTexBytes), sizeof(areaTexBytes));
-    _img_area.load_texture(device, vmalloc, queues, area_tex);
+    _img_area.load_texture(device, vmalloc, area_tex);
     // transition smaa textures to their permanent layouts
-    vk::CommandBuffer cmd = queues.oneshot_begin(device);
+    vk::CommandBuffer cmd = device.oneshot_begin();
     dv::Image::TransitionInfo info_transition {
         .cmd = cmd,
         .new_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
@@ -59,9 +59,9 @@ void SMAA::init_images(vk::Device device, vma::Allocator vmalloc, dv::Queues& qu
     };
     _img_search.transition_layout(info_transition);
     _img_area.transition_layout(info_transition);
-    queues.oneshot_end(device, cmd);
+    device.oneshot_end(cmd);
 }
-void SMAA::init_pipelines(vk::Device device, vk::Extent2D extent, dv::Image& color, dv::DepthStencil& depth_stencil) {
+void SMAA::init_pipelines(Device& device, vk::Extent2D extent, dv::Image& color, dv::DepthStencil& depth_stencil) {
     // create SMAA pipelines
     glm::vec4 SMAA_RT_METRICS = {
         1.0 / (double)extent.width,
@@ -82,7 +82,7 @@ void SMAA::init_pipelines(vk::Device device, vk::Extent2D extent, dv::Image& col
         .pData = &SMAA_RT_METRICS
     };
     _pipe_edges.init({
-        .device = device,
+        .device = device._logical,
         .extent = extent,
         .vs_path = "smaa/edges.vert", .vs_spec = smaa_spec_info,
         .fs_path = "smaa/edges.frag", .fs_spec = smaa_spec_info,
@@ -103,7 +103,7 @@ void SMAA::init_pipelines(vk::Device device, vk::Extent2D extent, dv::Image& col
         },
     });
     _pipe_weights.init({
-        .device = device,
+        .device = device._logical,
         .extent = extent,
         .vs_path = "smaa/weights.vert", .vs_spec = smaa_spec_info,
         .fs_path = "smaa/weights.frag", .fs_spec = smaa_spec_info,
@@ -124,7 +124,7 @@ void SMAA::init_pipelines(vk::Device device, vk::Extent2D extent, dv::Image& col
         },
     });
     _pipe_blending.init({
-        .device = device,
+        .device = device._logical,
         .extent = extent,
         .vs_path = "smaa/blending.vert", .vs_spec = smaa_spec_info,
         .fs_path = "smaa/blending.frag", .fs_spec = smaa_spec_info,
