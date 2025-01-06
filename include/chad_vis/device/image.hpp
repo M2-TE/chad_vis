@@ -6,7 +6,7 @@
 namespace dv {
 struct Image {
     struct CreateInfo {
-        vk::Device device;
+        const Device& device;
         vma::Allocator vmalloc;
         vk::Format format;
         vk::Extent3D extent;
@@ -71,7 +71,7 @@ struct DepthBuffer: public Image {
             }
         }
     }
-    void init(vk::Device device, vma::Allocator vmalloc, vk::Extent3D extent);
+    void init(Device& device, vma::Allocator vmalloc, vk::Extent3D extent);
 };
 struct DepthStencil: public Image {
     static vk::Format& get_format() {
@@ -94,6 +94,6 @@ struct DepthStencil: public Image {
             }
         }
     }
-    void init(vk::Device device, vma::Allocator vmalloc, vk::Extent3D extent);
+    void init(Device& device, vma::Allocator vmalloc, vk::Extent3D extent);
 };
 } // namespace dv

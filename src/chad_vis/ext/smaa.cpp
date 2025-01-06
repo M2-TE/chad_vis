@@ -7,7 +7,7 @@
 void SMAA::init_images(Device& device, vma::Allocator vmalloc, vk::Extent2D extent, vk::Format color_format) {
     // create SMAA render targets
     _img_edges.init({
-        .device = device._logical, .vmalloc = vmalloc,
+        .device = device, .vmalloc = vmalloc,
         .format = vk::Format::eR8G8Unorm,
         .extent { extent.width, extent.height, 1 },
         .usage = 
@@ -15,7 +15,7 @@ void SMAA::init_images(Device& device, vma::Allocator vmalloc, vk::Extent2D exte
             vk::ImageUsageFlagBits::eSampled,
     });
     _img_weights.init({
-        .device = device._logical, .vmalloc = vmalloc,
+        .device = device, .vmalloc = vmalloc,
         .format = vk::Format::eR8G8B8A8Unorm,
         .extent { extent.width, extent.height, 1 },
         .usage = 
@@ -23,7 +23,7 @@ void SMAA::init_images(Device& device, vma::Allocator vmalloc, vk::Extent2D exte
             vk::ImageUsageFlagBits::eSampled,
     });
     _img_output.init({
-        .device = device._logical, .vmalloc = vmalloc,
+        .device = device, .vmalloc = vmalloc,
         .format = color_format,
         .extent { extent.width, extent.height, 1 },
         .usage = 
@@ -34,7 +34,7 @@ void SMAA::init_images(Device& device, vma::Allocator vmalloc, vk::Extent2D exte
 
     // load smaa lookup textures
     _img_search.init({
-        .device = device._logical, .vmalloc = vmalloc,
+        .device = device, .vmalloc = vmalloc,
         .format = vk::Format::eR8Unorm,
         .extent = { SEARCHTEX_WIDTH, SEARCHTEX_HEIGHT, 1 },
         .usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
@@ -42,7 +42,7 @@ void SMAA::init_images(Device& device, vma::Allocator vmalloc, vk::Extent2D exte
     auto search_tex = std::span(reinterpret_cast<const std::byte*>(searchTexBytes), sizeof(searchTexBytes));
     _img_search.load_texture(device, vmalloc, search_tex);
     _img_area.init({
-        .device = device._logical, .vmalloc = vmalloc,
+        .device = device, .vmalloc = vmalloc,
         .format = vk::Format::eR8G8Unorm,
         .extent = { AREATEX_WIDTH, AREATEX_HEIGHT, 1 },
         .usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
@@ -82,7 +82,7 @@ void SMAA::init_pipelines(Device& device, vk::Extent2D extent, dv::Image& color,
         .pData = &SMAA_RT_METRICS
     };
     _pipe_edges.init({
-        .device = device._logical,
+        .device = device,
         .extent = extent,
         .vs_path = "smaa/edges.vert", .vs_spec = smaa_spec_info,
         .fs_path = "smaa/edges.frag", .fs_spec = smaa_spec_info,
@@ -103,7 +103,7 @@ void SMAA::init_pipelines(Device& device, vk::Extent2D extent, dv::Image& color,
         },
     });
     _pipe_weights.init({
-        .device = device._logical,
+        .device = device,
         .extent = extent,
         .vs_path = "smaa/weights.vert", .vs_spec = smaa_spec_info,
         .fs_path = "smaa/weights.frag", .fs_spec = smaa_spec_info,
@@ -124,7 +124,7 @@ void SMAA::init_pipelines(Device& device, vk::Extent2D extent, dv::Image& color,
         },
     });
     _pipe_blending.init({
-        .device = device._logical,
+        .device = device,
         .extent = extent,
         .vs_path = "smaa/blending.vert", .vs_spec = smaa_spec_info,
         .fs_path = "smaa/blending.frag", .fs_spec = smaa_spec_info,

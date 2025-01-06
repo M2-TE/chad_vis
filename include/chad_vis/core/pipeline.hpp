@@ -90,18 +90,17 @@ protected:
 };
 struct Compute: public PipelineBase {
 	struct CreateInfo {
-		vk::Device device;
-		//
+		const Device& device;
 		std::string_view cs_path; vk::SpecializationInfo spec_info = {};
 		// TODO: deprecate this one
 		SamplerInfos sampler_infos = {};
 	};
 	void init(const CreateInfo& info) {
 		// reflect shader contents
-		reflect(info.device, info.cs_path, info.sampler_infos);
+		reflect(info.device._logical, info.cs_path, info.sampler_infos);
 
 		// create pipeline layout
-		_pipeline_layout = info.device.createPipelineLayout({
+		_pipeline_layout = info.device._logical.createPipelineLayout({
 			.setLayoutCount = (uint32_t)_desc_set_layouts.size(),
 			.pSetLayouts = _desc_set_layouts.data(),
 		});
@@ -114,7 +113,7 @@ struct Compute: public PipelineBase {
 		};
 		// optionally create shader module in the deprecated way
 		vk::ShaderModule cs_module = nullptr;
-		if (get_module_deprecation()) cs_module = info.device.createShaderModule(info_cs);
+		if (get_module_deprecation()) cs_module = info.device._logical.createShaderModule(info_cs);
 
 		vk::ComputePipelineCreateInfo info_compute_pipe {
 			.stage = {
@@ -126,11 +125,11 @@ struct Compute: public PipelineBase {
 			},
 			.layout = _pipeline_layout,
 		};
-		auto [result, pipeline] = info.device.createComputePipeline(nullptr, info_compute_pipe);
+		auto [result, pipeline] = info.device._logical.createComputePipeline(nullptr, info_compute_pipe);
 		if (result != vk::Result::eSuccess) std::println("error creating compute pipeline");
 		_pipeline = pipeline;
 		// destroy shader module if previously created
-		if (get_module_deprecation()) info.device.destroyShaderModule(cs_module);
+		if (get_module_deprecation()) info.device._logical.destroyShaderModule(cs_module);
 	}
 	void execute(vk::CommandBuffer cmd, uint32_t nx, uint32_t ny, uint32_t nz) {
 		cmd.bindPipeline(vk::PipelineBindPoint::eCompute, _pipeline);
@@ -140,7 +139,7 @@ struct Compute: public PipelineBase {
 };
 struct Graphics: public PipelineBase {
 	struct CreateInfo {
-		vk::Device device;
+		const Device& device;
 		vk::Extent2D extent;
 		//
 		std::string_view vs_path; vk::SpecializationInfo vs_spec = {};
@@ -168,14 +167,14 @@ struct Graphics: public PipelineBase {
 	};
 	void init(const CreateInfo& info) {
 		// reflect shader contents
-		auto [bind_desc, attr_descs] = reflect(info.device, { info.vs_path, info.fs_path }, info.sampler_infos);
+		auto [bind_desc, attr_descs] = reflect(info.device._logical, { info.vs_path, info.fs_path }, info.sampler_infos);
 
 		// create pipeline layout
 		vk::PipelineLayoutCreateInfo layoutInfo {
 			.setLayoutCount = (uint32_t)_desc_set_layouts.size(),
 			.pSetLayouts = _desc_set_layouts.data()
 		};
-		_pipeline_layout = info.device.createPipelineLayout(layoutInfo);
+		_pipeline_layout = info.device._logical.createPipelineLayout(layoutInfo);
 
 		// create shader stages
 		auto [vs_code, vs_size] = spvrc::load(info.vs_path);
@@ -191,8 +190,8 @@ struct Graphics: public PipelineBase {
 		// optionally create shader modules in the deprecated way
 		vk::ShaderModule vs_module = nullptr;
 		vk::ShaderModule fs_module = nullptr;
-		if (get_module_deprecation()) vs_module = info.device.createShaderModule(info_vs);
-		if (get_module_deprecation()) fs_module = info.device.createShaderModule(info_fs);
+		if (get_module_deprecation()) vs_module = info.device._logical.createShaderModule(info_vs);
+		if (get_module_deprecation()) fs_module = info.device._logical.createShaderModule(info_fs);
 		std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages {{
 			vk::PipelineShaderStageCreateInfo {
 				.pNext = get_module_deprecation() ? nullptr : &info_vs,
@@ -310,7 +309,7 @@ struct Graphics: public PipelineBase {
 			.pDynamicState = &info_dynamic_state,
 			.layout = _pipeline_layout,
 		};
-		auto [result, pipeline] = info.device.createGraphicsPipeline(nullptr, pipeInfo);
+		auto [result, pipeline] = info.device._logical.createGraphicsPipeline(nullptr, pipeInfo);
 		if (result != vk::Result::eSuccess) std::println("error creating graphics pipeline");
 		_pipeline = pipeline;
 		// set persistent options
@@ -318,8 +317,8 @@ struct Graphics: public PipelineBase {
 		_depth_enabled = info.depth.test || info.depth.write;
 		_stencil_enabled = info.stencil.test;
 		// destroy shader modules if previously created
-		if (get_module_deprecation()) info.device.destroyShaderModule(vs_module);
-		if (get_module_deprecation()) info.device.destroyShaderModule(fs_module);
+		if (get_module_deprecation()) info.device._logical.destroyShaderModule(vs_module);
+		if (get_module_deprecation()) info.device._logical.destroyShaderModule(fs_module);
 	}
 	
 	// draw fullscreen triangle with color and depth attachments

@@ -94,7 +94,7 @@ private:
     void init_images(Device& device, vma::Allocator vmalloc, vk::Extent2D extent) {
         // create image with 16 bits color depth
         _color.init({
-            .device = device._logical, .vmalloc = vmalloc,
+            .device = device, .vmalloc = vmalloc,
             .format = vk::Format::eR16G16B16A16Sfloat,
             .extent { extent.width, extent.height, 1 },
             .usage = 
@@ -106,7 +106,7 @@ private:
         });
         // create storage image with same format as _color
         _storage.init({
-            .device = device._logical, .vmalloc = vmalloc,
+            .device = device, .vmalloc = vmalloc,
             .format = vk::Format::eR16G16B16A16Sfloat,
             .extent { extent.width, extent.height, 1 },
             .usage = 
@@ -115,12 +115,12 @@ private:
             .priority = 1.0f,
         });
         // create depth stencil with depth/stencil format picked by driver
-        _depth_stencil.init(device._logical, vmalloc, { extent.width, extent.height, 1 });
+        _depth_stencil.init(device, vmalloc, { extent.width, extent.height, 1 });
     }
     void init_pipelines(Device& device, vk::Extent2D extent, Scene& scene) {
         // create graphics pipelines
         _pipe_default.init({
-            .device = device._logical,
+            .device = device,
             .extent = extent,
             .vs_path = "defaults/default.vert",
             .fs_path = "defaults/default.frag",
@@ -144,7 +144,7 @@ private:
             vk::SpecializationMapEntry { .constantID = 1, .offset = 4, .size = 4 },
         };
         _pipe_wip.init({
-            .device = device._logical,
+            .device = device,
             .cs_path = "defaults/gradient.comp",
             .spec_info {
                 .mapEntryCount = image_spec_entries.size(),

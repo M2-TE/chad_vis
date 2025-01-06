@@ -47,7 +47,7 @@ namespace dv {
                 .layerCount = vk::RemainingArrayLayers,
             }
         };
-        _view = info.device.createImageView(info_view);
+        _view = info.device._logical.createImageView(info_view);
     }
     // wrap existing image without direct ownership
     void Image::wrap(const WrapInfo& info) {
@@ -191,7 +191,7 @@ namespace dv {
         cmd.blitImage2(info_blit);
     }
 
-    void DepthBuffer::init(vk::Device device, vma::Allocator vmalloc, vk::Extent3D extent) {
+    void DepthBuffer::init(Device& device, vma::Allocator vmalloc, vk::Extent3D extent) {
         _owning = true;
         _extent = extent;
         _format = get_format();
@@ -236,9 +236,9 @@ namespace dv {
                 .layerCount = vk::RemainingArrayLayers,
             }
         };
-        _view = device.createImageView(info_depth_view);
+        _view = device._logical.createImageView(info_depth_view);
     }
-    void DepthStencil::init(vk::Device device, vma::Allocator vmalloc, vk::Extent3D extent) {
+    void DepthStencil::init(Device& device, vma::Allocator vmalloc, vk::Extent3D extent) {
         _owning = true;
         _extent = extent;
         _format = get_format();
@@ -283,6 +283,6 @@ namespace dv {
                 .layerCount = vk::RemainingArrayLayers,
             }
         };
-        _view = device.createImageView(info_depth_view);
+        _view = device._logical.createImageView(info_depth_view);
     }
 } // namespace dv
