@@ -13,6 +13,9 @@ struct Window {
     auto focused() -> bool {
         return glfwGetWindowAttrib(_glfw_window_p, GLFW_FOCUSED);
     }
+    auto minimized() -> bool {
+        return glfwGetWindowAttrib(_glfw_window_p, GLFW_ICONIFIED);
+    }
     void delay(std::size_t ms) {
         std::this_thread::sleep_for(std::chrono::milliseconds(ms));
     }

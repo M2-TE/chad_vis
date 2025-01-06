@@ -123,20 +123,22 @@ private:
 
         // check for changed window size and focus
         auto window_size = _window.size();
-        auto window_focus = _window.focused();
         glfwPollEvents();
+
+        // handle window resized
         if (window_size != _window.size()) handle_resize();
-        if (window_focus != _window.focused()) {
-            if (_window.focused()) {
-                Input::Data::get().mouse_delta = {0, 0};
-                _swapchain.set_target_framerate(_fps_foreground);
-            }
-            else  {
-                Input::clear();
-                _swapchain.set_target_framerate(_fps_background);
-            }
+        // handle window focus
+        if (_window.focused()) {
+            Input::Data::get().mouse_delta = {0, 0};
+            _swapchain.set_target_framerate(_fps_foreground);
         }
-        // TODO: handle minimize events
+        else {
+            Input::clear();
+            _swapchain.set_target_framerate(_fps_background);
+        }
+        // handle minimize (iconify)
+        if (_window.minimized()) _rendering = false;
+        else _rendering = true;
 
         // handle mouse grab
         if (Keys::pressed(GLFW_KEY_LEFT_ALT)) Mouse::set_mode(_window._glfw_window_p, false);
