@@ -1,7 +1,7 @@
 #include "chad_vis/core/window.hpp"
 #include "chad_vis/core/input.hpp"
 
-void error_callback(int error, const char* description) {
+void static error_callback(int error, const char* description) {
     std::println("GLFW error {}:\n{}", error, description);
 }
 void Window::init(unsigned int width, unsigned int height, std::string name) {
