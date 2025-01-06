@@ -82,13 +82,11 @@ struct Engine {
         PipelineBase::set_module_deprecation(_device._physical);
         dv::DepthStencil::set_format(_device._physical);
 
-        // set up swapchain, resize request will be fulfilled later
-        _swapchain.set_target_framerate(_fps_foreground);
-
         // create scene with renderable entities
         _scene.init(_device, _vmalloc);
 
         // first resize will set up swapchain and renderer
+        _swapchain.set_target_framerate(_fps_foreground);
         handle_resize();
     }
     void destroy() {
@@ -117,7 +115,7 @@ struct Engine {
             _renderer.render(_device, _swapchain, _scene);
         }
     }
-    // TODO: create swapchain and stuff immediately
+    
 private:
     void handle_events() {
         // flush inputs from last frame before handling new events

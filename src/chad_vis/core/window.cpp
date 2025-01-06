@@ -33,18 +33,16 @@ void Window::init(unsigned int width, unsigned int height, std::string name) {
 
     // optionally enable debug layers
     std::vector<const char*> layers;
-#       ifdef VULKAN_ENABLE_VALIDATION_LAYERS
-        std::string validation_layer = "VK_LAYER_KHRONOS_validation";
-        // only request if validation layers are available
-        auto layer_props = vk::enumerateInstanceLayerProperties();
-        bool available = false;
-        for (auto& layer: layer_props) {
-            auto res = std::strcmp(layer.layerName, validation_layer.data());
-            if (res) available = true;
-        }
-        if (available) layers.push_back(validation_layer.data());
-        else std::println("Validation layers requested but not present");
-#       endif
+    std::string validation_layer = "VK_LAYER_KHRONOS_validation";
+    // only request if validation layers are available
+    auto layer_props = vk::enumerateInstanceLayerProperties();
+    bool available = false;
+    for (auto& layer: layer_props) {
+        auto res = std::strcmp(layer.layerName, validation_layer.data());
+        if (res) available = true;
+    }
+    if (available) layers.push_back(validation_layer.data());
+    else std::println("Validation layers requested but not present");
 
     // create vulkan instance
     vk::ApplicationInfo info_app {

@@ -12,7 +12,6 @@ class Renderer {
 public:
     void init(Device& device, vma::Allocator vmalloc, Scene& scene, vk::Extent2D extent) {
         // allocate single command pool and buffer pair
-        std::println("{}", device._universal_i);
         _command_pool = device._logical.createCommandPool({ .queueFamilyIndex = device._universal_i });
         vk::CommandBufferAllocateInfo bufferInfo {
             .commandPool = _command_pool,
