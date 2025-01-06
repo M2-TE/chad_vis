@@ -213,7 +213,6 @@ private:
     // pipelines
     Compute _pipe_wip;
     Graphics _pipe_default;
-
     SMAA _smaa;
     bool _smaa_enabled = true;
 };

@@ -123,28 +123,34 @@ private:
 
         // check for changed window size and focus
         auto window_size = _window.size();
+        auto window_focused = _window.focused();
         glfwPollEvents();
 
-        // handle window resized
+        // handle window resize
         if (window_size != _window.size()) handle_resize();
         // handle window focus
-        if (_window.focused()) {
-            Input::Data::get().mouse_delta = {0, 0};
-            _swapchain.set_target_framerate(_fps_foreground);
-        }
-        else {
-            Input::clear();
-            _swapchain.set_target_framerate(_fps_background);
+        if (window_focused != _window.focused()) {
+            if (_window.focused()) {
+                Input::Data::get().mouse_delta = {0, 0};
+                _swapchain.set_target_framerate(_fps_foreground);
+            }
+            else {
+                Input::clear();
+                _swapchain.set_target_framerate(_fps_background);
+            }
         }
         // handle minimize (iconify)
         if (_window.minimized()) _rendering = false;
         else _rendering = true;
 
+        // handle fullscreen controls
+        if (Keys::pressed(GLFW_KEY_F11)) _window.toggle_window_mode();
+
         // handle mouse grab
         if (Keys::pressed(GLFW_KEY_LEFT_ALT)) Mouse::set_mode(_window._glfw_window_p, false);
         else {
             if (Mouse::captured() && Keys::pressed(GLFW_KEY_ESCAPE)) Mouse::set_mode(_window._glfw_window_p, false);
-            else if (!Mouse::captured() && Mouse::pressed(0)) Mouse::set_mode(_window._glfw_window_p, true);
+            else if (!Mouse::captured() && !Keys::held(GLFW_KEY_LEFT_ALT) && Mouse::pressed(0)) Mouse::set_mode(_window._glfw_window_p, true);
             else if (!Mouse::captured() && Keys::released(GLFW_KEY_LEFT_ALT)) Mouse::set_mode(_window._glfw_window_p, true);
         }
     }
