@@ -6,7 +6,7 @@ set(SPIRV_REFLECT_ENABLE_ASSERTS OFF)
 set(SPIRV_REFLECT_ENABLE_ASAN    OFF)
 FetchContent_Declare(spirv-reflect
     GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Reflect.git"
-    GIT_TAG "vulkan-sdk-1.3.290.0"
+    GIT_TAG "vulkan-sdk-1.3.296.0"
     GIT_SHALLOW ON
     GIT_SUBMODULES ""
     OVERRIDE_FIND_PACKAGE

@@ -1,15 +1,3 @@
-if(${CMAKE_CXX_STANDARD} GREATER_EQUAL 20)
-    set(GLM_ENABLE_CXX_20 ON)
-elseif(${CMAKE_CXX_STANDARD} EQUAL 17)
-    set(GLM_ENABLE_CXX_17 ON)
-elseif(${CMAKE_CXX_STANDARD} EQUAL 14)
-    set(GLM_ENABLE_CXX_14 ON)
-elseif(${CMAKE_CXX_STANDARD} EQUAL 11)
-    set(GLM_ENABLE_CXX_11 ON)
-elseif(${CMAKE_CXX_STANDARD} EQUAL 98)
-    set(GLM_ENABLE_CXX_98 ON)
-endif()
-
 # query SIMD support
 FetchContent_Declare(libsimdpp
     GIT_REPOSITORY "https://github.com/p12tic/libsimdpp.git"
@@ -30,6 +18,17 @@ set(GLM_ENABLE_SIMD_AVX    ${CAN_RUN_X86_AVX})
 set(GLM_ENABLE_SIMD_AVX2   ${CAN_RUN_X86_AVX2})
 
 # standard glm options
+if(${CMAKE_CXX_STANDARD} GREATER_EQUAL 20)
+    set(GLM_ENABLE_CXX_20 ON)
+elseif(${CMAKE_CXX_STANDARD} EQUAL 17)
+    set(GLM_ENABLE_CXX_17 ON)
+elseif(${CMAKE_CXX_STANDARD} EQUAL 14)
+    set(GLM_ENABLE_CXX_14 ON)
+elseif(${CMAKE_CXX_STANDARD} EQUAL 11)
+    set(GLM_ENABLE_CXX_11 ON)
+elseif(${CMAKE_CXX_STANDARD} EQUAL 98)
+    set(GLM_ENABLE_CXX_98 ON)
+endif()
 set(GLM_BUILD_LIBRARY ON)
 set(GLM_BUILD_TEST OFF)
 set(GLM_BUILD_INSTALL OFF)
@@ -44,8 +43,9 @@ set(GLM_FORCE_PURE OFF)
 
 FetchContent_Declare(glm
     GIT_REPOSITORY "https://github.com/g-truc/glm.git"
-    GIT_TAG "1.0.1"
-    GIT_SHALLOW ON
+    GIT_TAG "18feaec455f8ee1f256d91f515fb02d66268ba14" # basically 1.0.2 tag
+    # GIT_TAG "1.0.1"
+    # GIT_SHALLOW ON
     OVERRIDE_FIND_PACKAGE
     EXCLUDE_FROM_ALL
     SYSTEM)
