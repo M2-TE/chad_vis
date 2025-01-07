@@ -2,20 +2,19 @@ FetchContent_Declare(vulkan-headers
     GIT_REPOSITORY "https://github.com/KhronosGroup/Vulkan-Headers.git"
     GIT_TAG "v1.3.290"
     GIT_SHALLOW ON
-    GIT_SUBMODULES ""
-    SOURCE_SUBDIR "disabled"
-    OVERRIDE_FIND_PACKAGE)
+    OVERRIDE_FIND_PACKAGE
+    EXCLUDE_FROM_ALL
+    SYSTEM)
 FetchContent_Declare(vulkan-hpp
     GIT_REPOSITORY "https://github.com/KhronosGroup/Vulkan-Hpp.git"
     GIT_TAG "v1.3.290"
     GIT_SHALLOW ON
     GIT_SUBMODULES ""
-    SOURCE_SUBDIR "disabled"
+    SOURCE_SUBDIR "disabled" # the way they fetch vulkan headers is a bit messy
     OVERRIDE_FIND_PACKAGE)
 FetchContent_MakeAvailable(vulkan-headers vulkan-hpp)
-target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE
-    "${vulkan-headers_SOURCE_DIR}/include"
-	"${vulkan-hpp_SOURCE_DIR}")
+target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::Headers)
+target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE "${vulkan-hpp_SOURCE_DIR}")
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     "VK_NO_PROTOTYPES"
     "VULKAN_HPP_NO_SETTERS"
