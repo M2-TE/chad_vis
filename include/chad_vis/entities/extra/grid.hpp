@@ -5,7 +5,7 @@
 #include "chad_vis/entities/mesh/mesh.hpp"
 
 struct Grid {
-    void init(vma::Allocator vmalloc, const vk::ArrayProxy<uint32_t>& queues, std::string_view path_rel) {
+    void init(vma::Allocator vmalloc, std::string_view path_rel) {
 		std::ifstream file;
         std::string path_full = path_rel.data();
 		file.open(path_full, std::ifstream::binary);
@@ -54,7 +54,7 @@ struct Grid {
                 cell_indices.push_back(cell[5]);
                 cell_indices.push_back(std::numeric_limits<Index>().max()); // restart strip
             }
-			_query_points.init(vmalloc, queues, query_points, cell_indices);
+			_query_points.init(vmalloc, query_points, cell_indices);
 
             file.close();
         }

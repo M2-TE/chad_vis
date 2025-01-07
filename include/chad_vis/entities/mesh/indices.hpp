@@ -1,18 +1,16 @@
 #pragma once
 #include <vk_mem_alloc.hpp>
 #include <vulkan/vulkan.hpp>
-#include "chad_vis/device/buffer.hpp"
+#include "chad_vis/device/device_buffer.hpp"
 
 template<typename Index>
 struct Indices {
-    void init(vma::Allocator vmalloc, const vk::ArrayProxy<uint32_t>& queues, std::span<Index> index_data) {
+    void init(vma::Allocator vmalloc, std::span<Index> index_data) {
         // create index buffer and copy indices to it
 		DeviceBuffer::CreateInfo info {
 			.vmalloc = vmalloc,
 			.size = sizeof(Index) * index_data.size(),
 			.usage = vk::BufferUsageFlagBits::eIndexBuffer,
-			.queue_families = queues,
-			.host_accessible = true,
 			.dedicated_memory = true,
 		};
 		_buffer.init(info);

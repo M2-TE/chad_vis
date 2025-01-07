@@ -6,12 +6,12 @@
 
 template<typename Vertex, typename Index = uint16_t> 
 struct Mesh {
-    void init(vma::Allocator vmalloc, const vk::ArrayProxy<uint32_t>& queues, std::span<Vertex> vertices, std::span<Index> indices) {
-        _vertices.init(vmalloc, queues, vertices);
-        _indices.init(vmalloc, queues, indices);
+    void init(vma::Allocator vmalloc, std::span<Vertex> vertices, std::span<Index> indices) {
+        _vertices.init(vmalloc, vertices);
+        _indices.init(vmalloc, indices);
     }
-    void init(vma::Allocator vmalloc, const vk::ArrayProxy<uint32_t>& queues, std::span<Vertex> vertices) {
-        _vertices.init(vmalloc, queues, vertices);
+    void init(vma::Allocator vmalloc, std::span<Vertex> vertices) {
+        _vertices.init(vmalloc, vertices);
     }
     void destroy(vma::Allocator vmalloc) {
         _vertices.destroy(vmalloc);

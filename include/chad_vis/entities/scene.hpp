@@ -1,17 +1,16 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.hpp>
-#include "chad_vis/core/device.hpp"
 #include "chad_vis/entities/camera.hpp"
 // #include "chad_vis/entities/extra/grid.hpp"
 #include "chad_vis/entities/extra/plymesh.hpp"
 
 struct Scene {
-    void init(Device& device, vma::Allocator vmalloc) {
-        _camera.init(vmalloc, device._universal_i);
+    void init(vma::Allocator vmalloc) {
+        _camera.init(vmalloc);
 
         // load mesh and grid objects
-        _mesh.init(vmalloc, device._universal_i, "data/v2/mesh.ply", glm::vec3{.1, .1, .1});
+        _mesh.init(vmalloc, "data/v2/mesh.ply", glm::vec3{.1, .1, .1});
         // _grid.init(vmalloc, queues._universal_i, "data/v2/hashgrid.grid");
     }
     void destroy(vma::Allocator vmalloc) {

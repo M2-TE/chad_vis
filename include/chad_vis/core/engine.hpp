@@ -81,9 +81,12 @@ struct Engine {
         // set the global properties for current physical device
         PipelineBase::set_module_deprecation(_device._physical);
         DepthStencil::set_format(_device._physical);
+        DepthBuffer::set_format(_device._physical);
+        // figure out whether ReBAR is available based on single large allocation
+        DeviceBuffer::set_staging_requirement(_device, _vmalloc);
 
         // create scene with renderable entities
-        _scene.init(_device, _vmalloc);
+        _scene.init(_vmalloc);
 
         // first resize will set up swapchain and renderer
         _swapchain.set_target_framerate(_fps_foreground);

@@ -5,7 +5,7 @@
 #include "chad_vis/entities/mesh/mesh.hpp"
 
 struct Plymesh {
-    void init(vma::Allocator vmalloc, const vk::ArrayProxy<uint32_t>& queues, std::string_view path_rel, std::optional<glm::vec3> color = std::nullopt) {
+    void init(vma::Allocator vmalloc, std::string_view path_rel, std::optional<glm::vec3> color = std::nullopt) {
         std::ifstream file;
         std::string path_full = path_rel.data();
 		file.open(path_full, std::ifstream::binary);
@@ -82,7 +82,7 @@ struct Plymesh {
             }
             
             // create actual mesh from raw data
-            _mesh.init(vmalloc, queues, vertices, indices);
+            _mesh.init(vmalloc, vertices, indices);
         }
         else {
             std::println("failed to load ply file: {}", path_full);

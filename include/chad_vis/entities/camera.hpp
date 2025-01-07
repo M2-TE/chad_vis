@@ -5,17 +5,15 @@
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.hpp>
 #include "chad_vis/core/input.hpp"
-#include "chad_vis/device/buffer.hpp"
+#include "chad_vis/device/device_buffer.hpp"
 
 struct Camera {
-    void init(vma::Allocator vmalloc, const vk::ArrayProxy<uint32_t>& queues) {
+    void init(vma::Allocator vmalloc) {
         // create camera matrix buffer
 		_buffer.init({
             .vmalloc = vmalloc,
             .size = sizeof(glm::aligned_mat4x4),
-            .usage = vk::BufferUsageFlagBits::eUniformBuffer,
-            .queue_families = queues,
-            .host_accessible = true,
+            .usage = vk::BufferUsageFlagBits::eUniformBuffer
 		});
     }
     void destroy(vma::Allocator vmalloc) {
@@ -48,9 +46,9 @@ struct Camera {
 		// merge rotation and projection matrices
 		glm::aligned_mat4x4 matrix;
 		matrix = glm::perspectiveFovLH<float>(glm::radians<float>(_fov), (float)_extent.width, (float)_extent.height, _near, _far);
-		matrix = glm::rotate(matrix, -_rot.x, glm::aligned_vec3(1, 0, 0));
-		matrix = glm::rotate(matrix, -_rot.y, glm::aligned_vec3(0, 1, 0));
-		matrix = glm::translate(matrix, -_pos);
+		matrix = glm::rotate(matrix, - _rot.x, glm::aligned_vec3(1, 0, 0));
+		matrix = glm::rotate(matrix, - _rot.y, glm::aligned_vec3(0, 1, 0));
+		matrix = glm::translate(matrix, - _pos);
 		
 		// upload data
 		_buffer.write(vmalloc, matrix);

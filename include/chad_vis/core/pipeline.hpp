@@ -2,7 +2,7 @@
 #include <vulkan/vulkan.hpp>
 #include <spvrc/spvrc.hpp>
 #include "chad_vis/device/image.hpp"
-#include "chad_vis/device/buffer.hpp"
+#include "chad_vis/device/device_buffer.hpp"
 #include "chad_vis/entities/mesh/mesh.hpp"
 
 struct PipelineBase {
