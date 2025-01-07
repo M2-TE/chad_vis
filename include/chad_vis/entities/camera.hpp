@@ -13,7 +13,7 @@ struct Camera {
 		_buffer.init({
             .vmalloc = vmalloc,
             .size = sizeof(glm::aligned_mat4x4),
-            .usage = vk::BufferUsageFlagBits::eUniformBuffer
+            .usage = vk::BufferUsageFlagBits::eUniformBuffer,
 		});
     }
     void destroy(vma::Allocator vmalloc) {

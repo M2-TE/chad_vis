@@ -10,14 +10,12 @@ struct DeviceBuffer {
 		vk::DeviceSize alignment = 0;
 		vk::BufferUsageFlags usage = vk::BufferUsageFlagBits::eUniformBuffer;
 		bool dedicated_memory = false;
-		bool host_write = false;
-		bool host_read = false;
 	};
 	void init(const CreateInfo& info) {
 		_size = info.size;
 		vk::BufferCreateInfo info_buffer {
 			.size = info.size,
-			.usage = requires_staging() ? vk::BufferUsageFlagBits::eTransferDst | info.usage : info.usage,
+			.usage = info.usage,
 			.sharingMode = vk::SharingMode::eExclusive,
 		};
 		// add flags to allow host access if requested (ReBAR if available)
@@ -31,7 +29,7 @@ struct DeviceBuffer {
 				vk::MemoryPropertyFlagBits::eHostVisible |
 				vk::MemoryPropertyFlagBits::eHostCoherent,
 		};
-		// add dedicated memory requirement if requested
+		// add various flags if requested
 		if (info.dedicated_memory) info_allocation.flags |= vma::AllocationCreateFlagBits::eDedicatedMemory;
 		// create buffer
 		if (info.alignment > 0) {
@@ -64,14 +62,12 @@ struct DeviceBuffer {
 		static bool require_staging = true;
 		return require_staging;
 	}
-	void static set_staging_requirement(Device& device, vma::Allocator vmalloc) {
+	void static set_staging_requirement(vma::Allocator vmalloc) {
 		// to see if ReBAR is available, create a simple 1GiB buffer
 		vk::BufferCreateInfo info_buffer {
 			.size = 1 << 30,
 			.usage = vk::BufferUsageFlagBits::eTransferSrc,
 			.sharingMode = vk::SharingMode::eExclusive,
-			.queueFamilyIndexCount = 1,
-			.pQueueFamilyIndices = &device._universal_i,
 		};
 		vma::AllocationCreateInfo info_allocation {
 			.flags = vma::AllocationCreateFlagBits::eDedicatedMemory | vma::AllocationCreateFlagBits::eMapped,
@@ -97,5 +93,4 @@ struct DeviceBuffer {
 	vk::Buffer _data;
 	vma::Allocation _allocation;
 	vk::DeviceSize _size;
-	void* _mapped_p = nullptr;
 };

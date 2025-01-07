@@ -83,7 +83,7 @@ struct Engine {
         DepthStencil::set_format(_device._physical);
         DepthBuffer::set_format(_device._physical);
         // figure out whether ReBAR is available based on single large allocation
-        DeviceBuffer::set_staging_requirement(_device, _vmalloc);
+        DeviceBuffer::set_staging_requirement(_vmalloc);
 
         // create scene with renderable entities
         _scene.init(_vmalloc);

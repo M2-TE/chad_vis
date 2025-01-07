@@ -2,7 +2,7 @@
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.hpp>
 #include "chad_vis/entities/camera.hpp"
-// #include "chad_vis/entities/extra/grid.hpp"
+#include "chad_vis/entities/extra/grid.hpp"
 #include "chad_vis/entities/extra/plymesh.hpp"
 
 struct Scene {
@@ -11,14 +11,14 @@ struct Scene {
 
         // load mesh and grid objects
         _mesh.init(vmalloc, "data/v2/mesh.ply", glm::vec3{.1, .1, .1});
-        // _grid.init(vmalloc, queues._universal_i, "data/v2/hashgrid.grid");
+        _grid.init(vmalloc, "data/v2/hashgrid.grid");
     }
     void destroy(vma::Allocator vmalloc) {
         _camera.destroy(vmalloc);
 
         // delete mesh and grid objects
         _mesh.destroy(vmalloc);
-        // _grid.destroy(vmalloc);
+        _grid.destroy(vmalloc);
     }
 
     // update without affecting current frames in flight
@@ -32,5 +32,5 @@ struct Scene {
 
     Camera _camera;
     Plymesh _mesh;
-    // Grid _grid;
+    Grid _grid;
 };
