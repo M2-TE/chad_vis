@@ -45,7 +45,7 @@ public:
 		};
 		device._logical.updateDescriptorSets(write_image, {});
 	}
-	void write_descriptor(Device& device, uint32_t set, uint32_t binding, Buffer& buffer, vk::DescriptorType type, size_t offset = 0) {
+	void write_descriptor(Device& device, uint32_t set, uint32_t binding, DeviceBuffer& buffer, vk::DescriptorType type, size_t offset = 0) {
 		vk::DescriptorBufferInfo info_buffer {
 			.buffer = buffer._data,
 			.offset = offset,

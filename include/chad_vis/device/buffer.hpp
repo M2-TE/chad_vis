@@ -2,7 +2,7 @@
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.hpp>
 
-struct Buffer {
+struct DeviceBuffer {
 	struct CreateInfo {
 		vma::Allocator vmalloc;
 		vk::DeviceSize size;
