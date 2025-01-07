@@ -80,7 +80,7 @@ public:
         device._universal_queue.submit(info_submit, _ready_to_record);
 
         // present drawn image
-        dv::Image& _final_image = _smaa_enabled ? _smaa.get_output() : _color;
+        Image& _final_image = _smaa_enabled ? _smaa.get_output() : _color;
         swapchain.present(device, _final_image, _ready_to_read, _ready_to_write);
     }
     // wait until device buffers are no longer in use and the command buffers can be recorded again
@@ -207,9 +207,9 @@ private:
     vk::CommandPool _command_pool;
     vk::CommandBuffer _command_buffer;
     // images
-    dv::DepthStencil _depth_stencil;
-    dv::Image _color;
-    dv::Image _storage;
+    DepthStencil _depth_stencil;
+    Image _color;
+    Image _storage;
     // pipelines
     Compute _pipe_wip;
     Graphics _pipe_default;

@@ -19,7 +19,7 @@ public:
 		_desc_set_layouts.clear();
 		_immutable_samplers.clear();
 	}
-	void write_descriptor(Device& device, uint32_t set, uint32_t binding, dv::Image& image, vk::DescriptorType type, vk::Sampler sampler = nullptr) {
+	void write_descriptor(Device& device, uint32_t set, uint32_t binding, Image& image, vk::DescriptorType type, vk::Sampler sampler = nullptr) {
 		vk::DescriptorImageInfo info_image {
 			.sampler = sampler,
 			.imageView = image._view,
@@ -45,7 +45,7 @@ public:
 		};
 		device._logical.updateDescriptorSets(write_image, {});
 	}
-	void write_descriptor(Device& device, uint32_t set, uint32_t binding, dv::Buffer& buffer, vk::DescriptorType type, size_t offset = 0) {
+	void write_descriptor(Device& device, uint32_t set, uint32_t binding, Buffer& buffer, vk::DescriptorType type, size_t offset = 0) {
 		vk::DescriptorBufferInfo info_buffer {
 			.buffer = buffer._data,
 			.offset = offset,
@@ -323,8 +323,8 @@ struct Graphics: public PipelineBase {
 	
 	// draw fullscreen triangle with color and depth attachments
 	auto execute(vk::CommandBuffer cmd,
-		dv::Image& color, vk::AttachmentLoadOp color_load,
-		dv::DepthStencil& depth_stencil, vk::AttachmentLoadOp depth_stencil_load)
+		Image& color, vk::AttachmentLoadOp color_load,
+		DepthStencil& depth_stencil, vk::AttachmentLoadOp depth_stencil_load)
 	-> void {
 		vk::RenderingAttachmentInfo info_color {
 			.imageView = color._view,
@@ -361,7 +361,7 @@ struct Graphics: public PipelineBase {
 
 	// draw fullscreen  triangle with only color attachment
 	auto execute(vk::CommandBuffer cmd,
-		dv::Image& color_dst, vk::AttachmentLoadOp color_load)
+		Image& color_dst, vk::AttachmentLoadOp color_load)
 	-> void {
 		vk::RenderingAttachmentInfo info_color_attach {
 			.imageView = color_dst._view,
@@ -391,8 +391,8 @@ struct Graphics: public PipelineBase {
 	// draw mesh
 	template<typename Vertex, typename Index>
 	auto execute(vk::CommandBuffer cmd,
-		dv::Image& color, vk::AttachmentLoadOp color_load,
-		dv::DepthStencil& depth_stencil, vk::AttachmentLoadOp depth_stencil_load,
+		Image& color, vk::AttachmentLoadOp color_load,
+		DepthStencil& depth_stencil, vk::AttachmentLoadOp depth_stencil_load,
 		Mesh<Vertex, Index>& mesh)
 	-> void {
 		vk::RenderingAttachmentInfo info_color {
@@ -441,7 +441,7 @@ struct Graphics: public PipelineBase {
 	// draw mesh without depth attachment
 	template<typename Vertex, typename Index>
 	auto execute(vk::CommandBuffer cmd,
-		dv::Image& color_dst, vk::AttachmentLoadOp color_load,
+		Image& color_dst, vk::AttachmentLoadOp color_load,
 		Mesh<Vertex, Index>& mesh)
 	-> void {
 		vk::RenderingAttachmentInfo info_color_attach {

@@ -58,7 +58,7 @@ struct Camera {
 
 	glm::aligned_vec3 _pos = { 0, 0, 0 };
 	glm::aligned_vec3 _rot = { 0, 0, 0 };
-	dv::Buffer _buffer;
+	Buffer _buffer;
 	vk::Extent2D _extent;
 	float _fov = 60;
 	float _near = 0.01;

@@ -7,7 +7,7 @@ template<typename Index>
 struct Indices {
     void init(vma::Allocator vmalloc, const vk::ArrayProxy<uint32_t>& queues, std::span<Index> index_data) {
         // create index buffer and copy indices to it
-		dv::Buffer::CreateInfo info {
+		Buffer::CreateInfo info {
 			.vmalloc = vmalloc,
 			.size = sizeof(Index) * index_data.size(),
 			.usage = vk::BufferUsageFlagBits::eIndexBuffer,
@@ -26,6 +26,6 @@ struct Indices {
 		return vk::IndexTypeValue<Index>::value;
 	}
 
-	dv::Buffer _buffer;
+	Buffer _buffer;
 	uint32_t _count;
 };

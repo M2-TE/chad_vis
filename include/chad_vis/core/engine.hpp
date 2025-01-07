@@ -80,7 +80,7 @@ struct Engine {
 
         // set the global properties for current physical device
         PipelineBase::set_module_deprecation(_device._physical);
-        dv::DepthStencil::set_format(_device._physical);
+        DepthStencil::set_format(_device._physical);
 
         // create scene with renderable entities
         _scene.init(_device, _vmalloc);

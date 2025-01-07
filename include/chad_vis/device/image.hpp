@@ -3,7 +3,6 @@
 #include <vk_mem_alloc.hpp>
 #include "chad_vis/core/device.hpp"
 
-namespace dv {
 struct Image {
     struct CreateInfo {
         const Device& device;
@@ -35,7 +34,7 @@ struct Image {
     
     void load_texture(Device& device, vma::Allocator vmalloc, std::span<const std::byte> tex_data);
     void transition_layout(const TransitionInfo& info);
-    void blit(vk::CommandBuffer cmd, dv::Image& src_image);
+    void blit(vk::CommandBuffer cmd, Image& src_image);
     
     vma::Allocation _allocation;
     vk::Image _image;
@@ -96,4 +95,3 @@ struct DepthStencil: public Image {
     }
     void init(Device& device, vma::Allocator vmalloc, vk::Extent3D extent);
 };
-} // namespace dv

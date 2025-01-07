@@ -138,7 +138,7 @@ void Swapchain::set_target_framerate(std::size_t fps) {
     }
     _target_frame_time = std::chrono::nanoseconds(static_cast<int64_t>(ns));
 }
-void Swapchain::present(Device& device, dv::Image& src_image, vk::Semaphore src_ready_to_read, vk::Semaphore src_ready_to_write) {
+void Swapchain::present(Device& device, Image& src_image, vk::Semaphore src_ready_to_read, vk::Semaphore src_ready_to_write) {
     // wait for this frame's fence to be signaled and reset it
     SyncFrame& frame = _sync_frames[_sync_frame_i++ % _sync_frames.size()];
     while (vk::Result::eTimeout == device._logical.waitForFences(frame._ready_to_record, vk::True, UINT64_MAX));

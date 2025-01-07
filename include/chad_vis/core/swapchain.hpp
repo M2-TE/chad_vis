@@ -9,10 +9,10 @@ struct Swapchain {
     void destroy(Device& device);
     void resize(Device& device, Window& window);
     void set_target_framerate(std::size_t fps);
-    void present(Device& device, dv::Image& src_image, vk::Semaphore src_ready_to_read, vk::Semaphore src_ready_to_write);
+    void present(Device& device, Image& src_image, vk::Semaphore src_ready_to_read, vk::Semaphore src_ready_to_write);
 
     vk::SwapchainKHR _swapchain;
-    std::vector<dv::Image> _images;
+    std::vector<Image> _images;
     vk::Extent2D _extent;
     vk::Format _format;
     bool _resize_requested;

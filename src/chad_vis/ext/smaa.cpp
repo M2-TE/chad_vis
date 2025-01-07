@@ -51,7 +51,7 @@ void SMAA::init_images(Device& device, vma::Allocator vmalloc, vk::Extent2D exte
     _img_area.load_texture(device, vmalloc, area_tex);
     // transition smaa textures to their permanent layouts
     vk::CommandBuffer cmd = device.oneshot_begin(QueueType::eUniversal);
-    dv::Image::TransitionInfo info_transition {
+    Image::TransitionInfo info_transition {
         .cmd = cmd,
         .new_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
         .dst_stage = vk::PipelineStageFlagBits2::eFragmentShader,
@@ -61,7 +61,7 @@ void SMAA::init_images(Device& device, vma::Allocator vmalloc, vk::Extent2D exte
     _img_area.transition_layout(info_transition);
     device.oneshot_end(QueueType::eUniversal, cmd);
 }
-void SMAA::init_pipelines(Device& device, vk::Extent2D extent, dv::Image& color, dv::DepthStencil& depth_stencil) {
+void SMAA::init_pipelines(Device& device, vk::Extent2D extent, Image& color, DepthStencil& depth_stencil) {
     // create SMAA pipelines
     glm::vec4 SMAA_RT_METRICS = {
         1.0 / (double)extent.width,

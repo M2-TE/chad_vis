@@ -7,7 +7,7 @@ template<typename Vertex>
 struct Vertices {
     void init(vma::Allocator vmalloc, const vk::ArrayProxy<uint32_t>& queues, std::span<Vertex> vertex_data) {
         // create vertex buffer and copy vertices to it
-		dv::Buffer::CreateInfo info {
+		Buffer::CreateInfo info {
 			.vmalloc = vmalloc,
 			.size = sizeof(Vertex) * vertex_data.size(),
 			.usage = vk::BufferUsageFlagBits::eVertexBuffer,
@@ -23,6 +23,6 @@ struct Vertices {
 		_buffer.destroy(vmalloc);
     }
 
-	dv::Buffer _buffer;
+	Buffer _buffer;
 	uint32_t _count;
 };

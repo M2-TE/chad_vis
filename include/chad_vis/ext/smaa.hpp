@@ -6,7 +6,7 @@
 
 class SMAA {
 public:
-    void init(Device& device, vma::Allocator vmalloc, vk::Extent2D extent, dv::Image& color, dv::DepthStencil& depth_stencil) {
+    void init(Device& device, vma::Allocator vmalloc, vk::Extent2D extent, Image& color, DepthStencil& depth_stencil) {
         init_images(device, vmalloc, extent, color._format);
         init_pipelines(device, extent, color, depth_stencil);
     }
@@ -22,14 +22,14 @@ public:
         _pipe_weights.destroy(device);
         _pipe_edges.destroy(device);
     }
-    void execute(vk::CommandBuffer cmd, dv::Image& color, dv::DepthStencil& depth_stencil) {
-        dv::Image::TransitionInfo info_transition_read {
+    void execute(vk::CommandBuffer cmd, Image& color, DepthStencil& depth_stencil) {
+        Image::TransitionInfo info_transition_read {
             .cmd = cmd,
             .new_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
             .dst_stage = vk::PipelineStageFlagBits2::eFragmentShader,
             .dst_access = vk::AccessFlagBits2::eShaderSampledRead
         };
-        dv::Image::TransitionInfo info_transition_write {
+        Image::TransitionInfo info_transition_write {
             .cmd = cmd,
             .new_layout = vk::ImageLayout::eColorAttachmentOptimal,
             .dst_stage = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
@@ -57,21 +57,21 @@ public:
         _img_output.transition_layout(info_transition_write);
         _pipe_blending.execute(cmd, _img_output, vk::AttachmentLoadOp::eClear);
     }
-    auto get_output() -> dv::Image& {
+    auto get_output() -> Image& {
         return _img_output;
     }
 
 private:
     void init_images(Device& device, vma::Allocator vmalloc, vk::Extent2D extent, vk::Format color_format);
-    void init_pipelines(Device& device, vk::Extent2D extent, dv::Image& color, dv::DepthStencil& depth_stencil);
+    void init_pipelines(Device& device, vk::Extent2D extent, Image& color, DepthStencil& depth_stencil);
     
     // static images
-    dv::Image _img_area;
-    dv::Image _img_search;
+    Image _img_area;
+    Image _img_search;
     // render targets
-    dv::Image _img_edges;
-    dv::Image _img_weights;
-    dv::Image _img_output;
+    Image _img_edges;
+    Image _img_weights;
+    Image _img_output;
     // pipelines
     Graphics _pipe_edges;
     Graphics _pipe_weights;

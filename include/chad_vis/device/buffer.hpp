@@ -2,7 +2,6 @@
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.hpp>
 
-namespace dv {
 struct Buffer {
 	struct CreateInfo {
 		vma::Allocator vmalloc;
@@ -79,4 +78,3 @@ struct Buffer {
 	bool _require_staging;
 	bool _require_flushing;
 };
-} // namespace dv
