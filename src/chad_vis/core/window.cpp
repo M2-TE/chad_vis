@@ -69,7 +69,7 @@ void Window::init(unsigned int width, unsigned int height, std::string name) {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE);
     _glfw_window_p = glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
-    _windowed_resolution = { width, height };
+    _windowed_resolution = vk::Extent2D { width, height };
     if (_glfw_window_p == nullptr) {
         std::println("Failed to create window");
         exit(1);
