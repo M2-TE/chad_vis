@@ -30,6 +30,7 @@ void Swapchain::init(Device& device, Window& window) {
         { vk::Format::eA2R10G10B10UnormPack32,  vk::ColorSpaceKHR::eSrgbNonlinear },
         { vk::Format::eA2B10G10R10UnormPack32,  vk::ColorSpaceKHR::eSrgbNonlinear },
         { vk::Format::eR16G16B16A16Sfloat,      vk::ColorSpaceKHR::eSrgbNonlinear },
+        { vk::Format::eR16G16B16A16Unorm,       vk::ColorSpaceKHR::eSrgbNonlinear },
         { vk::Format::eR8G8B8A8Srgb,            vk::ColorSpaceKHR::eSrgbNonlinear },
         { vk::Format::eB8G8R8A8Srgb,            vk::ColorSpaceKHR::eSrgbNonlinear },
         { vk::Format::eR8G8B8A8Unorm,           vk::ColorSpaceKHR::eSrgbNonlinear },
@@ -207,7 +208,7 @@ void Swapchain::present(Device& device, Image& src_image, vk::Semaphore src_read
         vk::PipelineStageFlagBits::eTopOfPipe, 
         vk::PipelineStageFlagBits::eTopOfPipe 
     };
-    vk::SubmitInfo info_submit {
+    res = device._universal_queue.submit(vk::SubmitInfo {
         .waitSemaphoreCount = (uint32_t)wait_semaphores.size(),
         .pWaitSemaphores = wait_semaphores.data(),
         .pWaitDstStageMask = wait_stages.data(),
@@ -215,8 +216,7 @@ void Swapchain::present(Device& device, Image& src_image, vk::Semaphore src_read
         .pCommandBuffers = &cmd,
         .signalSemaphoreCount = (uint32_t)sign_semaphores.size(),
         .pSignalSemaphores = sign_semaphores.data(),
-    };
-    res = device._universal_queue.submit(info_submit, frame._ready_to_record);
+    }, frame._ready_to_record);
     if (res != vk::Result::eSuccess) std::println("Failed to submit command buffer: {}", vk::to_string(res));
 
     // present swapchain image
