@@ -66,8 +66,10 @@ void Window::init(unsigned int width, unsigned int height, std::string name) {
     _monitors = glfwGetMonitors(&_monitor_count);
     
     // create window for rendering
+    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE);
+    glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
     _glfw_window_p = glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
     _windowed_resolution = vk::Extent2D { width, height };
     if (_glfw_window_p == nullptr) {
@@ -82,6 +84,10 @@ void Window::init(unsigned int width, unsigned int height, std::string name) {
     glfwSetKeyCallback(_glfw_window_p, Input::key_callback);
     glfwSetCursorPosCallback(_glfw_window_p, Input::mouse_position_callback);
     glfwSetMouseButtonCallback(_glfw_window_p, Input::mouse_button_callback);
+    // set window icon
+    std::vector<unsigned char> icon_data(16 * 16 * 4, 0);
+    GLFWimage icon { 16, 16, icon_data.data() };
+    glfwSetWindowIcon(_glfw_window_p, 1, &icon);
 
     // create vulkan surface from window
     VkSurfaceKHR surface;

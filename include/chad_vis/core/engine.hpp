@@ -17,6 +17,7 @@ struct Engine {
 
         // create a window, vulkan surface and instance
         _window.init(1280, 720, "CHAD Visualizer");
+        glfwSetWindowUserPointer(_window._glfw_window_p, this);
 
         // select physical device, then create logical device and its queues
         vk::PhysicalDeviceMaintenance5FeaturesKHR maintenance5 { .maintenance5 = vk::True };

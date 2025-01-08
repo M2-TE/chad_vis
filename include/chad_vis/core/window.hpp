@@ -16,18 +16,16 @@ struct Window {
     auto minimized() -> bool {
         return glfwGetWindowAttrib(_glfw_window_p, GLFW_ICONIFIED);
     }
+    auto maximized() -> bool {
+        return glfwGetWindowAttrib(_glfw_window_p, GLFW_MAXIMIZED);
+    }
     void delay(std::size_t ms) {
         std::this_thread::sleep_for(std::chrono::milliseconds(ms));
     }
     void toggle_window_mode() {
-        _fullscreen = !_fullscreen;
-        if (_fullscreen) {
-            auto mode = glfwGetVideoMode(_monitors[_monitor_i]);
-            glfwSetWindowMonitor(_glfw_window_p, _monitors[_monitor_i], 0, 0, mode->width, mode->height, 0);
-        }
-        else {
-            glfwSetWindowMonitor(_glfw_window_p, nullptr, 0, 0, _windowed_resolution.width, _windowed_resolution.height, 0);
-        }
+        glfwSetWindowAttrib(_glfw_window_p, GLFW_DECORATED, GLFW_FALSE);
+        if (maximized()) glfwRestoreWindow(_glfw_window_p);
+        else glfwMaximizeWindow(_glfw_window_p);
     }
     
     vk::Instance _instance;
@@ -39,5 +37,4 @@ struct Window {
     int _monitor_i = 0;
     // window state
     vk::Extent2D _windowed_resolution;
-    bool _fullscreen = false;
 };
