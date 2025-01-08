@@ -10,7 +10,7 @@
 
 class Renderer {
 public:
-    void init(Device& device, vma::Allocator vmalloc, Scene& scene, vk::Extent2D extent) {
+    void init(Device& device, vma::Allocator vmalloc, Scene& scene, vk::Extent2D extent, bool srgb_output) {
         // allocate single command pool and buffer pair
         _command_pool = device._logical.createCommandPool({ .queueFamilyIndex = device._universal_i });
         vk::CommandBufferAllocateInfo bufferInfo {
@@ -30,7 +30,7 @@ public:
         
         // create images and pipelines
         init_images(device, vmalloc, extent);
-        init_pipelines(device, extent, scene);
+        init_pipelines(device, extent, scene, srgb_output);
         _smaa.init(device, vmalloc, extent, _color, _depth_stencil);
     }
     void destroy(Device& device, vma::Allocator vmalloc) {
@@ -40,8 +40,8 @@ public:
         _storage.destroy(device, vmalloc);
         _depth_stencil.destroy(device, vmalloc);
         // destroy pipelines
-        _pipe_wip.destroy(device);
         _pipe_default.destroy(device);
+        _pipe_tone.destroy(device);
         // destroy command pools
         device._logical.destroyCommandPool(_command_pool);
         // destroy synchronization objects
@@ -50,9 +50,9 @@ public:
         device._logical.destroySemaphore(_ready_to_read);
     }
     
-    void resize(Device& device, vma::Allocator vmalloc, Scene& scene, vk::Extent2D extent) {
+    void resize(Device& device, vma::Allocator vmalloc, Scene& scene, vk::Extent2D extent, bool srgb_output) {
         destroy(device, vmalloc);
-        init(device, vmalloc, scene, extent);
+        init(device, vmalloc, scene, extent, srgb_output);
     }
     // record command buffer and submit it to the universal queue. wait() needs to have been called before this
     void render(Device& device, Swapchain& swapchain, Scene& scene) {
@@ -61,9 +61,6 @@ public:
         vk::CommandBuffer cmd = _command_buffer;
         cmd.begin({ .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
         execute_pipes(cmd, scene);
-
-        // optionally run SMAA
-        if (_smaa_enabled) _smaa.execute(cmd, _color, _depth_stencil);
         cmd.end();
 
         // submit command buffer
@@ -80,8 +77,7 @@ public:
         device._universal_queue.submit(info_submit, _ready_to_record);
 
         // present drawn image
-        Image& _final_image = _smaa_enabled ? _smaa.get_output() : _color;
-        swapchain.present(device, _final_image, _ready_to_read, _ready_to_write);
+        swapchain.present(device, _storage, _ready_to_read, _ready_to_write);
     }
     // wait until device buffers are no longer in use and the command buffers can be recorded again
     void wait(Device& device) {
@@ -110,13 +106,14 @@ private:
             .extent { extent.width, extent.height, 1 },
             .usage = 
                 vk::ImageUsageFlagBits::eTransferSrc |
+                vk::ImageUsageFlagBits::eTransferDst |
                 vk::ImageUsageFlagBits::eStorage,
             .priority = 1.0f,
         });
         // create depth stencil with depth/stencil format picked by driver
         _depth_stencil.init(device, vmalloc, { extent.width, extent.height, 1 });
     }
-    void init_pipelines(Device& device, vk::Extent2D extent, Scene& scene) {
+    void init_pipelines(Device& device, vk::Extent2D extent, Scene& scene, bool srgb_output) {
         // create graphics pipelines
         _pipe_default.init({
             .device = device,
@@ -133,56 +130,26 @@ private:
                 vk::DynamicState::eCullMode,
             },
         });
-        // write camera descriptor to pipelines
         _pipe_default.write_descriptor(device, 0, 0, scene._camera._buffer, vk::DescriptorType::eUniformBuffer);
         
-        // create main compute pipeline
-        glm::uvec2 image_size = { extent.width, extent.height };
-        std::array<vk::SpecializationMapEntry, 2> image_spec_entries {
+        // create sRGB conversion pipeline
+        uint32_t srgb = (uint32_t)srgb_output;
+        std::vector<vk::SpecializationMapEntry> image_spec_entries {
             vk::SpecializationMapEntry { .constantID = 0, .offset = 0, .size = 4 },
-            vk::SpecializationMapEntry { .constantID = 1, .offset = 4, .size = 4 },
         };
-        _pipe_wip.init({
+        _pipe_tone.init({
             .device = device,
-            .cs_path = "defaults/gradient.comp",
+            .cs_path = "defaults/tone_mapping.comp",
             .spec_info {
-                .mapEntryCount = image_spec_entries.size(),
+                .mapEntryCount = (uint32_t)image_spec_entries.size(),
                 .pMapEntries = image_spec_entries.data(),
-                .dataSize = sizeof(image_size),
-                .pData = &image_size
+                .dataSize = sizeof(srgb),
+                .pData = &srgb,
             }
         });
-        _pipe_wip.write_descriptor(device, 0, 0, _storage, vk::DescriptorType::eStorageImage);
+        _pipe_tone.write_descriptor(device, 0, 0, _storage, vk::DescriptorType::eStorageImage);
     }
     void execute_pipes(vk::CommandBuffer cmd, Scene& scene) {
-        // prepare for storage via compute shader
-        _storage.transition_layout({
-            .cmd = cmd,
-            .new_layout = vk::ImageLayout::eGeneral,
-            .dst_stage = vk::PipelineStageFlagBits2::eComputeShader,
-            .dst_access = vk::AccessFlagBits2::eShaderWrite
-        });
-
-        // execute main compute pipeline
-        uint32_t nx = std::ceil(_storage._extent.width / 8.0);
-        uint32_t ny = std::ceil(_storage._extent.height / 8.0);
-        _pipe_wip.execute(cmd, nx, ny, 1);
-
-        // blit storage image to color image
-        _storage.transition_layout({
-            .cmd = cmd,
-            .new_layout = vk::ImageLayout::eTransferSrcOptimal,
-            .dst_stage = vk::PipelineStageFlagBits2::eBlit,
-            .dst_access = vk::AccessFlagBits2::eTransferRead
-        });
-        _color.transition_layout({
-            .cmd = cmd,
-            .new_layout = vk::ImageLayout::eTransferDstOptimal,
-            .dst_stage = vk::PipelineStageFlagBits2::eBlit,
-            .dst_access = vk::AccessFlagBits2::eTransferWrite
-        });
-        _color.blit(cmd, _storage);
-
         // draw scene data
         _color.transition_layout({
             .cmd = cmd,
@@ -195,7 +162,35 @@ private:
             .dst_stage = vk::PipelineStageFlagBits2::eEarlyFragmentTests,
             .dst_access = vk::AccessFlagBits2::eDepthStencilAttachmentRead | vk::AccessFlagBits2::eDepthStencilAttachmentWrite});
         cmd.setCullMode(vk::CullModeFlagBits::eNone); // no culling needed here
-        _pipe_default.execute(cmd, _color, vk::AttachmentLoadOp::eLoad, _depth_stencil, vk::AttachmentLoadOp::eClear, scene._mesh._mesh);
+        _pipe_default.execute(cmd, _color, vk::AttachmentLoadOp::eClear, _depth_stencil, vk::AttachmentLoadOp::eClear, scene._mesh._mesh);
+
+        // optionally run SMAA
+        if (_smaa_enabled) _smaa.execute(cmd, _color, _depth_stencil);
+
+        // convert from linear to srgb
+        Image& final_image = _smaa_enabled ? _smaa.get_output() : _color;
+        final_image.transition_layout({
+            .cmd = cmd,
+            .new_layout = vk::ImageLayout::eTransferSrcOptimal,
+            .dst_stage = vk::PipelineStageFlagBits2::eBlit,
+            .dst_access = vk::AccessFlagBits2::eTransferRead
+        });
+        _storage.transition_layout({
+            .cmd = cmd,
+            .new_layout = vk::ImageLayout::eTransferDstOptimal,
+            .dst_stage = vk::PipelineStageFlagBits2::eBlit,
+            .dst_access = vk::AccessFlagBits2::eTransferWrite
+        });
+        _storage.blit(cmd, final_image);
+        _storage.transition_layout({
+            .cmd = cmd,
+            .new_layout = vk::ImageLayout::eGeneral,
+            .dst_stage = vk::PipelineStageFlagBits2::eComputeShader,
+            .dst_access = vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite
+        });
+        uint32_t nx = std::ceil(_storage._extent.width / 8.0);
+        uint32_t ny = std::ceil(_storage._extent.height / 8.0);
+        _pipe_tone.execute(cmd, nx, ny, 1);
     }
 
 private:
@@ -211,8 +206,8 @@ private:
     Image _color;
     Image _storage;
     // pipelines
-    Compute _pipe_wip;
     Graphics _pipe_default;
+    Compute _pipe_tone;
     SMAA _smaa;
     bool _smaa_enabled = true;
 };

@@ -165,20 +165,22 @@ void Image::blit(vk::CommandBuffer cmd, Image& src_image) {
             .baseArrayLayer = 0,
             .layerCount = 1,
         },
-        .srcOffsets = std::array<vk::Offset3D, 2>{ 
-            vk::Offset3D(), 
-            vk::Offset3D(src_image._extent.width, src_image._extent.height, 1) },
+        .srcOffsets ={{ 
+            vk::Offset3D(0, 0, 0), 
+            vk::Offset3D(src_image._extent.width, src_image._extent.height, 1)
+        }},
         .dstSubresource { 
             .aspectMask = _aspects,
             .mipLevel = 0,
             .baseArrayLayer = 0,
             .layerCount = 1,
         },
-        .dstOffsets = std::array<vk::Offset3D, 2>{ 
-            vk::Offset3D(), 
-            vk::Offset3D(_extent.width, _extent.height, 1) },
+        .dstOffsets {{
+            vk::Offset3D(0, 0, 0), 
+            vk::Offset3D(_extent.width, _extent.height, 1)
+        }},
     };
-    vk::BlitImageInfo2 info_blit {
+    cmd.blitImage2({
         .srcImage = src_image._image,
         .srcImageLayout = vk::ImageLayout::eTransferSrcOptimal,
         .dstImage = _image,
@@ -186,8 +188,7 @@ void Image::blit(vk::CommandBuffer cmd, Image& src_image) {
         .regionCount = 1,
         .pRegions = &region,
         .filter = vk::Filter::eLinear,
-    };
-    cmd.blitImage2(info_blit);
+    });
 }
 
 void DepthBuffer::init(Device& device, vma::Allocator vmalloc, vk::Extent3D extent) {

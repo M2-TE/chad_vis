@@ -17,7 +17,6 @@ struct Grid {
 			file.read(reinterpret_cast<char*>(&voxelsize), sizeof(float));
 			file.read(reinterpret_cast<char*>(&query_points_n), sizeof(std::size_t));
 			file.read(reinterpret_cast<char*>(&cells_n), sizeof(std::size_t));
-            std::println("voxelsize of: {} with {} query points and {} cells", voxelsize, query_points_n, cells_n);
             
 			// alloc and read query points
 			std::vector<QueryPoint> query_points;

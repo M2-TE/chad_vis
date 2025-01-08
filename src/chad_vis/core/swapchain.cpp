@@ -27,14 +27,14 @@ void Swapchain::init(Device& device, Window& window) {
     //     std::println("Available format: {}, {}", vk::to_string(format.format), vk::to_string(format.colorSpace));
     // }
     std::vector<vk::SurfaceFormatKHR> preferred_formats = {
-        { vk::Format::eA2R10G10B10UnormPack32,  vk::ColorSpaceKHR::eSrgbNonlinear },
-        { vk::Format::eA2B10G10R10UnormPack32,  vk::ColorSpaceKHR::eSrgbNonlinear },
-        { vk::Format::eR16G16B16A16Sfloat,      vk::ColorSpaceKHR::eSrgbNonlinear },
-        { vk::Format::eR16G16B16A16Unorm,       vk::ColorSpaceKHR::eSrgbNonlinear },
-        { vk::Format::eR8G8B8A8Srgb,            vk::ColorSpaceKHR::eSrgbNonlinear },
-        { vk::Format::eB8G8R8A8Srgb,            vk::ColorSpaceKHR::eSrgbNonlinear },
-        { vk::Format::eR8G8B8A8Unorm,           vk::ColorSpaceKHR::eSrgbNonlinear },
-        { vk::Format::eB8G8R8A8Unorm,           vk::ColorSpaceKHR::eSrgbNonlinear },
+        { vk::Format::eA2R10G10B10UnormPack32, vk::ColorSpaceKHR::eSrgbNonlinear },
+        { vk::Format::eA2B10G10R10UnormPack32, vk::ColorSpaceKHR::eSrgbNonlinear },
+        { vk::Format::eR16G16B16A16Sfloat,     vk::ColorSpaceKHR::eSrgbNonlinear },
+        { vk::Format::eR16G16B16A16Unorm,      vk::ColorSpaceKHR::eSrgbNonlinear },
+        { vk::Format::eR8G8B8A8Srgb,           vk::ColorSpaceKHR::eSrgbNonlinear },
+        { vk::Format::eB8G8R8A8Srgb,           vk::ColorSpaceKHR::eSrgbNonlinear },
+        { vk::Format::eR8G8B8A8Unorm,          vk::ColorSpaceKHR::eSrgbNonlinear },
+        { vk::Format::eB8G8R8A8Unorm,          vk::ColorSpaceKHR::eSrgbNonlinear },
     };
     _format = available_formats.front().format;
     vk::ColorSpaceKHR color_space = available_formats.front().colorSpace;
@@ -45,6 +45,8 @@ void Swapchain::init(Device& device, Window& window) {
             break;
         }
     }
+    if (_format == vk::Format::eR8G8B8A8Srgb || _format == vk::Format::eB8G8R8A8Srgb) _srgb_required = false;
+    else _srgb_required = true;
 
     // pick present mode
     auto available_present_modes_res = device._physical.getSurfacePresentModesKHR(window._surface);
@@ -116,11 +118,10 @@ void Swapchain::init(Device& device, Window& window) {
         _sync_frames[i].init(device);
     }
     _resize_requested = false;
-    std::println("Swapchain created: {}x{}, {}, {}, {}",
+    std::println("Swapchain created: {}, {}x{}, {}",
+        vk::to_string(present_mode),
         _extent.width, _extent.height,
-        vk::to_string(_format),
-        vk::to_string(color_space),
-        vk::to_string(present_mode));
+        vk::to_string(_format));
 }
 void Swapchain::destroy(Device& device) {
     if (_images.size() > 0) device._logical.destroySwapchainKHR(_swapchain);

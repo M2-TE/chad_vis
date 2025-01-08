@@ -16,6 +16,7 @@ struct Swapchain {
     vk::Extent2D _extent;
     vk::Format _format;
     bool _resize_requested;
+    bool _srgb_required;
 
 private:
     struct SyncFrame {

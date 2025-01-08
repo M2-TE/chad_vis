@@ -1,0 +1,24 @@
+#version 460
+
+layout(set = 0, binding = 0, rgba16f) uniform image2D image;
+layout(constant_id = 0) const uint image_srgb = 1; // boolean
+
+float linear_to_srgb (float col_linear) {
+  return col_linear <= 0.0031308
+       ? col_linear * 12.92
+       : pow(col_linear, 1.0/2.4) * 1.055 - 0.055;
+}
+vec3 linear_to_srgb (vec3 col_linear) {
+    col_linear.r = linear_to_srgb(col_linear.r);
+    col_linear.g = linear_to_srgb(col_linear.g);
+    col_linear.b = linear_to_srgb(col_linear.b);
+    return col_linear;
+}
+
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+void main() {
+    ivec2 uv = ivec2(gl_GlobalInvocationID.xy);
+    vec4 color = imageLoad(image, uv);
+    if (image_srgb > 0) color.rgb = linear_to_srgb(color.rgb);
+    imageStore(image, uv, color);
+}

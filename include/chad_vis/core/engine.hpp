@@ -160,8 +160,8 @@ private:
     void handle_resize() {
         _device._logical.waitIdle();
         _scene._camera.resize(_window.size());
-        _renderer.resize(_device, _vmalloc, _scene, _window.size());
         _swapchain.resize(_device, _window);
+        _renderer.resize(_device, _vmalloc, _scene, _window.size(), _swapchain._srgb_required);
     }
 
     vma::Allocator _vmalloc;
