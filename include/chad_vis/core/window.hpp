@@ -23,9 +23,14 @@ struct Window {
         std::this_thread::sleep_for(std::chrono::milliseconds(ms));
     }
     void toggle_window_mode() {
-        glfwSetWindowAttrib(_glfw_window_p, GLFW_DECORATED, GLFW_FALSE);
-        if (maximized()) glfwRestoreWindow(_glfw_window_p);
-        else glfwMaximizeWindow(_glfw_window_p);
+        if (maximized()) {
+            glfwSetWindowAttrib(_glfw_window_p, GLFW_DECORATED, GLFW_TRUE);
+            glfwRestoreWindow(_glfw_window_p);
+        }
+        else {
+            glfwSetWindowAttrib(_glfw_window_p, GLFW_DECORATED, GLFW_FALSE);
+            glfwMaximizeWindow(_glfw_window_p);
+        }
     }
     
     vk::Instance _instance;

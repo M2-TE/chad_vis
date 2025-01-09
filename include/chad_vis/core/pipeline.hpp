@@ -340,7 +340,7 @@ struct Graphics: public PipelineBase {
 			.resolveMode = 	vk::ResolveModeFlagBits::eNone,
 			.loadOp = depth_stencil_load,
 			.storeOp = vk::AttachmentStoreOp::eStore,
-			.clearValue = { .depthStencil { .depth = 1.0f, .stencil = 0 } },
+			.clearValue { .depthStencil { .depth = 1.0f, .stencil = 0 } },
 		};
 		vk::RenderingInfo info_render {
 			.renderArea = _render_area,
