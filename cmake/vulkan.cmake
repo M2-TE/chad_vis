@@ -1,13 +1,13 @@
 FetchContent_Declare(vulkan-headers
     GIT_REPOSITORY "https://github.com/KhronosGroup/Vulkan-Headers.git"
-    GIT_TAG "v1.4.303"
+    GIT_TAG "v1.4.304"
     GIT_SHALLOW ON
     OVERRIDE_FIND_PACKAGE
     EXCLUDE_FROM_ALL
     SYSTEM)
 FetchContent_Declare(vulkan-hpp
     GIT_REPOSITORY "https://github.com/KhronosGroup/Vulkan-Hpp.git"
-    GIT_TAG "v1.4.303"
+    GIT_TAG "v1.4.304"
     GIT_SHALLOW ON
     GIT_SUBMODULES ""
     SOURCE_SUBDIR "disabled" # the way they fetch vulkan headers is a bit messy
@@ -25,7 +25,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     "VULKAN_HPP_NO_SMART_HANDLE"
     "VULKAN_HPP_NO_SPACESHIP_OPERATOR"
     "VULKAN_HPP_NO_PROTOTYPES"
-    "VULKAN_HPP_TYPESAFE_CONVERSION=1"
+    "VULKAN_HPP_TYPESAFE_CONVERSION=0"
     "VULKAN_HPP_DISPATCH_LOADER_DYNAMIC")
 
 # create vk_layer_settings.txt for validation layers
