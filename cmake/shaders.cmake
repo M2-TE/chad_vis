@@ -28,7 +28,7 @@ set(SPVRC_SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets/shaders/")
 set(SPVRC_SHADER_ENV "vulkan1.3")
 FetchContent_Declare(spvrc
     GIT_REPOSITORY "https://github.com/M2-TE/spvrc.git"
-    GIT_TAG "v1.0.1"
+    GIT_TAG "v1.0.2"
     GIT_SHALLOW ON
     OVERRIDE_FIND_PACKAGE
     EXCLUDE_FROM_ALL
