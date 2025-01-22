@@ -309,6 +309,7 @@ struct Graphics: public PipelineBase {
 			.pDynamicState = &info_dynamic_state,
 			.layout = _pipeline_layout,
 		};
+
 		auto [result, pipeline] = info.device._logical.createGraphicsPipeline(nullptr, pipeInfo);
 		if (result != vk::Result::eSuccess) std::println("error creating graphics pipeline");
 		_pipeline = pipeline;

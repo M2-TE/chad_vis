@@ -7,7 +7,7 @@ FetchContent_Declare(vulkanmemoryallocator
     SYSTEM)
 FetchContent_Declare(vulkanmemoryallocator-hpp
     GIT_REPOSITORY "https://github.com/YaaZ/VulkanMemoryAllocator-Hpp.git"
-    GIT_TAG "5e2b0bebc2f03bc255a1754d4dba135f5971eda8"
+    GIT_TAG "4fcfec043b12629f934f4d542aedeedaa12a101e"
     # GIT_TAG "v3.1.0"
     # GIT_SHALLOW ON
     GIT_SUBMODULES ""

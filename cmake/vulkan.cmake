@@ -1,16 +1,14 @@
-set(VULKAN_HPP_GENERATOR_BUILD OFF)
 FetchContent_Declare(vulkan-headers
     GIT_REPOSITORY "https://github.com/KhronosGroup/Vulkan-Headers.git"
-    GIT_TAG "v1.4.304"
+    GIT_TAG "v1.4.305"
     GIT_SHALLOW ON
     OVERRIDE_FIND_PACKAGE
     EXCLUDE_FROM_ALL
     SYSTEM)
 FetchContent_Declare(vulkan-hpp
     GIT_REPOSITORY "https://github.com/KhronosGroup/Vulkan-Hpp.git"
-    GIT_TAG "ce439adae242d54d2e10425ce103bad895dde291"
-    # GIT_TAG "v1.4.304"
-    # GIT_SHALLOW ON
+    GIT_TAG "v1.4.305"
+    GIT_SHALLOW ON
     GIT_SUBMODULES ""
     OVERRIDE_FIND_PACKAGE
     EXCLUDE_FROM_ALL

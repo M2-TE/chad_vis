@@ -217,28 +217,31 @@ auto create_logical(const Device::CreateInfo& info, vk::PhysicalDevice physical_
         *tail_pp = &features_vk13;
         tail_pp = &features_vk13.pNext;
     }
+    
+    // keep track of optional extensions via set
+    std::set<const char*> optional_extensions;
+    optional_extensions.insert(info._optional_extensions.cbegin(), info._optional_extensions.cend());
 
-    // enable optional extensions if available
-    auto extensions = info._required_extensions;
+    // simple optional extensions without device features
     auto available_extensions = physical_device.enumerateDeviceExtensionProperties();
-    for (const char* ext: info._optional_extensions) {
-        for (auto& available: available_extensions) {
-            if (strcmp(ext, available.extensionName) == 0) {
-                extensions.push_back(ext);
-                break;
-            }
-        }
+    for (auto& ext: info._optional_extensions) {
+        if (!check_extension(physical_device, ext)) continue;
+        optional_extensions.insert(ext);
     }
 
-    // chain additional features if their extensions are available
+    // optional features accompanied by their extension
     for (auto& [feature_void_p, ext]: info._optional_features) {
-        if (check_extension(physical_device, ext)) {
-            // simply reinterpret to get the pNext member
-            vk::PhysicalDeviceFeatures2* feature_p = reinterpret_cast<vk::PhysicalDeviceFeatures2*>(feature_void_p);
-            *tail_pp = feature_p;
-            tail_pp = &feature_p->pNext;
-        }
+        if (!check_extension(physical_device, ext)) continue;
+        auto* feature_p = reinterpret_cast<vk::PhysicalDeviceFeatures2*>(feature_void_p);
+        *tail_pp = feature_p;
+        tail_pp = &feature_p->pNext;
+        optional_extensions.insert(ext);
     }
+
+    // write extensions to vector
+    std::vector<const char*> extensions;
+    extensions.insert(extensions.end(), info._required_extensions.cbegin(), info._required_extensions.cend());
+    extensions.insert(extensions.end(), optional_extensions.cbegin(), optional_extensions.cend());
     
     // tally unique queues
     std::map<uint32_t, uint32_t> queue_counts;

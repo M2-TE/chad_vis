@@ -33,10 +33,7 @@ struct Engine {
                 vk::KHRSwapchainExtensionName,
             },
             ._optional_extensions {
-                vk::KHRMaintenance5ExtensionName,
                 vk::EXTMemoryBudgetExtensionName,
-                vk::EXTMemoryPriorityExtensionName,
-                vk::EXTPageableDeviceLocalMemoryExtensionName,
             },
             ._required_features {
             },
@@ -69,7 +66,6 @@ struct Engine {
                 vma::AllocatorCreateFlagBits::eKhrMaintenance5 |
                 vma::AllocatorCreateFlagBits::eExtMemoryBudget |
                 vma::AllocatorCreateFlagBits::eExtMemoryPriority |
-                vma::AllocatorCreateFlagBits::eBufferDeviceAddress |
                 vma::AllocatorCreateFlagBits::eKhrDedicatedAllocation,
             .physicalDevice = _device._physical,
             .device = _device._logical,
