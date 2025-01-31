@@ -134,9 +134,13 @@ bool check_presentation(vk::PhysicalDevice physical_device, vk::SurfaceKHR surfa
 bool check_extension(vk::PhysicalDevice physical_device, const char* extension_name) {
     auto available_extensions = physical_device.enumerateDeviceExtensionProperties();
     for (auto& available: available_extensions) {
-        if (strcmp(extension_name, available.extensionName) == 0) {
-            return true;
-        }
+        if (strcmp(extension_name, available.extensionName) == 0) return true;
+    }
+    return false;
+}
+bool check_extension(std::vector<vk::ExtensionProperties>& available_extensions, const char* extension_name) {
+    for (auto& available: available_extensions) {
+        if (strcmp(extension_name, available.extensionName) == 0) return true;
     }
     return false;
 }
@@ -219,29 +223,28 @@ auto create_logical(const Device::CreateInfo& info, vk::PhysicalDevice physical_
     }
     
     // keep track of optional extensions via set
-    std::set<const char*> optional_extensions;
-    optional_extensions.insert(info._optional_extensions.cbegin(), info._optional_extensions.cend());
+    std::set<const char*> extension_set;
+    auto available_extensions = physical_device.enumerateDeviceExtensionProperties();
 
     // simple optional extensions without device features
-    auto available_extensions = physical_device.enumerateDeviceExtensionProperties();
     for (auto& ext: info._optional_extensions) {
-        if (!check_extension(physical_device, ext)) continue;
-        optional_extensions.insert(ext);
+        if (!check_extension(available_extensions, ext)) continue;
+        extension_set.insert(ext);
     }
 
     // optional features accompanied by their extension
     for (auto& [feature_void_p, ext]: info._optional_features) {
-        if (!check_extension(physical_device, ext)) continue;
+        if (!check_extension(available_extensions, ext)) continue;
         auto* feature_p = reinterpret_cast<vk::PhysicalDeviceFeatures2*>(feature_void_p);
         *tail_pp = feature_p;
         tail_pp = &feature_p->pNext;
-        optional_extensions.insert(ext);
+        extension_set.insert(ext);
     }
 
     // write extensions to vector
     std::vector<const char*> extensions;
     extensions.insert(extensions.end(), info._required_extensions.cbegin(), info._required_extensions.cend());
-    extensions.insert(extensions.end(), optional_extensions.cbegin(), optional_extensions.cend());
+    extensions.insert(extensions.end(), extension_set.cbegin(), extension_set.cend());
     
     // tally unique queues
     std::map<uint32_t, uint32_t> queue_counts;
@@ -277,7 +280,6 @@ void Device::init(const Device::CreateInfo& info) {
     // create logical device from physical
     auto queue_families = get_queue_families(_physical);
     _logical = create_logical(info, _physical, queue_families);
-    VULKAN_HPP_DEFAULT_DISPATCHER.init(_logical);
 
     // assign queue families
     _universal_i = queue_families[0];

@@ -13,11 +13,13 @@
 struct Engine {
     void init() {
         // dynamic dispatcher init 1/3
-        VULKAN_HPP_DEFAULT_DISPATCHER.init();
+        vk::detail::defaultDispatchLoaderDynamic.init();
+        
 
         // create a window, vulkan surface and instance
         _window.init(1280, 720, "CHAD Visualizer");
-        glfwSetWindowUserPointer(_window._glfw_window_p, this);
+        // dynamic dispatcher init 2/3
+        vk::detail::defaultDispatchLoaderDynamic.init(_window._instance);
 
         // select physical device, then create logical device and its queues
         vk::PhysicalDeviceMaintenance5FeaturesKHR maintenance5 { .maintenance5 = vk::True };
@@ -53,11 +55,13 @@ struct Engine {
                 {&pageable_memory, vk::EXTPageableDeviceLocalMemoryExtensionName},
             }
         });
+        // dynamic dispatcher init 3/3
+        vk::detail::defaultDispatchLoaderDynamic.init(_device._logical);
 
         // create vulkan memory allocator
         vma::VulkanFunctions vk_funcs {
-            .vkGetInstanceProcAddr = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetInstanceProcAddr,
-            .vkGetDeviceProcAddr = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetDeviceProcAddr,
+            .vkGetInstanceProcAddr = vk::detail::defaultDispatchLoaderDynamic.vkGetInstanceProcAddr,
+            .vkGetDeviceProcAddr = vk::detail::defaultDispatchLoaderDynamic.vkGetDeviceProcAddr,
         };
         vma::AllocatorCreateInfo info_vmalloc {
             .flags =

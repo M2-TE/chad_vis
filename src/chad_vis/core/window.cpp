@@ -6,7 +6,7 @@ void static error_callback(int error, const char* description) {
 }
 void Window::init(unsigned int width, unsigned int height, std::string name) {
     // initialize GLFW
-    glfwInitVulkanLoader(VULKAN_HPP_DEFAULT_DISPATCHER.vkGetInstanceProcAddr);
+    glfwInitVulkanLoader(vk::detail::defaultDispatchLoaderDynamic.vkGetInstanceProcAddr);
     if (!glfwInit()) {
         std::println("Failed to initialize GLFW");
         exit(1);
@@ -60,7 +60,6 @@ void Window::init(unsigned int width, unsigned int height, std::string name) {
         .ppEnabledExtensionNames = extensions_required,
     };
     _instance = vk::createInstance(info_instance);
-    VULKAN_HPP_DEFAULT_DISPATCHER.init(_instance);
 
     // build list of monitors and video modes of the first (primary) monitor
     _monitors = glfwGetMonitors(&_monitor_count);

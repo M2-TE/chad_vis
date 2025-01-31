@@ -1,20 +1,14 @@
-FetchContent_Declare(vulkan-headers
-    GIT_REPOSITORY "https://github.com/KhronosGroup/Vulkan-Headers.git"
-    GIT_TAG "v1.4.305"
-    GIT_SHALLOW ON
-    OVERRIDE_FIND_PACKAGE
-    EXCLUDE_FROM_ALL
-    SYSTEM)
 FetchContent_Declare(vulkan-hpp
     GIT_REPOSITORY "https://github.com/KhronosGroup/Vulkan-Hpp.git"
-    GIT_TAG "v1.4.305"
+    GIT_TAG "v1.4.306"
     GIT_SHALLOW ON
-    GIT_SUBMODULES ""
+    GIT_SUBMODULES "Vulkan-Headers"
+    GIT_PROGRESS ON
     OVERRIDE_FIND_PACKAGE
     EXCLUDE_FROM_ALL
     SYSTEM)
-FetchContent_MakeAvailable(vulkan-headers vulkan-hpp)
-target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::Headers Vulkan::Hpp)
+FetchContent_MakeAvailable(vulkan-hpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::Hpp)
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     "VK_NO_PROTOTYPES"
     "VULKAN_HPP_NO_SETTERS"
@@ -24,12 +18,13 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     "VULKAN_HPP_NO_SPACESHIP_OPERATOR"
     "VULKAN_HPP_NO_PROTOTYPES"
     "VULKAN_HPP_TYPESAFE_CONVERSION=0"
-    "VULKAN_HPP_DISPATCH_LOADER_DYNAMIC")
+    "VULKAN_HPP_DISPATCH_LOADER_DYNAMIC"
+    "VULKAN_HPP_ENABLE_DYNAMIC_LOADER_TOOL=1")
 
 # create vk_layer_settings.txt for validation layers
 get_target_property(VALIDATION_LAYER_OVERRIDE_FOLDER ${PROJECT_NAME} RUNTIME_OUTPUT_DIRECTORY)
 file(MAKE_DIRECTORY "${VALIDATION_LAYER_OVERRIDE_FOLDER}")
-FILE(WRITE "${VALIDATION_LAYER_OVERRIDE_FOLDER}/vk_layer_settings.txt"
+file(WRITE "${VALIDATION_LAYER_OVERRIDE_FOLDER}/vk_layer_settings.txt"
 "# Enable core validation
 khronos_validation.validate_core = true
 

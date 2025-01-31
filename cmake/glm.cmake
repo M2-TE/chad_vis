@@ -1,13 +1,14 @@
 # query SIMD support
-FetchContent_Declare(libsimdpp
-    GIT_REPOSITORY "https://github.com/p12tic/libsimdpp.git"
-    GIT_TAG "v2.1"
-    GIT_SHALLOW ON
-    SOURCE_SUBDIR "disabled")
-FetchContent_MakeAvailable(libsimdpp)
-list(APPEND CMAKE_MODULE_PATH "${libsimdpp_SOURCE_DIR}/cmake/")
-include(SimdppMultiarch)
-simdpp_get_runnable_archs(ARCHS)
+# FetchContent_Declare(libsimdpp
+#     GIT_REPOSITORY "https://github.com/p12tic/libsimdpp.git"
+#     GIT_TAG "v2.1"
+#     GIT_SHALLOW ON
+#     SOURCE_SUBDIR "disabled")
+# FetchContent_MakeAvailable(libsimdpp)
+# list(APPEND CMAKE_MODULE_PATH "${libsimdpp_SOURCE_DIR}/cmake/")
+# include(SimdppMultiarch)
+# simdpp_get_runnable_archs(ARCHS)
+
 # use SIMD support info to configure glm
 set(GLM_ENABLE_SIMD_SSE2   ${CAN_RUN_X86_SSE2})
 set(GLM_ENABLE_SIMD_SSE3   ${CAN_RUN_X86_SSE3})
@@ -18,7 +19,9 @@ set(GLM_ENABLE_SIMD_AVX    ${CAN_RUN_X86_AVX})
 set(GLM_ENABLE_SIMD_AVX2   ${CAN_RUN_X86_AVX2})
 
 # standard glm options
-if(${CMAKE_CXX_STANDARD} GREATER_EQUAL 20)
+if(${CMAKE_CXX_STANDARD} GREATER_EQUAL 23)
+    set(GLM_ENABLE_CXX_23 ON)
+elseif(${CMAKE_CXX_STANDARD} GREATER_EQUAL 20)
     set(GLM_ENABLE_CXX_20 ON)
 elseif(${CMAKE_CXX_STANDARD} EQUAL 17)
     set(GLM_ENABLE_CXX_17 ON)
