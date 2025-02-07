@@ -5,7 +5,6 @@ set(CMAKE_POLICY_DEFAULT_CMP0077 NEW) # disallow option() from overwriting set()
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
-set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
 # cmake settings
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -48,13 +47,6 @@ elseif(UNIX)
     if (MOLD_FOUND)
         message(STATUS "Linker: mold found")
         set(CMAKE_LINKER_TYPE MOLD)
-    endif()
-    # enable ccache if present
-    find_program(CCACHE_FOUND ccache)
-    if (CCACHE_FOUND)
-        message(STATUS "Compiler: ccache found")
-        set(CMAKE_C_COMPILER_LAUNCHER ccache)
-        set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
     endif()
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")

@@ -3,7 +3,6 @@ FetchContent_Declare(vulkan-hpp
     GIT_TAG "v1.4.306"
     GIT_SHALLOW ON
     GIT_SUBMODULES "Vulkan-Headers"
-    GIT_PROGRESS ON
     OVERRIDE_FIND_PACKAGE
     EXCLUDE_FROM_ALL
     SYSTEM)
