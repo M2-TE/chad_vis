@@ -51,7 +51,7 @@ export template<typename Vertex> struct Vertices {
 	uint32_t _count;
 };
 
-export template<typename Vertex, typename Index = uint16_t>  struct Mesh {
+export template<typename Vertex, typename Index = uint16_t> struct Mesh {
     void init(vma::Allocator vmalloc, std::span<Vertex> vertices, std::span<Index> indices) {
         _vertices.init(vmalloc, vertices);
         _indices.init(vmalloc, indices);

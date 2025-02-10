@@ -76,7 +76,6 @@ Engine::Engine() {
         }
     });
     
-    // TODO: dynamically check this on resource creation
     // set global properties relying on current device capabilities
     DepthBuffer::set_format(_device._physical);
     DepthStencil::set_format(_device._physical);
