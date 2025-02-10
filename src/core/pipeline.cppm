@@ -15,60 +15,10 @@ import image;
 import mesh;
 
 struct PipelineBase {
-    typedef std::vector<std::tuple<uint32_t /*set*/, uint32_t /*binding*/, vk::SamplerCreateInfo>> SamplerInfos; // TODO: deprecate
-    void destroy(Device& device) {
-        device._logical.destroyPipeline(_pipeline);
-        device._logical.destroyPipelineLayout(_pipeline_layout);
-
-        for (auto& layout: _desc_set_layouts) device._logical.destroyDescriptorSetLayout(layout);
-        for (auto& sampler: _immutable_samplers) device._logical.destroySampler(sampler);
-        device._logical.destroyDescriptorPool(_pool);
-        _desc_sets.clear();
-        _desc_set_layouts.clear();
-        _immutable_samplers.clear();
-    }
-    void write_descriptor(Device& device, uint32_t set, uint32_t binding, Image& image, vk::DescriptorType type, vk::Sampler sampler = nullptr) {
-        vk::DescriptorImageInfo info_image {
-            .sampler = sampler,
-            .imageView = image._view,
-        };
-        switch (type) {
-            case vk::DescriptorType::eStorageImage:
-                info_image.imageLayout = vk::ImageLayout::eGeneral;
-                break;
-            case vk::DescriptorType::eSampledImage:
-            case vk::DescriptorType::eCombinedImageSampler:
-                info_image.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-                break;
-            default:
-                assert(false && "Invalid descriptor type");
-                break;
-        }
-        vk::WriteDescriptorSet write_image {
-            .dstSet = _desc_sets[set],
-            .dstBinding = binding,
-            .descriptorCount = 1,
-            .descriptorType = type,
-            .pImageInfo = &info_image,
-        };
-        device._logical.updateDescriptorSets(write_image, {});
-    }
-    void write_descriptor(Device& device, uint32_t set, uint32_t binding, DeviceBuffer& buffer, vk::DescriptorType type, size_t offset = 0) {
-        vk::DescriptorBufferInfo info_buffer {
-            .buffer = buffer._data,
-            .offset = offset,
-            .range = buffer._size,
-        };
-        vk::WriteDescriptorSet write_buffer {
-            .dstSet = _desc_sets[set],
-            .dstBinding = binding,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType = type,
-            .pBufferInfo = &info_buffer
-        };
-        device._logical.updateDescriptorSets(write_buffer, {});
-    }
+    typedef std::vector<std::tuple<uint32_t /*set*/, uint32_t /*binding*/, vk::SamplerCreateInfo>> SamplerInfos;
+    void destroy(Device& device);
+    void write_descriptor(Device& device, uint32_t set, uint32_t binding, Image& image, vk::DescriptorType type, vk::Sampler sampler = nullptr);
+    void write_descriptor(Device& device, uint32_t set, uint32_t binding, DeviceBuffer& buffer, vk::DescriptorType type, size_t offset = 0);
     auto static get_module_deprecation() -> bool& {
         static bool _shader_modules_deprecated = true;
         return _shader_modules_deprecated;
@@ -97,313 +47,27 @@ protected:
     std::vector<vk::Sampler> _immutable_samplers;
 };
 export struct Compute: public PipelineBase {
-	struct CreateInfo {
-		const Device& device;
-		std::string_view cs_path; vk::SpecializationInfo spec_info = {};
-		// TODO: deprecate this one
-		SamplerInfos sampler_infos = {};
-	};
-	void init(const CreateInfo& info) {
-		// reflect shader contents
-		reflect(info.device._logical, info.cs_path, info.sampler_infos);
-
-		// create pipeline layout
-		_pipeline_layout = info.device._logical.createPipelineLayout({
-			.setLayoutCount = (uint32_t)_desc_set_layouts.size(),
-			.pSetLayouts = _desc_set_layouts.data(),
-		});
-
-		// create pipeline
-		auto [cs_code, cs_size] = spvrc::load(info.cs_path);
-		vk::ShaderModuleCreateInfo info_cs {
-			.codeSize = cs_size * sizeof(uint32_t),
-			.pCode = cs_code,
-		};
-		// optionally create shader module in the deprecated way
-		vk::ShaderModule cs_module = nullptr;
-		if (get_module_deprecation()) cs_module = info.device._logical.createShaderModule(info_cs);
-
-		vk::ComputePipelineCreateInfo info_compute_pipe {
-			.stage = {
-				.pNext = get_module_deprecation() ? nullptr : &info_cs,
-				.stage = vk::ShaderStageFlagBits::eCompute,
-				.module = get_module_deprecation() ? cs_module : nullptr,
-				.pName = "main",
-				.pSpecializationInfo = info.spec_info.dataSize > 0 ? &info.spec_info : nullptr,
-			},
-			.layout = _pipeline_layout,
-		};
-		auto [result, pipeline] = info.device._logical.createComputePipeline(nullptr, info_compute_pipe);
-		if (result != vk::Result::eSuccess) std::println("error creating compute pipeline");
-		_pipeline = pipeline;
-		// destroy shader module if previously created
-		if (get_module_deprecation()) info.device._logical.destroyShaderModule(cs_module);
-	}
-	void execute(vk::CommandBuffer cmd, uint32_t nx, uint32_t ny, uint32_t nz) {
-		cmd.bindPipeline(vk::PipelineBindPoint::eCompute, _pipeline);
-		cmd.bindDescriptorSets(vk::PipelineBindPoint::eCompute, _pipeline_layout, 0, _desc_sets, {});
-		cmd.dispatch(nx, ny, nz);
-	}
+	struct CreateInfo;
+	void init(const CreateInfo& info);
+	void execute(vk::CommandBuffer cmd, uint32_t nx, uint32_t ny, uint32_t nz);
 };
 export struct Graphics: public PipelineBase {
-	struct CreateInfo {
-		const Device& device;
-		vk::Extent2D extent;
-		//
-		std::string_view vs_path; vk::SpecializationInfo vs_spec = {};
-		std::string_view fs_path; vk::SpecializationInfo fs_spec = {};
-		//
-		struct Color {
-			vk::ArrayProxy<vk::Format> formats;
-			vk::Bool32 blend = false;
-		} color = {};
-		struct Depth {
-			vk::Format format = vk::Format::eUndefined;
-			vk::Bool32 write = false;
-			vk::Bool32 test = false;
-		} depth = {};
-		struct Stencil {
-			vk::Format format = vk::Format::eUndefined;
-			vk::Bool32 test = false;
-			vk::StencilOpState front = {};
-			vk::StencilOpState back = {};
-		} stencil = {};
-		//
-		vk::ArrayProxy<vk::DynamicState> dynamic_states = {};
-		// TODO: deprecate this one
-		SamplerInfos sampler_infos = {};
-	};
-	void init(const CreateInfo& info) {
-		// reflect shader contents
-		auto [bind_desc, attr_descs] = reflect(info.device._logical, { info.vs_path, info.fs_path }, info.sampler_infos);
-
-		// create pipeline layout
-		vk::PipelineLayoutCreateInfo layoutInfo {
-			.setLayoutCount = (uint32_t)_desc_set_layouts.size(),
-			.pSetLayouts = _desc_set_layouts.data()
-		};
-		_pipeline_layout = info.device._logical.createPipelineLayout(layoutInfo);
-
-		// create shader stages
-		auto [vs_code, vs_size] = spvrc::load(info.vs_path);
-		auto [fs_code, fs_size] = spvrc::load(info.fs_path);
-		vk::ShaderModuleCreateInfo info_vs {
-			.codeSize = vs_size * sizeof(uint32_t),
-			.pCode = vs_code,
-		};
-		vk::ShaderModuleCreateInfo info_fs {
-			.codeSize = fs_size * sizeof(uint32_t),
-			.pCode = fs_code,
-		};
-		// optionally create shader modules in the deprecated way
-		vk::ShaderModule vs_module = nullptr;
-		vk::ShaderModule fs_module = nullptr;
-		if (get_module_deprecation()) vs_module = info.device._logical.createShaderModule(info_vs);
-		if (get_module_deprecation()) fs_module = info.device._logical.createShaderModule(info_fs);
-		std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages {{
-			vk::PipelineShaderStageCreateInfo {
-				.pNext = get_module_deprecation() ? nullptr : &info_vs,
-				.stage = vk::ShaderStageFlagBits::eVertex,
-				.module = get_module_deprecation() ? vs_module : nullptr,
-				.pName = "main",
-				.pSpecializationInfo = info.vs_spec.dataSize > 0 ? &info.vs_spec : nullptr,
-			},
-			vk::PipelineShaderStageCreateInfo {
-				.pNext = get_module_deprecation() ? nullptr : &info_fs,
-				.stage = vk::ShaderStageFlagBits::eFragment,
-				.module = get_module_deprecation() ? fs_module : nullptr,
-				.pName = "main",
-				.pSpecializationInfo = info.fs_spec.dataSize > 0 ? &info.fs_spec : nullptr,
-			}
-		}};
-
-		// create graphics pipeline parts
-		vk::PipelineVertexInputStateCreateInfo info_vertex_input;
-		if (attr_descs.size() > 0) {
-			info_vertex_input = {
-				.vertexBindingDescriptionCount = 1,
-				.pVertexBindingDescriptions = &bind_desc,
-				.vertexAttributeDescriptionCount = (uint32_t)attr_descs.size(),
-				.pVertexAttributeDescriptions = attr_descs.data(),
-			};
-		}
-		vk::PipelineInputAssemblyStateCreateInfo info_input_assembly {
-			.topology = vk::PrimitiveTopology::eTriangleList,
-			.primitiveRestartEnable = vk::False,
-		};
-		vk::PipelineTessellationStateCreateInfo info_tessellation {
-			.patchControlPoints = 0, // not using tesselation
-		};
-		vk::Viewport viewport {
-			.x = 0, .y = 0,
-			.width = (float)info.extent.width,
-			.height = (float)info.extent.height,
-			.minDepth = 0.0,
-			.maxDepth = 1.0,
-		};
-		vk::Rect2D scissor({0, 0}, info.extent);
-		vk::PipelineViewportStateCreateInfo info_viewport {
-			.viewportCount = 1,
-			.pViewports = &viewport,
-			.scissorCount = 1,
-			.pScissors = & scissor,	
-		};
-		vk::PipelineRasterizationStateCreateInfo info_rasterization {
-			.depthClampEnable = false,
-			.rasterizerDiscardEnable = false,
-			.polygonMode = vk::PolygonMode::eFill,
-			.cullMode = vk::CullModeFlagBits::eBack,
-			.frontFace = vk::FrontFace::eClockwise,
-			.depthBiasEnable = false,
-			.lineWidth = 1.0,
-		};
-		vk::PipelineMultisampleStateCreateInfo info_multisampling {
-			.sampleShadingEnable = false,
-			.alphaToCoverageEnable = false,
-			.alphaToOneEnable = false,
-		};
-		vk::PipelineDepthStencilStateCreateInfo info_depth_stencil {
-			.depthTestEnable = info.depth.test,
-			.depthWriteEnable = info.depth.write,
-			.depthCompareOp = vk::CompareOp::eLessOrEqual,
-			.depthBoundsTestEnable = false,
-			.stencilTestEnable = info.stencil.test,
-			.front = info.stencil.front,
-			.back = info.stencil.back,
-		};
-		vk::PipelineColorBlendAttachmentState info_blend_attach {
-			.blendEnable = info.color.blend,
-			.srcColorBlendFactor = vk::BlendFactor::eSrcAlpha,
-			.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha,
-			.colorBlendOp = vk::BlendOp::eAdd,
-			.srcAlphaBlendFactor = vk::BlendFactor::eOne,
-			.dstAlphaBlendFactor = vk::BlendFactor::eZero,
-			.alphaBlendOp = vk::BlendOp::eAdd,
-			.colorWriteMask = 
-				vk::ColorComponentFlagBits::eR |
-				vk::ColorComponentFlagBits::eG |
-				vk::ColorComponentFlagBits::eB,
-		};
-		vk::PipelineColorBlendStateCreateInfo info_blend_state {
-			.logicOpEnable = false,
-			.attachmentCount = 1,
-			.pAttachments = &info_blend_attach,	
-			.blendConstants = std::array<float, 4>{ 1.0, 1.0, 1.0, 1.0 },
-		};
-		vk::PipelineDynamicStateCreateInfo info_dynamic_state {
-			.dynamicStateCount = (uint32_t)info.dynamic_states.size(),
-			.pDynamicStates = info.dynamic_states.data(),
-		};
-
-		// create pipeline
-		vk::PipelineRenderingCreateInfo renderInfo {
-			.colorAttachmentCount = (uint32_t)info.color.formats.size(),
-			.pColorAttachmentFormats = info.color.formats.data(),
-			.depthAttachmentFormat = info.depth.format,
-			.stencilAttachmentFormat = info.stencil.format,
-		};
-		vk::GraphicsPipelineCreateInfo pipeInfo {
-			.pNext = &renderInfo,
-			.stageCount = (uint32_t)shader_stages.size(), 
-			.pStages = shader_stages.data(),
-			.pVertexInputState = &info_vertex_input,
-			.pInputAssemblyState = &info_input_assembly,
-			.pTessellationState = &info_tessellation,
-			.pViewportState = &info_viewport,
-			.pRasterizationState = &info_rasterization,
-			.pMultisampleState = &info_multisampling,
-			.pDepthStencilState = &info_depth_stencil,
-			.pColorBlendState = &info_blend_state,
-			.pDynamicState = &info_dynamic_state,
-			.layout = _pipeline_layout,
-		};
-
-		auto [result, pipeline] = info.device._logical.createGraphicsPipeline(nullptr, pipeInfo);
-		if (result != vk::Result::eSuccess) std::println("error creating graphics pipeline");
-		_pipeline = pipeline;
-		// set persistent options
-		_render_area = vk::Rect2D({ 0,0 }, info.extent);
-		_depth_enabled = info.depth.test || info.depth.write;
-		_stencil_enabled = info.stencil.test;
-		// destroy shader modules if previously created
-		if (get_module_deprecation()) info.device._logical.destroyShaderModule(vs_module);
-		if (get_module_deprecation()) info.device._logical.destroyShaderModule(fs_module);
-	}
+	struct CreateInfo;
+	void init(const CreateInfo& info);
 	
 	// draw fullscreen triangle with color and depth attachments
-	auto execute(vk::CommandBuffer cmd,
-		Image& color, vk::AttachmentLoadOp color_load,
-		DepthStencil& depth_stencil, vk::AttachmentLoadOp depth_stencil_load)
-	-> void {
-		vk::RenderingAttachmentInfo info_color {
-			.imageView = color._view,
-			.imageLayout = color._last_layout,
-			.resolveMode = 	vk::ResolveModeFlagBits::eNone,
-			.loadOp = color_load,
-			.storeOp = vk::AttachmentStoreOp::eStore,
-			.clearValue { .color { std::array<float, 4>{ 0, 0, 0, 0 } } }
-		};
-		vk::RenderingAttachmentInfo info_depth_stencil {
-			.imageView = depth_stencil._view,
-			.imageLayout = depth_stencil._last_layout,
-			.resolveMode = 	vk::ResolveModeFlagBits::eNone,
-			.loadOp = depth_stencil_load,
-			.storeOp = vk::AttachmentStoreOp::eStore,
-			.clearValue { .depthStencil { .depth = 1.0f, .stencil = 0 } },
-		};
-		vk::RenderingInfo info_render {
-			.renderArea = _render_area,
-			.layerCount = 1,
-			.colorAttachmentCount = 1,
-			.pColorAttachments = &info_color,
-			.pDepthAttachment = _depth_enabled ? &info_depth_stencil : nullptr,
-			.pStencilAttachment = _stencil_enabled ? &info_depth_stencil : nullptr,
-		};
-		cmd.beginRendering(info_render);
-		cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, _pipeline);
-		if (_desc_sets.size() > 0) {
-			cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, _pipeline_layout, 0, _desc_sets, {});
-		}
-		cmd.draw(3, 1, 0, 0);
-		cmd.endRendering();
-	}
-
+	void execute(vk::CommandBuffer cmd,
+				 Image& color, vk::AttachmentLoadOp color_load,
+				 DepthStencil& depth_stencil, vk::AttachmentLoadOp depth_stencil_load);
 	// draw fullscreen  triangle with only color attachment
-	auto execute(vk::CommandBuffer cmd,
-		Image& color_dst, vk::AttachmentLoadOp color_load)
-	-> void {
-		vk::RenderingAttachmentInfo info_color_attach {
-			.imageView = color_dst._view,
-			.imageLayout = color_dst._last_layout,
-			.resolveMode = 	vk::ResolveModeFlagBits::eNone,
-			.loadOp = color_load,
-			.storeOp = vk::AttachmentStoreOp::eStore,
-			.clearValue { .color { std::array<float, 4>{ 0, 0, 0, 0 } } }
-		};
-		vk::RenderingInfo info_render {
-			.renderArea = _render_area,
-			.layerCount = 1,
-			.colorAttachmentCount = 1,
-			.pColorAttachments = &info_color_attach,
-			.pDepthAttachment = nullptr,
-			.pStencilAttachment = nullptr,
-		};
-		cmd.beginRendering(info_render);
-		cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, _pipeline);
-		if (_desc_sets.size() > 0) {
-			cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, _pipeline_layout, 0, _desc_sets, {});
-		}
-		cmd.draw(3, 1, 0, 0);
-		cmd.endRendering();
-	}
+	void execute(vk::CommandBuffer cmd, Image& color_dst, vk::AttachmentLoadOp color_load);
 
 	// draw mesh
 	template<typename Vertex, typename Index>
-	auto execute(vk::CommandBuffer cmd,
-		Image& color, vk::AttachmentLoadOp color_load,
-		DepthStencil& depth_stencil, vk::AttachmentLoadOp depth_stencil_load,
-		Mesh<Vertex, Index>& mesh)
-	-> void {
+	void execute(vk::CommandBuffer cmd,
+			Image& color, vk::AttachmentLoadOp color_load,
+			DepthStencil& depth_stencil, vk::AttachmentLoadOp depth_stencil_load,
+			Mesh<Vertex, Index>& mesh) {
 		vk::RenderingAttachmentInfo info_color {
 			.imageView = color._view,
 			.imageLayout = color._last_layout,
@@ -446,13 +110,11 @@ export struct Graphics: public PipelineBase {
 		// draw end //
 		cmd.endRendering();
 	}
-
 	// draw mesh without depth attachment
 	template<typename Vertex, typename Index>
-	auto execute(vk::CommandBuffer cmd,
-		Image& color_dst, vk::AttachmentLoadOp color_load,
-		Mesh<Vertex, Index>& mesh)
-	-> void {
+	void execute(vk::CommandBuffer cmd,
+			Image& color_dst, vk::AttachmentLoadOp color_load,
+			Mesh<Vertex, Index>& mesh) {
 		vk::RenderingAttachmentInfo info_color_attach {
 			.imageView = color_dst._view,
 			.imageLayout = color_dst._last_layout,
@@ -494,7 +156,352 @@ private:
 	bool _stencil_enabled;
 };
 
+struct Compute::CreateInfo {
+	const Device& device;
+	std::string_view cs_path; vk::SpecializationInfo spec_info = {};
+	// TODO: deprecate this one
+	SamplerInfos sampler_infos = {};
+};
+struct Graphics::CreateInfo {
+	const Device& device;
+	vk::Extent2D extent;
+	//
+	std::string_view vs_path; vk::SpecializationInfo vs_spec = {};
+	std::string_view fs_path; vk::SpecializationInfo fs_spec = {};
+	//
+	struct Color {
+		vk::ArrayProxy<vk::Format> formats;
+		vk::Bool32 blend = false;
+	} color = {};
+	struct Depth {
+		vk::Format format = vk::Format::eUndefined;
+		vk::Bool32 write = false;
+		vk::Bool32 test = false;
+	} depth = {};
+	struct Stencil {
+		vk::Format format = vk::Format::eUndefined;
+		vk::Bool32 test = false;
+		vk::StencilOpState front = {};
+		vk::StencilOpState back = {};
+	} stencil = {};
+	//
+	vk::ArrayProxy<vk::DynamicState> dynamic_states = {};
+	// TODO: deprecate this one
+	SamplerInfos sampler_infos = {};
+};
+
 module: private;
+void PipelineBase::destroy(Device& device) {
+	device._logical.destroyPipeline(_pipeline);
+	device._logical.destroyPipelineLayout(_pipeline_layout);
+
+	for (auto& layout: _desc_set_layouts) device._logical.destroyDescriptorSetLayout(layout);
+	for (auto& sampler: _immutable_samplers) device._logical.destroySampler(sampler);
+	device._logical.destroyDescriptorPool(_pool);
+	_desc_sets.clear();
+	_desc_set_layouts.clear();
+	_immutable_samplers.clear();
+}
+void PipelineBase::write_descriptor(Device& device, uint32_t set, uint32_t binding, Image& image, vk::DescriptorType type, vk::Sampler sampler) {
+	vk::DescriptorImageInfo info_image {
+		.sampler = sampler,
+		.imageView = image._view,
+	};
+	switch (type) {
+		case vk::DescriptorType::eStorageImage:
+			info_image.imageLayout = vk::ImageLayout::eGeneral;
+			break;
+		case vk::DescriptorType::eSampledImage:
+		case vk::DescriptorType::eCombinedImageSampler:
+			info_image.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+			break;
+		default:
+			assert(false && "Invalid descriptor type");
+			break;
+	}
+	vk::WriteDescriptorSet write_image {
+		.dstSet = _desc_sets[set],
+		.dstBinding = binding,
+		.descriptorCount = 1,
+		.descriptorType = type,
+		.pImageInfo = &info_image,
+	};
+	device._logical.updateDescriptorSets(write_image, {});
+}
+void PipelineBase::write_descriptor(Device& device, uint32_t set, uint32_t binding, DeviceBuffer& buffer, vk::DescriptorType type, size_t offset) {
+	vk::DescriptorBufferInfo info_buffer {
+		.buffer = buffer._data,
+		.offset = offset,
+		.range = buffer._size,
+	};
+	vk::WriteDescriptorSet write_buffer {
+		.dstSet = _desc_sets[set],
+		.dstBinding = binding,
+		.dstArrayElement = 0,
+		.descriptorCount = 1,
+		.descriptorType = type,
+		.pBufferInfo = &info_buffer
+	};
+	device._logical.updateDescriptorSets(write_buffer, {});
+}
+void Compute::init(const CreateInfo& info) {
+	// reflect shader contents
+	reflect(info.device._logical, info.cs_path, info.sampler_infos);
+
+	// create pipeline layout
+	_pipeline_layout = info.device._logical.createPipelineLayout({
+		.setLayoutCount = (uint32_t)_desc_set_layouts.size(),
+		.pSetLayouts = _desc_set_layouts.data(),
+	});
+
+	// create pipeline
+	auto [cs_code, cs_size] = spvrc::load(info.cs_path);
+	vk::ShaderModuleCreateInfo info_cs {
+		.codeSize = cs_size * sizeof(uint32_t),
+		.pCode = cs_code,
+	};
+	// optionally create shader module in the deprecated way
+	vk::ShaderModule cs_module = nullptr;
+	if (get_module_deprecation()) cs_module = info.device._logical.createShaderModule(info_cs);
+
+	vk::ComputePipelineCreateInfo info_compute_pipe {
+		.stage = {
+			.pNext = get_module_deprecation() ? nullptr : &info_cs,
+			.stage = vk::ShaderStageFlagBits::eCompute,
+			.module = get_module_deprecation() ? cs_module : nullptr,
+			.pName = "main",
+			.pSpecializationInfo = info.spec_info.dataSize > 0 ? &info.spec_info : nullptr,
+		},
+		.layout = _pipeline_layout,
+	};
+	auto [result, pipeline] = info.device._logical.createComputePipeline(nullptr, info_compute_pipe);
+	if (result != vk::Result::eSuccess) std::println("error creating compute pipeline");
+	_pipeline = pipeline;
+	// destroy shader module if previously created
+	if (get_module_deprecation()) info.device._logical.destroyShaderModule(cs_module);
+}
+void Compute::execute(vk::CommandBuffer cmd, uint32_t nx, uint32_t ny, uint32_t nz) {
+	cmd.bindPipeline(vk::PipelineBindPoint::eCompute, _pipeline);
+	cmd.bindDescriptorSets(vk::PipelineBindPoint::eCompute, _pipeline_layout, 0, _desc_sets, {});
+	cmd.dispatch(nx, ny, nz);
+}
+void Graphics::init(const CreateInfo& info) {
+	// reflect shader contents
+	auto [bind_desc, attr_descs] = reflect(info.device._logical, { info.vs_path, info.fs_path }, info.sampler_infos);
+
+	// create pipeline layout
+	vk::PipelineLayoutCreateInfo layoutInfo {
+		.setLayoutCount = (uint32_t)_desc_set_layouts.size(),
+		.pSetLayouts = _desc_set_layouts.data()
+	};
+	_pipeline_layout = info.device._logical.createPipelineLayout(layoutInfo);
+
+	// create shader stages
+	auto [vs_code, vs_size] = spvrc::load(info.vs_path);
+	auto [fs_code, fs_size] = spvrc::load(info.fs_path);
+	vk::ShaderModuleCreateInfo info_vs {
+		.codeSize = vs_size * sizeof(uint32_t),
+		.pCode = vs_code,
+	};
+	vk::ShaderModuleCreateInfo info_fs {
+		.codeSize = fs_size * sizeof(uint32_t),
+		.pCode = fs_code,
+	};
+	// optionally create shader modules in the deprecated way
+	vk::ShaderModule vs_module = nullptr;
+	vk::ShaderModule fs_module = nullptr;
+	if (get_module_deprecation()) vs_module = info.device._logical.createShaderModule(info_vs);
+	if (get_module_deprecation()) fs_module = info.device._logical.createShaderModule(info_fs);
+	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages {{
+		vk::PipelineShaderStageCreateInfo {
+			.pNext = get_module_deprecation() ? nullptr : &info_vs,
+			.stage = vk::ShaderStageFlagBits::eVertex,
+			.module = get_module_deprecation() ? vs_module : nullptr,
+			.pName = "main",
+			.pSpecializationInfo = info.vs_spec.dataSize > 0 ? &info.vs_spec : nullptr,
+		},
+		vk::PipelineShaderStageCreateInfo {
+			.pNext = get_module_deprecation() ? nullptr : &info_fs,
+			.stage = vk::ShaderStageFlagBits::eFragment,
+			.module = get_module_deprecation() ? fs_module : nullptr,
+			.pName = "main",
+			.pSpecializationInfo = info.fs_spec.dataSize > 0 ? &info.fs_spec : nullptr,
+		}
+	}};
+
+	// create graphics pipeline parts
+	vk::PipelineVertexInputStateCreateInfo info_vertex_input;
+	if (attr_descs.size() > 0) {
+		info_vertex_input = {
+			.vertexBindingDescriptionCount = 1,
+			.pVertexBindingDescriptions = &bind_desc,
+			.vertexAttributeDescriptionCount = (uint32_t)attr_descs.size(),
+			.pVertexAttributeDescriptions = attr_descs.data(),
+		};
+	}
+	vk::PipelineInputAssemblyStateCreateInfo info_input_assembly {
+		.topology = vk::PrimitiveTopology::eTriangleList,
+		.primitiveRestartEnable = vk::False,
+	};
+	vk::PipelineTessellationStateCreateInfo info_tessellation {
+		.patchControlPoints = 0, // not using tesselation
+	};
+	vk::Viewport viewport {
+		.x = 0, .y = 0,
+		.width = (float)info.extent.width,
+		.height = (float)info.extent.height,
+		.minDepth = 0.0,
+		.maxDepth = 1.0,
+	};
+	vk::Rect2D scissor({0, 0}, info.extent);
+	vk::PipelineViewportStateCreateInfo info_viewport {
+		.viewportCount = 1,
+		.pViewports = &viewport,
+		.scissorCount = 1,
+		.pScissors = & scissor,	
+	};
+	vk::PipelineRasterizationStateCreateInfo info_rasterization {
+		.depthClampEnable = false,
+		.rasterizerDiscardEnable = false,
+		.polygonMode = vk::PolygonMode::eFill,
+		.cullMode = vk::CullModeFlagBits::eBack,
+		.frontFace = vk::FrontFace::eClockwise,
+		.depthBiasEnable = false,
+		.lineWidth = 1.0,
+	};
+	vk::PipelineMultisampleStateCreateInfo info_multisampling {
+		.sampleShadingEnable = false,
+		.alphaToCoverageEnable = false,
+		.alphaToOneEnable = false,
+	};
+	vk::PipelineDepthStencilStateCreateInfo info_depth_stencil {
+		.depthTestEnable = info.depth.test,
+		.depthWriteEnable = info.depth.write,
+		.depthCompareOp = vk::CompareOp::eLessOrEqual,
+		.depthBoundsTestEnable = false,
+		.stencilTestEnable = info.stencil.test,
+		.front = info.stencil.front,
+		.back = info.stencil.back,
+	};
+	vk::PipelineColorBlendAttachmentState info_blend_attach {
+		.blendEnable = info.color.blend,
+		.srcColorBlendFactor = vk::BlendFactor::eSrcAlpha,
+		.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha,
+		.colorBlendOp = vk::BlendOp::eAdd,
+		.srcAlphaBlendFactor = vk::BlendFactor::eOne,
+		.dstAlphaBlendFactor = vk::BlendFactor::eZero,
+		.alphaBlendOp = vk::BlendOp::eAdd,
+		.colorWriteMask = 
+			vk::ColorComponentFlagBits::eR |
+			vk::ColorComponentFlagBits::eG |
+			vk::ColorComponentFlagBits::eB,
+	};
+	vk::PipelineColorBlendStateCreateInfo info_blend_state {
+		.logicOpEnable = false,
+		.attachmentCount = 1,
+		.pAttachments = &info_blend_attach,	
+		.blendConstants = std::array<float, 4>{ 1.0, 1.0, 1.0, 1.0 },
+	};
+	vk::PipelineDynamicStateCreateInfo info_dynamic_state {
+		.dynamicStateCount = (uint32_t)info.dynamic_states.size(),
+		.pDynamicStates = info.dynamic_states.data(),
+	};
+
+	// create pipeline
+	vk::PipelineRenderingCreateInfo renderInfo {
+		.colorAttachmentCount = (uint32_t)info.color.formats.size(),
+		.pColorAttachmentFormats = info.color.formats.data(),
+		.depthAttachmentFormat = info.depth.format,
+		.stencilAttachmentFormat = info.stencil.format,
+	};
+	vk::GraphicsPipelineCreateInfo pipeInfo {
+		.pNext = &renderInfo,
+		.stageCount = (uint32_t)shader_stages.size(), 
+		.pStages = shader_stages.data(),
+		.pVertexInputState = &info_vertex_input,
+		.pInputAssemblyState = &info_input_assembly,
+		.pTessellationState = &info_tessellation,
+		.pViewportState = &info_viewport,
+		.pRasterizationState = &info_rasterization,
+		.pMultisampleState = &info_multisampling,
+		.pDepthStencilState = &info_depth_stencil,
+		.pColorBlendState = &info_blend_state,
+		.pDynamicState = &info_dynamic_state,
+		.layout = _pipeline_layout,
+	};
+
+	auto [result, pipeline] = info.device._logical.createGraphicsPipeline(nullptr, pipeInfo);
+	if (result != vk::Result::eSuccess) std::println("error creating graphics pipeline");
+	_pipeline = pipeline;
+	// set persistent options
+	_render_area = vk::Rect2D({ 0,0 }, info.extent);
+	_depth_enabled = info.depth.test || info.depth.write;
+	_stencil_enabled = info.stencil.test;
+	// destroy shader modules if previously created
+	if (get_module_deprecation()) info.device._logical.destroyShaderModule(vs_module);
+	if (get_module_deprecation()) info.device._logical.destroyShaderModule(fs_module);
+}
+void Graphics::execute(vk::CommandBuffer cmd,
+		Image& color, vk::AttachmentLoadOp color_load,
+		DepthStencil& depth_stencil, vk::AttachmentLoadOp depth_stencil_load) {
+	vk::RenderingAttachmentInfo info_color {
+		.imageView = color._view,
+		.imageLayout = color._last_layout,
+		.resolveMode = 	vk::ResolveModeFlagBits::eNone,
+		.loadOp = color_load,
+		.storeOp = vk::AttachmentStoreOp::eStore,
+		.clearValue { .color { std::array<float, 4>{ 0, 0, 0, 0 } } }
+	};
+	vk::RenderingAttachmentInfo info_depth_stencil {
+		.imageView = depth_stencil._view,
+		.imageLayout = depth_stencil._last_layout,
+		.resolveMode = 	vk::ResolveModeFlagBits::eNone,
+		.loadOp = depth_stencil_load,
+		.storeOp = vk::AttachmentStoreOp::eStore,
+		.clearValue { .depthStencil { .depth = 1.0f, .stencil = 0 } },
+	};
+	vk::RenderingInfo info_render {
+		.renderArea = _render_area,
+		.layerCount = 1,
+		.colorAttachmentCount = 1,
+		.pColorAttachments = &info_color,
+		.pDepthAttachment = _depth_enabled ? &info_depth_stencil : nullptr,
+		.pStencilAttachment = _stencil_enabled ? &info_depth_stencil : nullptr,
+};
+cmd.beginRendering(info_render);
+cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, _pipeline);
+if (_desc_sets.size() > 0) {
+	cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, _pipeline_layout, 0, _desc_sets, {});
+}
+cmd.draw(3, 1, 0, 0);
+cmd.endRendering();
+}
+void Graphics::execute(vk::CommandBuffer cmd, Image& color_dst, vk::AttachmentLoadOp color_load) {
+	vk::RenderingAttachmentInfo info_color_attach {
+		.imageView = color_dst._view,
+		.imageLayout = color_dst._last_layout,
+		.resolveMode = 	vk::ResolveModeFlagBits::eNone,
+		.loadOp = color_load,
+		.storeOp = vk::AttachmentStoreOp::eStore,
+		.clearValue { .color { std::array<float, 4>{ 0, 0, 0, 0 } } }
+	};
+	vk::RenderingInfo info_render {
+		.renderArea = _render_area,
+		.layerCount = 1,
+		.colorAttachmentCount = 1,
+		.pColorAttachments = &info_color_attach,
+		.pDepthAttachment = nullptr,
+		.pStencilAttachment = nullptr,
+	};
+	cmd.beginRendering(info_render);
+	cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, _pipeline);
+	if (_desc_sets.size() > 0) {
+		cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, _pipeline_layout, 0, _desc_sets, {});
+	}
+	cmd.draw(3, 1, 0, 0);
+	cmd.endRendering();
+}
+
 auto get_reflections(const vk::ArrayProxy<std::string_view>& shader_paths)
 -> std::vector<spv_reflect::ShaderModule> {
 	std::vector<spv_reflect::ShaderModule> reflections;
