@@ -1,13 +1,97 @@
-#include <vulkan/vulkan.hpp>
-#include <glm/glm.hpp>
+module;
+#include <span>
+#include <cstddef>
 #include "AreaTex.h"
 #include "SearchTex.h"
-#include "chad_vis/ext/smaa.hpp"
+export module smaa;
+import vk_mem_alloc_hpp;
+import vulkan_hpp;
+import pipeline;
+import device;
+import image;
 
-void SMAA::init_images(Device& device, vma::Allocator vmalloc, vk::Extent2D extent, vk::Format color_format) {
+export struct SMAA {
+    void init(Device& device, vk::Extent2D extent, Image& color, DepthStencil& depth_stencil);
+    void destroy(Device& device);
+    void execute(vk::CommandBuffer cmd, Image& color, DepthStencil& depth_stencil);
+    auto get_output() -> Image&;
+
+private:
+    void init_images(Device& device, vk::Extent2D extent, vk::Format color_format);
+    void init_pipelines(Device& device, vk::Extent2D extent, Image& color, DepthStencil& depth_stencil);
+    
+    // static images
+    Image _img_area;
+    Image _img_search;
+    // render targets
+    Image _img_edges;
+    Image _img_weights;
+    Image _img_output;
+    // pipelines
+    Graphics _pipe_edges;
+    Graphics _pipe_weights;
+    Graphics _pipe_blending;
+};
+
+module: private;
+void SMAA::init(Device& device, vk::Extent2D extent, Image& color, DepthStencil& depth_stencil) {
+    init_images(device, extent, color._format);
+    init_pipelines(device, extent, color, depth_stencil);
+}
+void SMAA::destroy(Device& device) {
+    // destroy images
+    _img_output.destroy(device);
+    _img_weights.destroy(device);
+    _img_edges.destroy(device);
+    _img_area.destroy(device);
+    _img_search.destroy(device);
+    // destroy pipelines
+    _pipe_blending.destroy(device);
+    _pipe_weights.destroy(device);
+    _pipe_edges.destroy(device);
+}
+void SMAA::execute(vk::CommandBuffer cmd, Image& color, DepthStencil& depth_stencil) {
+    Image::TransitionInfo info_transition_read {
+        .cmd = cmd,
+        .new_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
+        .dst_stage = vk::PipelineStageFlagBits2::eFragmentShader,
+        .dst_access = vk::AccessFlagBits2::eShaderSampledRead
+    };
+    Image::TransitionInfo info_transition_write {
+        .cmd = cmd,
+        .new_layout = vk::ImageLayout::eColorAttachmentOptimal,
+        .dst_stage = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        .dst_access = vk::AccessFlagBits2::eColorAttachmentWrite
+    };
+    // transition depth stencil for stencil tests
+    depth_stencil.transition_layout({
+        .cmd = cmd,
+        .new_layout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
+        .dst_stage = vk::PipelineStageFlagBits2::eEarlyFragmentTests,
+        .dst_access = vk::AccessFlagBits2::eDepthStencilAttachmentRead | vk::AccessFlagBits2::eDepthStencilAttachmentWrite
+    });
+    // SMAA edge detection
+    color.transition_layout(info_transition_read);
+    _img_edges.transition_layout(info_transition_write);
+    _pipe_edges.execute(cmd, _img_edges, vk::AttachmentLoadOp::eClear, depth_stencil, vk::AttachmentLoadOp::eLoad);
+
+    // SMAA blending weight calculation
+    _img_edges.transition_layout(info_transition_read);
+    _img_weights.transition_layout(info_transition_write);
+    _pipe_weights.execute(cmd, _img_weights, vk::AttachmentLoadOp::eClear, depth_stencil, vk::AttachmentLoadOp::eLoad);
+
+    // SMAA neighborhood blending
+    _img_weights.transition_layout(info_transition_read);
+    _img_output.transition_layout(info_transition_write);
+    _pipe_blending.execute(cmd, _img_output, vk::AttachmentLoadOp::eClear);
+}
+auto SMAA::get_output() -> Image& {
+    return _img_output;
+}
+void SMAA::init_images(Device& device, vk::Extent2D extent, vk::Format color_format) {
     // create SMAA render targets
     _img_edges.init({
-        .device = device, .vmalloc = vmalloc,
+        .device = device,
         .format = vk::Format::eR8G8Unorm,
         .extent { extent.width, extent.height, 1 },
         .usage = 
@@ -15,7 +99,7 @@ void SMAA::init_images(Device& device, vma::Allocator vmalloc, vk::Extent2D exte
             vk::ImageUsageFlagBits::eSampled,
     });
     _img_weights.init({
-        .device = device, .vmalloc = vmalloc,
+        .device = device, 
         .format = vk::Format::eR8G8B8A8Unorm,
         .extent { extent.width, extent.height, 1 },
         .usage = 
@@ -23,7 +107,7 @@ void SMAA::init_images(Device& device, vma::Allocator vmalloc, vk::Extent2D exte
             vk::ImageUsageFlagBits::eSampled,
     });
     _img_output.init({
-        .device = device, .vmalloc = vmalloc,
+        .device = device,
         .format = color_format,
         .extent { extent.width, extent.height, 1 },
         .usage = 
@@ -34,21 +118,21 @@ void SMAA::init_images(Device& device, vma::Allocator vmalloc, vk::Extent2D exte
 
     // load smaa lookup textures
     _img_search.init({
-        .device = device, .vmalloc = vmalloc,
+        .device = device,
         .format = vk::Format::eR8Unorm,
         .extent = { SEARCHTEX_WIDTH, SEARCHTEX_HEIGHT, 1 },
         .usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
     });
     auto search_tex = std::span(reinterpret_cast<const std::byte*>(searchTexBytes), sizeof(searchTexBytes));
-    _img_search.load_texture(device, vmalloc, search_tex);
+    _img_search.load_texture(device, search_tex);
     _img_area.init({
-        .device = device, .vmalloc = vmalloc,
+        .device = device,
         .format = vk::Format::eR8G8Unorm,
         .extent = { AREATEX_WIDTH, AREATEX_HEIGHT, 1 },
         .usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
     });
     auto area_tex = std::span(reinterpret_cast<const std::byte*>(areaTexBytes), sizeof(areaTexBytes));
-    _img_area.load_texture(device, vmalloc, area_tex);
+    _img_area.load_texture(device, area_tex);
     // transition smaa textures to their permanent layouts
     vk::CommandBuffer cmd = device.oneshot_begin(QueueType::eUniversal);
     Image::TransitionInfo info_transition {
@@ -63,11 +147,11 @@ void SMAA::init_images(Device& device, vma::Allocator vmalloc, vk::Extent2D exte
 }
 void SMAA::init_pipelines(Device& device, vk::Extent2D extent, Image& color, DepthStencil& depth_stencil) {
     // create SMAA pipelines
-    glm::vec4 SMAA_RT_METRICS = {
-        1.0 / (double)extent.width,
-        1.0 / (double)extent.height,
-        (double)extent.width,
-        (double)extent.height
+    std::array<float, 4> SMAA_RT_METRICS = {
+        1.0f / (float)extent.width,
+        1.0f / (float)extent.height,
+        (float)extent.width,
+        (float)extent.height
     };
     std::array<vk::SpecializationMapEntry, 4> smaa_spec_entries {
         vk::SpecializationMapEntry { .constantID = 0, .offset =  0, .size = 4 },

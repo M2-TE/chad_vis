@@ -1,10 +1,16 @@
-#pragma once
-#include <vulkan/vulkan.hpp>
-#include <vk_mem_alloc.hpp>
+module;
+#include <print>
+#include <vector>
+#include <fstream>
+#include <cstdint>
+#include <optional>
+#include <string_view>
 #include <glm/glm.hpp>
-#include "chad_vis/entities/mesh/mesh.hpp"
+export module plymesh;
+import vk_mem_alloc_hpp;
+import mesh;
 
-struct Plymesh {
+export struct Plymesh {
     void init(vma::Allocator vmalloc, std::string_view path_rel, std::optional<glm::vec3> color = std::nullopt) {
         std::ifstream file;
         std::string path_full = path_rel.data();

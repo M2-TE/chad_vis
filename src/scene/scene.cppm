@@ -1,17 +1,18 @@
-#pragma once
-#include <vulkan/vulkan.hpp>
-#include <vk_mem_alloc.hpp>
-#include "chad_vis/entities/camera.hpp"
-#include "chad_vis/entities/extra/grid.hpp"
-#include "chad_vis/entities/extra/plymesh.hpp"
+module;
+#include <glm/glm.hpp>
+export module scene;
+import vk_mem_alloc_hpp;
+import plymesh;
+import camera;
+import grid;
 
-struct Scene {
+export struct Scene {
     void init(vma::Allocator vmalloc) {
         _camera.init(vmalloc);
 
         // load mesh and grid objects
-        _mesh.init(vmalloc, "data/v2/mesh.ply", glm::vec3{.5, .5, .5});
-        _grid.init(vmalloc, "data/v2/hashgrid.grid");
+        _mesh.init(vmalloc, "data/mesh.ply", glm::vec3{.5, .5, .5});
+        _grid.init(vmalloc, "data/hashgrid.grid");
     }
     void destroy(vma::Allocator vmalloc) {
         _camera.destroy(vmalloc);

@@ -17,8 +17,8 @@ export struct Image {
     // wrap existing image without direct ownership
     void wrap(const WrapInfo& info);
     // destroy device-side resources if owning
-    void destroy(Device& device, vma::Allocator vmalloc);
-    void load_texture(Device& device, vma::Allocator vmalloc, std::span<const std::byte> tex_data);
+    void destroy(Device& device);
+    void load_texture(Device& device, std::span<const std::byte> tex_data);
     void transition_layout(const TransitionInfo& info);
     void blit(vk::CommandBuffer cmd, Image& src_image);
     
@@ -55,7 +55,7 @@ export struct DepthBuffer: public Image {
             }
         }
     }
-    void init(Device& device, vma::Allocator vmalloc, vk::Extent3D extent);
+    void init(Device& device, vk::Extent3D extent);
 };
 export struct DepthStencil: public Image {
     static vk::Format& get_format() {
@@ -78,12 +78,11 @@ export struct DepthStencil: public Image {
             }
         }
     }
-    void init(Device& device, vma::Allocator vmalloc, vk::Extent3D extent);
+    void init(Device& device, vk::Extent3D extent);
 };
 
 struct Image::CreateInfo {
     const Device& device;
-    vma::Allocator vmalloc;
     vk::Format format;
     vk::Extent3D extent;
     vk::ImageUsageFlags usage;
@@ -128,7 +127,7 @@ void Image::init(const CreateInfo& info) {
         .requiredFlags = vk::MemoryPropertyFlagBits::eDeviceLocal,
         .priority = info.priority,
     };
-    std::tie(_image, _allocation) = info.vmalloc.createImage(info_image, info_alloc);
+    std::tie(_image, _allocation) = info.device._vmalloc.createImage(info_image, info_alloc);
     
     // create image view
     vk::ImageViewCreateInfo info_view {
@@ -161,13 +160,13 @@ void Image::wrap(const WrapInfo& info) {
     _last_access = vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite;
     _last_stage = vk::PipelineStageFlagBits2::eTopOfPipe;
 }
-void Image::destroy(Device& device, vma::Allocator vmalloc) {
+void Image::destroy(Device& device) {
     if (_owning) {
-        vmalloc.destroyImage(_image, _allocation);
+        device._vmalloc.destroyImage(_image, _allocation);
         device._logical.destroyImageView(_view);
     }
 }
-void Image::load_texture(Device& device, vma::Allocator vmalloc, std::span<const std::byte> tex_data) {
+void Image::load_texture(Device& device, std::span<const std::byte> tex_data) {
     // create image data buffer
     vk::BufferCreateInfo info_buffer {
         .size = tex_data.size(),
@@ -188,12 +187,12 @@ void Image::load_texture(Device& device, vma::Allocator vmalloc, std::span<const
             vk::MemoryPropertyFlagBits::eHostCoherent |
             vk::MemoryPropertyFlagBits::eHostVisible
     };
-    auto [staging_buffer, staging_alloc] = vmalloc.createBuffer(info_buffer, info_allocation);
+    auto [staging_buffer, staging_alloc] = device._vmalloc.createBuffer(info_buffer, info_allocation);
 
     // upload data
-    void* mapped_data_p = vmalloc.mapMemory(staging_alloc);
+    void* mapped_data_p = device._vmalloc.mapMemory(staging_alloc);
     std::memcpy(mapped_data_p, tex_data.data(), tex_data.size());
-    vmalloc.unmapMemory(staging_alloc);
+    device._vmalloc.unmapMemory(staging_alloc);
 
     vk::CommandBuffer cmd = device.oneshot_begin(QueueType::eUniversal);
     // transition image for transfer
@@ -229,7 +228,7 @@ void Image::load_texture(Device& device, vma::Allocator vmalloc, std::span<const
     device.oneshot_end(QueueType::eUniversal, cmd);
     
     // clean up staging buffer
-    vmalloc.destroyBuffer(staging_buffer, staging_alloc);
+    device._vmalloc.destroyBuffer(staging_buffer, staging_alloc);
 }
 void Image::transition_layout(const TransitionInfo& info) {
     vk::ImageMemoryBarrier2 image_barrier {
@@ -290,7 +289,7 @@ void Image::blit(vk::CommandBuffer cmd, Image& src_image) {
         .filter = vk::Filter::eLinear,
     });
 }
-void DepthBuffer::init(Device& device, vma::Allocator vmalloc, vk::Extent3D extent) {
+void DepthBuffer::init(Device& device, vk::Extent3D extent) {
     _owning = true;
     _extent = extent;
     _format = get_format();
@@ -314,7 +313,7 @@ void DepthBuffer::init(Device& device, vma::Allocator vmalloc, vk::Extent3D exte
         .requiredFlags = vk::MemoryPropertyFlagBits::eDeviceLocal,
         .priority = 1.0f,
     };
-    std::tie(_image, _allocation) = vmalloc.createImage(info_image, info_alloc);
+    std::tie(_image, _allocation) = device._vmalloc.createImage(info_image, info_alloc);
     
     // create image view
     vk::ImageViewCreateInfo info_depth_view {
@@ -337,7 +336,7 @@ void DepthBuffer::init(Device& device, vma::Allocator vmalloc, vk::Extent3D exte
     };
     _view = device._logical.createImageView(info_depth_view);
 }
-void DepthStencil::init(Device& device, vma::Allocator vmalloc, vk::Extent3D extent) {
+void DepthStencil::init(Device& device, vk::Extent3D extent) {
     _owning = true;
     _extent = extent;
     _format = get_format();
@@ -361,7 +360,7 @@ void DepthStencil::init(Device& device, vma::Allocator vmalloc, vk::Extent3D ext
         .requiredFlags = vk::MemoryPropertyFlagBits::eDeviceLocal,
         .priority = 1.0f,
     };
-    std::tie(_image, _allocation) = vmalloc.createImage(info_image, info_alloc);
+    std::tie(_image, _allocation) = device._vmalloc.createImage(info_image, info_alloc);
     
     // create image view
     vk::ImageViewCreateInfo info_depth_view {

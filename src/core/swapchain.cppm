@@ -153,6 +153,7 @@ void Swapchain::init(Device& device, Window& window) {
     for (std::size_t i = 0; i < images.size(); i++) {
         _sync_frames.emplace_back().init(device);
     }
+    _resize_requested = false;
     std::println("Swapchain created: {}, {}x{}, {}",
         vk::to_string(present_mode),
         _extent.width, _extent.height,
@@ -166,7 +167,6 @@ void Swapchain::destroy(Device& device) {
 void Swapchain::resize(Device& device, Window& window) {
     for (auto& frame: _sync_frames) frame.destroy(device);
     init(device, window);
-    _resize_requested = false;
 }
 void Swapchain::set_target_framerate(uint32_t frames_per_second) {
     double ns = 0;

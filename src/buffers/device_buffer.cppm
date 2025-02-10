@@ -1,9 +1,11 @@
-#pragma once
-#include <vulkan/vulkan.hpp>
-#include <vk_mem_alloc.hpp>
-#include "chad_vis/core/device.hpp"
+module;
+#include <tuple>
+#include <print>
+export module device_buffer;
+import vulkan_hpp;
+import vk_mem_alloc_hpp;
 
-struct DeviceBuffer {
+export struct DeviceBuffer {
 	struct CreateInfo {
 		vma::Allocator vmalloc;
 		vk::DeviceSize size;
@@ -70,7 +72,10 @@ struct DeviceBuffer {
 			.sharingMode = vk::SharingMode::eExclusive,
 		};
 		vma::AllocationCreateInfo info_allocation {
-			.flags = vma::AllocationCreateFlagBits::eDedicatedMemory | vma::AllocationCreateFlagBits::eMapped,
+			.flags = 
+			vma::AllocationCreateFlagBits::eHostAccessSequentialWrite |
+				vma::AllocationCreateFlagBits::eDedicatedMemory |
+				vma::AllocationCreateFlagBits::eMapped,
 			.usage = vma::MemoryUsage::eAutoPreferDevice,
 			.requiredFlags = 
 				vk::MemoryPropertyFlagBits::eDeviceLocal,

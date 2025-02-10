@@ -1,13 +1,15 @@
-#pragma once
+module;
 #include <glm/glm.hpp>
 #include <glm/gtc/type_aligned.hpp>
 #include <glm/gtc/quaternion.hpp>
-#include <vulkan/vulkan.hpp>
-#include <vk_mem_alloc.hpp>
-#include "chad_vis/core/input.hpp"
-#include "chad_vis/device/device_buffer.hpp"
+#include <GLFW/glfw3.h>
+export module camera;
+import vk_mem_alloc_hpp;
+import device_buffer;
+import vulkan_hpp;
+import input;
 
-struct Camera {
+export struct Camera {
     void init(vma::Allocator vmalloc) {
         // create camera matrix buffer
 		_buffer.init({

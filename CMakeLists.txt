@@ -30,6 +30,6 @@ set(FETCHCONTENT_QUIET OFF) # enable git output for FetchContent steps
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON) # speed up consecutive config runs
 include("cmake/vulkan.cmake")
 include("cmake/vma.cmake")
-# include("cmake/shaders.cmake")
+include("cmake/shaders.cmake")
 include("cmake/glfw.cmake")
-# include("cmake/glm.cmake")
+include("cmake/glm.cmake")
