@@ -5,6 +5,7 @@ module;
 #include <thread>
 #include <cstdint>
 export module swapchain;
+import render_semaphore;
 import vulkan_hpp;
 import device;
 import window;
@@ -15,7 +16,7 @@ export struct Swapchain {
     void destroy(Device& device);
     void resize(Device& device, Window& window);
     void set_target_framerate(uint32_t fps);
-    void present(Device& device, Image& src_image, vk::Semaphore src_ready_to_read, vk::Semaphore src_ready_to_write);
+    void present(Device& device, Image& src_image, RenderSemaphore& render_semaphore);
 
     vk::SwapchainKHR _swapchain;
     std::vector<Image> _images;
@@ -182,7 +183,7 @@ void Swapchain::set_target_framerate(uint32_t frames_per_second) {
     }
     _target_frame_time = std::chrono::nanoseconds(static_cast<int64_t>(ns));
 }
-void Swapchain::present(Device& device, Image& src_image, vk::Semaphore src_ready_to_read, vk::Semaphore src_ready_to_write) {
+void Swapchain::present(Device& device, Image& src_image, RenderSemaphore& render_semaphore) {
     // wait for this frame's fence to be signaled and reset it
     SyncFrame& frame = _sync_frames[_sync_frame_i++ % _sync_frames.size()];
     while (vk::Result::eTimeout == device._logical.waitForFences(frame._ready_to_record, vk::True, UINT64_MAX));
@@ -243,21 +244,26 @@ void Swapchain::present(Device& device, Image& src_image, vk::Semaphore src_read
     cmd.end();
     
     // submit command buffer to graphics queue
-    std::array<vk::Semaphore, 2> wait_semaphores = { src_ready_to_read, frame._ready_to_write };
-    std::array<vk::Semaphore, 2> sign_semaphores = { src_ready_to_write, frame._ready_to_read };
+    std::array<uint64_t, 2> wait_timeline_values { render_semaphore._ready_to_read,  0 };
+    std::array<uint64_t, 2> sign_timeline_values { render_semaphore._ready_to_write, 0 };
+    vk::TimelineSemaphoreSubmitInfo timeline_info {
+        .waitSemaphoreValueCount =   wait_timeline_values.size(), .pWaitSemaphoreValues =   wait_timeline_values.data(),
+        .signalSemaphoreValueCount = sign_timeline_values.size(), .pSignalSemaphoreValues = sign_timeline_values.data(),
+    };
+    std::array<vk::Semaphore, 2> wait_semaphores = { render_semaphore._value, frame._ready_to_write };
+    std::array<vk::Semaphore, 2> sign_semaphores = { render_semaphore._value, frame._ready_to_read };
     std::array<vk::PipelineStageFlags, 2> wait_stages = { 
         vk::PipelineStageFlagBits::eTopOfPipe, 
         vk::PipelineStageFlagBits::eTopOfPipe 
     };
     device._universal_queue.submit(vk::SubmitInfo {
-        .waitSemaphoreCount = (uint32_t)wait_semaphores.size(),
-        .pWaitSemaphores = wait_semaphores.data(),
+        .pNext = &timeline_info,
+        .waitSemaphoreCount = (uint32_t)wait_semaphores.size(), .pWaitSemaphores = wait_semaphores.data(),
         .pWaitDstStageMask = wait_stages.data(),
-        .commandBufferCount = 1,
-        .pCommandBuffers = &cmd,
-        .signalSemaphoreCount = (uint32_t)sign_semaphores.size(),
-        .pSignalSemaphores = sign_semaphores.data(),
+        .commandBufferCount = 1, .pCommandBuffers = &cmd,
+        .signalSemaphoreCount = (uint32_t)sign_semaphores.size(), .pSignalSemaphores = sign_semaphores.data(),
     }, frame._ready_to_record);
+    render_semaphore._ready_to_read = render_semaphore._ready_to_write + 1;
 
     // present swapchain image
     vk::PresentInfoKHR presentInfo {

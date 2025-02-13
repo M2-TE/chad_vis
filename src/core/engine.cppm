@@ -57,6 +57,7 @@ Engine::Engine() {
         ._required_vk11_features {
         },
         ._required_vk12_features {
+            .timelineSemaphore = true,
             .bufferDeviceAddress = true,
         },
         ._required_vk13_features {

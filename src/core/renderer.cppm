@@ -5,6 +5,7 @@ module;
 export module renderer;
 import pipeline_graphics;
 import pipeline_compute;
+import render_semaphore;
 import vulkan_hpp;
 import swapchain;
 import device;
@@ -30,9 +31,7 @@ private:
 
 private:
     // synchronization
-    vk::Fence _ready_to_record;
-    vk::Semaphore _ready_to_write;
-    vk::Semaphore _ready_to_read;
+    RenderSemaphore _semaphore;
     // command recording
     vk::CommandPool _command_pool;
     vk::CommandBuffer _command_buffer;
@@ -58,13 +57,8 @@ void Renderer::init(Device& device, Scene& scene, vk::Extent2D extent, bool srgb
     };
     _command_buffer = device._logical.allocateCommandBuffers(bufferInfo).front();
 
-    // allocate semaphores and fences
-    _ready_to_record = device._logical.createFence({ .flags = vk::FenceCreateFlagBits::eSignaled });
-    _ready_to_write = device._logical.createSemaphore({});
-    _ready_to_read = device._logical.createSemaphore({});
-    // create dummy submission to initialize _ready_to_write
-    auto cmd = device.oneshot_begin(QueueType::eUniversal);
-    device.oneshot_end(QueueType::eUniversal, cmd, {}, _ready_to_write);
+    // create timeline semaphore
+    _semaphore.init(device);
     
     // create images and pipelines
     init_images(device, extent);
@@ -83,9 +77,7 @@ void Renderer::destroy(Device& device) {
     // destroy command pools
     device._logical.destroyCommandPool(_command_pool);
     // destroy synchronization objects
-    device._logical.destroyFence(_ready_to_record);
-    device._logical.destroySemaphore(_ready_to_write);
-    device._logical.destroySemaphore(_ready_to_read);
+    _semaphore.destroy(device);
 }
 void Renderer::resize(Device& device, Scene& scene, vk::Extent2D extent, bool srgb_output) {
     destroy(device);
@@ -101,23 +93,26 @@ void Renderer::render(Device& device, Swapchain& swapchain, Scene& scene) {
     
     // submit command buffer
     vk::PipelineStageFlags wait_stage = vk::PipelineStageFlagBits::eTopOfPipe;
-    vk::SubmitInfo info_submit {
-        .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &_ready_to_write,
-        .pWaitDstStageMask = &wait_stage,
-        .commandBufferCount = 1,
-        .pCommandBuffers = &cmd,
-        .signalSemaphoreCount = 1,
-        .pSignalSemaphores = &_ready_to_read,
+    vk::TimelineSemaphoreSubmitInfo info_timeline {
+        .waitSemaphoreValueCount = 1, .pWaitSemaphoreValues = &_semaphore._ready_to_write,
+        .signalSemaphoreValueCount = 1, .pSignalSemaphoreValues = &_semaphore._ready_to_read,
     };
-    device._universal_queue.submit(info_submit, _ready_to_record);
+    vk::SubmitInfo info_submit {
+        .pNext = &info_timeline,
+        .waitSemaphoreCount = 1, .pWaitSemaphores = &_semaphore._value,
+        .pWaitDstStageMask = &wait_stage,
+        .commandBufferCount = 1, .pCommandBuffers = &cmd,
+        .signalSemaphoreCount = 1, .pSignalSemaphores = &_semaphore._value,
+    };
+    device._universal_queue.submit(info_submit);
+    _semaphore._ready_to_write = _semaphore._ready_to_read + 1;
     
     // present drawn image
-    swapchain.present(device, _storage, _ready_to_read, _ready_to_write);
+    swapchain.present(device, _storage, _semaphore);
 }
 void Renderer::wait(Device& device) {
-    while (vk::Result::eTimeout == device._logical.waitForFences(_ready_to_record, vk::True, UINT64_MAX));
-    device._logical.resetFences(_ready_to_record);
+    // wait until write is unblocked to make sure no work is left
+    _semaphore.wait_ready_to_write(device);
 }
 void Renderer::init_images(Device& device, vk::Extent2D extent) {
     // create image with 16 bits color depth
