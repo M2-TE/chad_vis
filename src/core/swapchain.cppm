@@ -152,6 +152,7 @@ void Swapchain::init(Device& device, Window& window) {
 
     // create command pools and buffers
     if (_sync_frames.size() != _images.size()) {
+        for (auto& frame: _sync_frames) frame.destroy(device);
         _sync_frames.clear();
         for (std::size_t i = 0; i < _images.size(); i++) {
             _sync_frames.emplace_back().init(device);
