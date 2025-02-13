@@ -244,36 +244,26 @@ void Swapchain::present(Device& device, Image& src_image, RenderSemaphore& rende
     cmd.end();
     
     // submit command buffer to graphics queue
-    std::array<uint64_t, 2> wait_timeline_values { render_semaphore._ready_to_read,  0 };
-    std::array<uint64_t, 2> sign_timeline_values { render_semaphore._ready_to_write, 0 };
-    vk::TimelineSemaphoreSubmitInfo timeline_info {
-        .waitSemaphoreValueCount =   wait_timeline_values.size(), .pWaitSemaphoreValues =   wait_timeline_values.data(),
-        .signalSemaphoreValueCount = sign_timeline_values.size(), .pSignalSemaphoreValues = sign_timeline_values.data(),
-    };
-    std::array<vk::Semaphore, 2> wait_semaphores = { render_semaphore._value, frame._ready_to_write };
-    std::array<vk::Semaphore, 2> sign_semaphores = { render_semaphore._value, frame._ready_to_read };
+    render_semaphore.prepare_for_read();
+    std::array<uint64_t, 2> wait_timeline_values { render_semaphore._val_ready_to_read,  0 };
+    std::array<uint64_t, 2> sign_timeline_values { render_semaphore._val_ready_to_write, 0 };
+    std::array<vk::Semaphore, 2> wait_semaphores = { render_semaphore._semaphore, frame._ready_to_write };
+    std::array<vk::Semaphore, 2> sign_semaphores = { render_semaphore._semaphore, frame._ready_to_read };
     std::array<vk::PipelineStageFlags, 2> wait_stages = { 
         vk::PipelineStageFlagBits::eTopOfPipe, 
         vk::PipelineStageFlagBits::eTopOfPipe 
     };
+    vk::TimelineSemaphoreSubmitInfo info_timeline {
+        .waitSemaphoreValueCount =   wait_timeline_values.size(), .pWaitSemaphoreValues =   wait_timeline_values.data(),
+        .signalSemaphoreValueCount = sign_timeline_values.size(), .pSignalSemaphoreValues = sign_timeline_values.data(),
+    };
     device._universal_queue.submit(vk::SubmitInfo {
-        .pNext = &timeline_info,
+        .pNext = &info_timeline,
         .waitSemaphoreCount = (uint32_t)wait_semaphores.size(), .pWaitSemaphores = wait_semaphores.data(),
         .pWaitDstStageMask = wait_stages.data(),
         .commandBufferCount = 1, .pCommandBuffers = &cmd,
         .signalSemaphoreCount = (uint32_t)sign_semaphores.size(), .pSignalSemaphores = sign_semaphores.data(),
     }, frame._ready_to_record);
-    render_semaphore._ready_to_read = render_semaphore._ready_to_write + 1;
-
-    // present swapchain image
-    vk::PresentInfoKHR presentInfo {
-        .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &frame._ready_to_read,
-        .swapchainCount = 1,
-        .pSwapchains = &_swapchain,
-        .pImageIndices = &swap_index,
-        .pResults = nullptr
-    };
 
     // wait for target framerate
     auto new_timestamp = std::chrono::high_resolution_clock::now();
@@ -285,7 +275,14 @@ void Swapchain::present(Device& device, Image& src_image, RenderSemaphore& rende
     
     // present swapchain image
     try {
-        auto res = device._universal_queue.presentKHR(presentInfo);
+        auto res = device._universal_queue.presentKHR({
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = &frame._ready_to_read,
+            .swapchainCount = 1,
+            .pSwapchains = &_swapchain,
+            .pImageIndices = &swap_index,
+            .pResults = nullptr
+        });
         switch (res) {
             case vk::Result::eSuccess: break;
             case vk::Result::eSuboptimalKHR: {

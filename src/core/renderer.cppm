@@ -31,7 +31,7 @@ private:
 
 private:
     // synchronization
-    RenderSemaphore _semaphore;
+    RenderSemaphore _synchronization;
     // command recording
     vk::CommandPool _command_pool;
     vk::CommandBuffer _command_buffer;
@@ -58,7 +58,7 @@ void Renderer::init(Device& device, Scene& scene, vk::Extent2D extent, bool srgb
     _command_buffer = device._logical.allocateCommandBuffers(bufferInfo).front();
 
     // create timeline semaphore
-    _semaphore.init(device);
+    _synchronization.init(device);
     
     // create images and pipelines
     init_images(device, extent);
@@ -77,7 +77,7 @@ void Renderer::destroy(Device& device) {
     // destroy command pools
     device._logical.destroyCommandPool(_command_pool);
     // destroy synchronization objects
-    _semaphore.destroy(device);
+    _synchronization.destroy(device);
 }
 void Renderer::resize(Device& device, Scene& scene, vk::Extent2D extent, bool srgb_output) {
     destroy(device);
@@ -92,27 +92,26 @@ void Renderer::render(Device& device, Swapchain& swapchain, Scene& scene) {
     cmd.end();
     
     // submit command buffer
+    _synchronization.prepare_for_write();
     vk::PipelineStageFlags wait_stage = vk::PipelineStageFlagBits::eTopOfPipe;
     vk::TimelineSemaphoreSubmitInfo info_timeline {
-        .waitSemaphoreValueCount = 1, .pWaitSemaphoreValues = &_semaphore._ready_to_write,
-        .signalSemaphoreValueCount = 1, .pSignalSemaphoreValues = &_semaphore._ready_to_read,
+        .waitSemaphoreValueCount = 1, .pWaitSemaphoreValues = &_synchronization._val_ready_to_write,
+        .signalSemaphoreValueCount = 1, .pSignalSemaphoreValues = &_synchronization._val_ready_to_read,
     };
-    vk::SubmitInfo info_submit {
+    device._universal_queue.submit(vk::SubmitInfo {
         .pNext = &info_timeline,
-        .waitSemaphoreCount = 1, .pWaitSemaphores = &_semaphore._value,
+        .waitSemaphoreCount = 1, .pWaitSemaphores = &_synchronization._semaphore,
         .pWaitDstStageMask = &wait_stage,
         .commandBufferCount = 1, .pCommandBuffers = &cmd,
-        .signalSemaphoreCount = 1, .pSignalSemaphores = &_semaphore._value,
-    };
-    device._universal_queue.submit(info_submit);
-    _semaphore._ready_to_write = _semaphore._ready_to_read + 1;
+        .signalSemaphoreCount = 1, .pSignalSemaphores = &_synchronization._semaphore,
+    });
     
     // present drawn image
-    swapchain.present(device, _storage, _semaphore);
+    swapchain.present(device, _storage, _synchronization);
 }
 void Renderer::wait(Device& device) {
     // wait until write is unblocked to make sure no work is left
-    _semaphore.wait_ready_to_write(device);
+    _synchronization.wait_ready_to_write(device);
 }
 void Renderer::init_images(Device& device, vk::Extent2D extent) {
     // create image with 16 bits color depth
