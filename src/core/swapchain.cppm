@@ -134,11 +134,12 @@ void Swapchain::init(Device& device, Window& window) {
         .clipped = true,
         .oldSwapchain = _swapchain,
     };
+    vk::SwapchainKHR swapchain_old = _swapchain;
     _swapchain = device._logical.createSwapchainKHR(info_swapchain);
-    if (_images.size() > 0) device._logical.destroySwapchainKHR(_swapchain);
-    _images.clear();
+    if (_images.size() > 0) device._logical.destroySwapchainKHR(swapchain_old);
 
     // retrieve and wrap swapchain images
+    _images.clear();
     auto images = device._logical.getSwapchainImagesKHR(_swapchain);
     for (vk::Image image: images) {
         _images.emplace_back().wrap({
@@ -150,6 +151,7 @@ void Swapchain::init(Device& device, Window& window) {
     }
 
     // create command pools and buffers
+    _sync_frames.clear();
     for (std::size_t i = 0; i < images.size(); i++) {
         _sync_frames.emplace_back().init(device);
     }
@@ -163,6 +165,7 @@ void Swapchain::init(Device& device, Window& window) {
 void Swapchain::destroy(Device& device) {
     for (auto& frame: _sync_frames) frame.destroy(device);
     if (_images.size() > 0) device._logical.destroySwapchainKHR(_swapchain);
+    _images.clear();
 }
 void Swapchain::resize(Device& device, Window& window) {
     for (auto& frame: _sync_frames) frame.destroy(device);

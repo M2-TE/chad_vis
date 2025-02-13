@@ -1,4 +1,5 @@
 module;
+#include <print>
 #include <cstdint>
 #include <GLFW/glfw3.h>
 export module engine;
@@ -107,7 +108,7 @@ void Engine::run() {
         if (!_rendering) _window.delay(50);
         if (!_rendering) continue;
         if (_swapchain._resize_requested) handle_resize();
-
+        
         _scene.update_safe();
         _renderer.wait(_device);
         _scene.update(_device._vmalloc);
@@ -152,7 +153,10 @@ void Engine::handle_events() {
     }
 }
 void Engine::handle_resize() {
+    // wait for current frame to finish
+    _renderer.wait(_device);
     _device._logical.waitIdle();
+
     _scene._camera.resize(_window.size());
     _swapchain.resize(_device, _window);
     _renderer.resize(_device, _scene, _window.size(), _swapchain._manual_srgb_required);

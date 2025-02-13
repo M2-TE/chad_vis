@@ -98,7 +98,7 @@ void Renderer::render(Device& device, Swapchain& swapchain, Scene& scene) {
     cmd.begin({ .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
     execute_pipes(cmd, scene);
     cmd.end();
-
+    
     // submit command buffer
     vk::PipelineStageFlags wait_stage = vk::PipelineStageFlagBits::eTopOfPipe;
     vk::SubmitInfo info_submit {
@@ -111,7 +111,7 @@ void Renderer::render(Device& device, Swapchain& swapchain, Scene& scene) {
         .pSignalSemaphores = &_ready_to_read,
     };
     device._universal_queue.submit(info_submit, _ready_to_record);
-
+    
     // present drawn image
     swapchain.present(device, _storage, _ready_to_read, _ready_to_write);
 }
