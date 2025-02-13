@@ -151,9 +151,11 @@ void Swapchain::init(Device& device, Window& window) {
     }
 
     // create command pools and buffers
-    _sync_frames.clear();
-    for (std::size_t i = 0; i < images.size(); i++) {
-        _sync_frames.emplace_back().init(device);
+    if (_sync_frames.size() != _images.size()) {
+        _sync_frames.clear();
+        for (std::size_t i = 0; i < _images.size(); i++) {
+            _sync_frames.emplace_back().init(device);
+        }
     }
     _resize_requested = false;
     std::println("Swapchain created: {}, {}x{}, {}",
@@ -168,7 +170,6 @@ void Swapchain::destroy(Device& device) {
     _images.clear();
 }
 void Swapchain::resize(Device& device, Window& window) {
-    for (auto& frame: _sync_frames) frame.destroy(device);
     init(device, window);
 }
 void Swapchain::set_target_framerate(uint32_t frames_per_second) {
