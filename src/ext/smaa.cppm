@@ -4,9 +4,9 @@ module;
 #include "AreaTex.h"
 #include "SearchTex.h"
 export module smaa;
+import pipeline_graphics;
 import vk_mem_alloc_hpp;
 import vulkan_hpp;
-import pipeline;
 import device;
 import image;
 

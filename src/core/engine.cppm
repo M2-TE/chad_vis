@@ -11,9 +11,9 @@ import input;
 import scene;
 
 // temporary:
+import pipeline_base;
 import device_buffer;
 import image;
-import pipeline;
 
 
 export struct Engine {
@@ -80,7 +80,7 @@ Engine::Engine() {
     DepthBuffer::set_format(_device._physical);
     DepthStencil::set_format(_device._physical);
     DeviceBuffer::set_staging_requirement(_device._vmalloc);
-    Graphics::set_module_deprecation(_device._physical);
+    PipelineBase::set_module_deprecation(_device._physical);
 
     _swapchain.init(_device, _window);
     _swapchain.set_target_framerate(_fps_foreground);
