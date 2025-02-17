@@ -9,9 +9,9 @@ set(VULKAN_HPP_NO_CONSTRUCTORS ON)
 set(VULKAN_HPP_NO_SMART_HANDLE ON)
 set(VULKAN_HPP_NO_SPACESHIP_OPERATOR ON)
 FetchContent_Declare(vulkan-hpp
-    GIT_REPOSITORY "https://github.com/M2-TE/Vulkan-Hpp.git"
-    GIT_TAG "cmake-target-properties"
-    GIT_SHALLOW ON
+    GIT_REPOSITORY "https://github.com/KhronosGroup/Vulkan-Hpp.git"
+    GIT_TAG "7d7c25f9bebf89606892360efdb0d1c873dd1de8"
+    # GIT_SHALLOW ON
     GIT_SUBMODULES "Vulkan-Headers"
     OVERRIDE_FIND_PACKAGE
     EXCLUDE_FROM_ALL
