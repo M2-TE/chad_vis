@@ -1,22 +1,43 @@
-set(VULKAN_HPP_ENABLE_CPP20_MODULES ON)
-set(VULKAN_HPP_ENABLE_STD_MODULE OFF)
-set(VULKAN_HPP_TYPESAFE_CONVERSION OFF)
+# set(VULKAN_HPP_ENABLE_CPP20_MODULES ON)
+# set(VULKAN_HPP_ENABLE_STD_MODULE OFF)
+# set(VULKAN_HPP_TYPESAFE_CONVERSION OFF)
+# set(VULKAN_HPP_DISPATCH_LOADER_DYNAMIC ON)
+# set(VULKAN_HPP_NO_SETTERS ON)
+# set(VULKAN_HPP_NO_TO_STRING OFF)
+# set(VULKAN_HPP_NO_PROTOTYPES ON)
+# set(VULKAN_HPP_NO_CONSTRUCTORS ON)
+# set(VULKAN_HPP_NO_SMART_HANDLE ON)
+# set(VULKAN_HPP_NO_SPACESHIP_OPERATOR ON)
+# FetchContent_Declare(vulkan-hpp
+#     GIT_REPOSITORY "https://github.com/KhronosGroup/Vulkan-Hpp.git"
+#     GIT_TAG "7d7c25f9bebf89606892360efdb0d1c873dd1de8"
+#     # GIT_SHALLOW ON
+#     GIT_SUBMODULES "Vulkan-Headers"
+#     OVERRIDE_FIND_PACKAGE
+#     EXCLUDE_FROM_ALL
+#     SYSTEM)
+# FetchContent_MakeAvailable(vulkan-hpp)
+# target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::HppModule)
+
+set(VK_NO_PROTOTYPES ON)
+set(VULKAN_HPP_ENABLE_MODULE ON)
+set(VULKAN_HPP_ENABLE_MODULE_STD OFF)
+set(VULKAN_HPP_TYPESAFE_CONVERSION ON)
 set(VULKAN_HPP_DISPATCH_LOADER_DYNAMIC ON)
 set(VULKAN_HPP_NO_SETTERS ON)
-set(VULKAN_HPP_NO_TO_STRING OFF)
+set(VULKAN_HPP_NO_TO_STRING ON)
 set(VULKAN_HPP_NO_PROTOTYPES ON)
 set(VULKAN_HPP_NO_CONSTRUCTORS ON)
 set(VULKAN_HPP_NO_SMART_HANDLE ON)
 set(VULKAN_HPP_NO_SPACESHIP_OPERATOR ON)
-FetchContent_Declare(vulkan-hpp
-    GIT_REPOSITORY "https://github.com/KhronosGroup/Vulkan-Hpp.git"
-    GIT_TAG "7d7c25f9bebf89606892360efdb0d1c873dd1de8"
-    # GIT_SHALLOW ON
-    GIT_SUBMODULES "Vulkan-Headers"
+FetchContent_Declare(vulkan-headers
+    GIT_REPOSITORY "https://github.com/M2-TE/Vulkan-Headers.git"
+    GIT_TAG "cmake-vulkan-hpp"
+    GIT_SHALLOW ON
     OVERRIDE_FIND_PACKAGE
     EXCLUDE_FROM_ALL
     SYSTEM)
-FetchContent_MakeAvailable(vulkan-hpp)
+FetchContent_MakeAvailable(vulkan-headers)
 target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::HppModule)
 
 # create vk_layer_settings.txt for validation layers

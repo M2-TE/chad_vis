@@ -9,8 +9,6 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-
-
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexperimental-modules-reduced-bmi -fmodules-validate-once-per-build-session")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
