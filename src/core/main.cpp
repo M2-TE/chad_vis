@@ -1,6 +1,8 @@
 import engine;
 
-int main() {
-    Engine engine;
-    engine.run();
-}
+#if __has_include(<GLFW/glfw3.h>)
+    int main() {
+        Engine engine;
+        engine.run();
+    }
+#endif

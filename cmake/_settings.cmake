@@ -4,21 +4,21 @@ set(CMAKE_POLICY_DEFAULT_CMP0077 NEW) # disallow option() from overwriting set()
 # cxx settings
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # cmake settings
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(BUILD_SHARED_LIBS OFF)
 
 # IPO/LTO support
-# set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
-# include(CheckIPOSupported)
-# check_ipo_supported(RESULT CMAKE_INTERPROCEDURAL_OPTIMIZATION LANGUAGES CXX)
-# message(STATUS "IPO/LTO enabled: ${CMAKE_INTERPROCEDURAL_OPTIMIZATION}")
+set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
+include(CheckIPOSupported)
+check_ipo_supported(RESULT CMAKE_INTERPROCEDURAL_OPTIMIZATION LANGUAGES CXX)
+message(STATUS "IPO/LTO enabled: ${CMAKE_INTERPROCEDURAL_OPTIMIZATION}")
 
 # other
-set(STRICT_COMPILATION OFF)
-set(CROSS_PLATFORM_DETERMINISTIC OFF)
+set(STRICT_COMPILATION OFF) # all warnings will emit errors
+set(CROSS_PLATFORM_DETERMINISTIC OFF) # cross-platform determinism disables fast-math
 
 if(MSVC)
     set(CMAKE_VS_PLATFORM_TOOLSET_HOST_ARCHITECTURE "x64")
@@ -45,14 +45,19 @@ elseif(UNIX)
     # enable mold linker if present
     find_program(MOLD_FOUND mold)
     if (MOLD_FOUND)
-        message(STATUS "Linker: mold found")
+        message(STATUS "Using mold linker")
         set(CMAKE_LINKER_TYPE MOLD)
     endif()
 
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
+    # enable ccache if present
+    find_program(CCACHE_FOUND ccache)
+    if (CCACHE_FOUND)
+        message(STATUS "Using ccache")
+        set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
+    endif()
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -Wall -Wextra -Wpedantic")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing") # as recommended by Vulkan-Hpp
     if (STRICT_COMPILATION)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
     endif()

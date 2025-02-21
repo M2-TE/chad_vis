@@ -1,11 +1,10 @@
 module;
 #include <set>
 #include <cctype>
-#include <GLFW/glfw3.h>
 export module input;
 
 export namespace Input {
-	struct MouseVec2 { int32_t x, y; };
+	struct MouseVec2 { double x, y; };
 	// data storage for internal use only
 	struct Data {
 		auto static get() noexcept -> Data& { 
@@ -20,24 +19,32 @@ export namespace Input {
 	};
 
 	struct Keys {
+		enum: int {
+			eSpacebar = 32,
+			eEscape = 256,
+			eF11 = 300,
+			eLeftShift = 340,
+			eLeftCtrl = 341,
+			eLeftAlt = 342,
+		};
 		// check if key was pressed in this frame
+		bool static inline pressed(char character) noexcept { return Data::get().keys_pressed.contains((int)std::toupper(character)); }
 		bool static inline pressed(int code) noexcept { return Data::get().keys_pressed.contains(code); }
-		bool static inline pressed(char code) noexcept { return Data::get().keys_pressed.contains((int)std::toupper(code)); }
 
 		// check if key is being held
+		bool static inline held(char character) noexcept { return Data::get().keys_held.contains((int)std::toupper(character)); }
 		bool static inline held(int code) noexcept { return Data::get().keys_held.contains(code); }
-		bool static inline held(char code) noexcept { return Data::get().keys_held.contains((int)std::toupper(code)); }
 
 		// check if key was released in this frame
+		bool static inline released(char character) noexcept { return Data::get().keys_released.contains((int)std::toupper(character)); }
 		bool static inline released(int code) noexcept { return Data::get().keys_released.contains(code); }
-		bool static inline released(char code) noexcept { return Data::get().keys_released.contains((int)std::toupper(code)); }
     };
 	struct Mouse {
-		// set capture mode of the mouse
-		void static set_mode(GLFWwindow* window_p, bool captured) {
-			glfwSetInputMode(window_p, GLFW_CURSOR, captured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
-			Data::get().mouse_captured = captured;
-		}
+		enum: int {
+			eLeft = 0,
+			eRight = 1,
+			eMiddle = 2,
+		};
 		// check if mouse button was pressed in this frame
 		bool static inline pressed(int button) noexcept { return Data::get().buttons_pressed.contains(button); }
 		// check if mouse button is being held held
@@ -68,44 +75,29 @@ export namespace Input {
 		Data::get().buttons_held.clear();
 	}
 
-	// callback for key events
-	[[maybe_unused]]
-	void key_callback(GLFWwindow* window_p, int key, int scancode, int action, int mods) {
-		if (action == GLFW_PRESS) {
-			Data::get().keys_pressed.insert(key);
-			Data::get().keys_held.insert(key);
-		}
-		else if (action == GLFW_RELEASE) {
-			Data::get().keys_released.insert(key);
-			Data::get().keys_held.erase(key);
-		}
-		(void)window_p;
-		(void)scancode;
-		(void)mods;
+	void register_key_press(int key) {
+		Data::get().keys_pressed.insert(key);
+		Data::get().keys_held.insert(key);
 	}
-
-	// callback for mouse button events
-	[[maybe_unused]]
-	void mouse_button_callback(GLFWwindow* window_p, int button, int action, int mods) {
-		if (action == GLFW_PRESS) {
-			Data::get().buttons_pressed.insert(button);
-			Data::get().buttons_held.insert(button);
-		}
-		else if (action == GLFW_RELEASE) {
-			Data::get().buttons_released.insert(button);
-			Data::get().buttons_held.erase(button);
-		}
-		(void)window_p;
-		(void)mods;
+	void register_key_release(int key) {
+		Data::get().keys_released.insert(key);
+		Data::get().keys_held.erase(key);
 	}
-
-	// callback for mouse movement
-	[[maybe_unused]]
-	void mouse_position_callback(GLFWwindow* window_p, double xpos, double ypos) {
-		Data::get().mouse_delta.x += (int32_t)xpos - Data::get().mouse_position.x;
-		Data::get().mouse_delta.y += (int32_t)ypos - Data::get().mouse_position.y;
-		Data::get().mouse_position = { (int32_t)xpos, (int32_t)ypos };
-		(void)window_p;
+	void register_mouse_press(int button) {
+		Data::get().buttons_pressed.insert(button);
+		Data::get().buttons_held.insert(button);
+	}
+	void register_mouse_release(int button) {
+		Data::get().buttons_released.insert(button);
+		Data::get().buttons_held.erase(button);
+	}
+	void register_mouse_capture(bool captured) {
+		Data::get().mouse_captured = captured;
+	}
+	void register_mouse_move(double xpos, double ypos) {
+		Data::get().mouse_delta.x += xpos - Data::get().mouse_position.x;
+		Data::get().mouse_delta.y += ypos - Data::get().mouse_position.y;
+		Data::get().mouse_position = { xpos, ypos };
 	}
 }
 export using Keys  = Input::Keys;

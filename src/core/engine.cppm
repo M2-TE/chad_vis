@@ -16,7 +16,6 @@ import pipeline_base;
 import device_buffer;
 import image;
 
-
 export struct Engine {
     Engine();
     ~Engine();
@@ -143,14 +142,13 @@ void Engine::handle_events() {
     else _rendering = true;
 
     // handle fullscreen controls
-    if (Keys::pressed(GLFW_KEY_F11)) _window.toggle_window_mode();
-
+    if (Keys::pressed(Keys::eF11)) _window.toggle_window_mode();
     // handle mouse grab
-    if (Keys::pressed(GLFW_KEY_LEFT_ALT)) Mouse::set_mode(_window._glfw_window_p, false);
+    if (Keys::pressed(Keys::eLeftAlt)) _window.set_mouse_capture_mode(false);
     else {
-        if (Mouse::captured() && Keys::pressed(GLFW_KEY_ESCAPE)) Mouse::set_mode(_window._glfw_window_p, false);
-        else if (!Mouse::captured() && !Keys::held(GLFW_KEY_LEFT_ALT) && Mouse::pressed(0)) Mouse::set_mode(_window._glfw_window_p, true);
-        else if (!Mouse::captured() && Keys::released(GLFW_KEY_LEFT_ALT)) Mouse::set_mode(_window._glfw_window_p, true);
+        if (Mouse::captured() && Keys::pressed(Keys::eEscape)) _window.set_mouse_capture_mode(false);
+        else if (!Mouse::captured() && !Keys::held(Keys::eLeftAlt) && Mouse::pressed(0)) _window.set_mouse_capture_mode(true);
+        else if (!Mouse::captured() && Keys::released(Keys::eLeftAlt)) _window.set_mouse_capture_mode(true);
     }
 }
 void Engine::handle_resize() {

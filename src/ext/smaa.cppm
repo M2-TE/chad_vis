@@ -13,11 +13,13 @@ import image;
 export struct SMAA {
     void init(Device& device, vk::Extent2D extent, Image& color, DepthStencil& depth_stencil);
     void destroy(Device& device);
+    void resize(Device& device, vk::Extent2D extent, Image& color, DepthStencil& depth_stencil);
     void execute(vk::CommandBuffer cmd, Image& color, DepthStencil& depth_stencil);
     auto get_output() -> Image&;
 
 private:
-    void init_images(Device& device, vk::Extent2D extent, vk::Format color_format);
+    void init_render_targets(Device& device, vk::Extent2D extent, vk::Format color_format);
+    void init_lookup_textures(Device& device);
     void init_pipelines(Device& device, vk::Extent2D extent, Image& color, DepthStencil& depth_stencil);
     
     // static images
@@ -35,7 +37,8 @@ private:
 
 module: private;
 void SMAA::init(Device& device, vk::Extent2D extent, Image& color, DepthStencil& depth_stencil) {
-    init_images(device, extent, color._format);
+    init_lookup_textures(device);
+    init_render_targets(device, extent, color._format);
     init_pipelines(device, extent, color, depth_stencil);
 }
 void SMAA::destroy(Device& device) {
@@ -49,6 +52,20 @@ void SMAA::destroy(Device& device) {
     _pipe_blending.destroy(device);
     _pipe_weights.destroy(device);
     _pipe_edges.destroy(device);
+}
+void SMAA::resize(Device& device, vk::Extent2D extent, Image& color, DepthStencil& depth_stencil) {
+    // destroy images
+    _img_output.destroy(device);
+    _img_weights.destroy(device);
+    _img_edges.destroy(device);
+    // destroy pipelines
+    _pipe_blending.destroy(device);
+    _pipe_weights.destroy(device);
+    _pipe_edges.destroy(device);
+
+    // recreate them
+    init_render_targets(device, extent, color._format);
+    init_pipelines(device, extent, color, depth_stencil);
 }
 void SMAA::execute(vk::CommandBuffer cmd, Image& color, DepthStencil& depth_stencil) {
     Image::TransitionInfo info_transition_read {
@@ -88,7 +105,7 @@ void SMAA::execute(vk::CommandBuffer cmd, Image& color, DepthStencil& depth_sten
 auto SMAA::get_output() -> Image& {
     return _img_output;
 }
-void SMAA::init_images(Device& device, vk::Extent2D extent, vk::Format color_format) {
+void SMAA::init_render_targets(Device& device, vk::Extent2D extent, vk::Format color_format) {
     // create SMAA render targets
     _img_edges.init({
         .device = device,
@@ -115,8 +132,8 @@ void SMAA::init_images(Device& device, vk::Extent2D extent, vk::Format color_for
             vk::ImageUsageFlagBits::eTransferSrc |
             vk::ImageUsageFlagBits::eSampled
     });
-
-    // load smaa lookup textures
+}
+void SMAA::init_lookup_textures(Device& device) {
     _img_search.init({
         .device = device,
         .format = vk::Format::eR8Unorm,

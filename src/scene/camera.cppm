@@ -2,7 +2,6 @@ module;
 #include <glm/glm.hpp>
 #include <glm/gtc/type_aligned.hpp>
 #include <glm/gtc/quaternion.hpp>
-#include <GLFW/glfw3.h>
 export module camera;
 import vk_mem_alloc_hpp;
 import device_buffer;
@@ -28,8 +27,8 @@ export struct Camera {
 	void update(vma::Allocator vmalloc) {
 		// read input for movement and rotation
 		float speed = 0.05;
-		if (Keys::held(GLFW_KEY_LEFT_CONTROL)) speed /= 4.0;
-		if (Keys::held(GLFW_KEY_LEFT_SHIFT)) speed *= 4.0;
+		if (Keys::held(Keys::eLeftCtrl)) speed /= 4.0;
+		if (Keys::held(Keys::eLeftShift)) speed *= 4.0;
 
 		// move in direction relative to camera
 		glm::qua<float, glm::aligned_highp> q_rot(_rot);

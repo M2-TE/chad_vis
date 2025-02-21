@@ -1,19 +1,8 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.28)
 project(chad_vis LANGUAGES CXX)
 
-# cmake settings
-set(CMAKE_POLICY_DEFAULT_CMP0077 NEW) # option() should honor normal variables
-
-# language settings
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexperimental-modules-reduced-bmi -fmodules-validate-once-per-build-session")
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-endif()
+# general settings
+include("cmake/_settings.cmake")
 
 # create visualizer executable
 add_executable(${PROJECT_NAME})
@@ -32,8 +21,8 @@ target_sources(${PROJECT_NAME} PUBLIC FILE_SET CXX_MODULES FILES "${CPPM_SOURCE_
 
 # add dependencies
 include(FetchContent)
-set(FETCHCONTENT_QUIET OFF) # enable git output for FetchContent steps
-set(FETCHCONTENT_UPDATES_DISCONNECTED ON) # speed up consecutive config runs
+set(FETCHCONTENT_QUIET ON) # disables git output for FetchContent steps
+set(FETCHCONTENT_UPDATES_DISCONNECTED ON) # speeds up consecutive config runs
 include("cmake/vulkan.cmake")
 include("cmake/vma.cmake")
 include("cmake/shaders.cmake")

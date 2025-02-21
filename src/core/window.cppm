@@ -5,8 +5,8 @@ module;
 #include <string>
 #include <cstring>
 #include <cstdint>
-#include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_hpp_macros.hpp>
+#include <vulkan/vulkan_core.h>
 #include <GLFW/glfw3.h>
 export module window;
 import vulkan_hpp;
@@ -44,6 +44,10 @@ export struct Window {
             glfwSetWindowAttrib(_glfw_window_p, GLFW_DECORATED, GLFW_FALSE);
             glfwMaximizeWindow(_glfw_window_p);
         }
+    }
+    void set_mouse_capture_mode(bool captured) {
+        glfwSetInputMode(_glfw_window_p, GLFW_CURSOR, captured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+        Input::register_mouse_capture(captured);
     }
     
     vk::Instance _instance;
@@ -140,9 +144,17 @@ void Window::init(unsigned int width, unsigned int height, std::string name){
     if (glfwRawMouseMotionSupported()) glfwSetInputMode(_glfw_window_p, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
     else std::println("Raw mouse motion not supported");
     // register callbacks
-    glfwSetKeyCallback(_glfw_window_p, Input::key_callback);
-    glfwSetCursorPosCallback(_glfw_window_p, Input::mouse_position_callback);
-    glfwSetMouseButtonCallback(_glfw_window_p, Input::mouse_button_callback);
+    glfwSetKeyCallback(_glfw_window_p, [](GLFWwindow*, int key, int, int action, int) {
+        if (action == GLFW_PRESS) Input::register_key_press(key);
+		else if (action == GLFW_RELEASE) Input::register_key_release(key);
+    });
+    glfwSetMouseButtonCallback(_glfw_window_p, [](GLFWwindow*, int button, int action, int) {
+        if (action == GLFW_PRESS) Input::register_mouse_press(button);
+		else if (action == GLFW_RELEASE) Input::register_mouse_release(button);
+    });
+    glfwSetCursorPosCallback(_glfw_window_p, [](GLFWwindow*, double xpos, double ypos) {
+        Input::register_mouse_move(xpos, ypos);
+    });
     // set window icon
     std::vector<unsigned char> icon_data(16 * 16 * 4, 0);
     GLFWimage icon { 16, 16, icon_data.data() };

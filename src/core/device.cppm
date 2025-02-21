@@ -52,7 +52,7 @@ struct Device::CreateInfo {
 
 module: private;
 template<typename T>
-bool check_features(const T& available, const T& required) {
+bool check_features(const T& /*available*/, const T& /*required*/) {
     // // track available features via simple vector
     // std::vector<vk::Bool32> available_features;
     // auto fnc_add_available = [&](auto arg) {
