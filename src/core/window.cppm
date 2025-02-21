@@ -1,67 +1,50 @@
 module;
 #include <print>
-#include <chrono>
-#include <thread>
 #include <string>
 #include <cstring>
 #include <cstdint>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_vulkan.h>
 #include <vulkan/vulkan_hpp_macros.hpp>
-
-#if __has_include(<GLFW/glfw3.h>)
-#   include <vulkan/vulkan_core.h>
-#   include <GLFW/glfw3.h>
-#endif
-
 export module window;
 import vulkan_hpp;
 import input;
 
 export struct Window {
-    void init(unsigned int width, unsigned int height, std::string name);
+    enum Mode { eFullscreen, eBorderless, eWindowed };
+    void init(std::string name, unsigned int width, unsigned int height, Mode window_mode);
     void destroy();
+    void handle_event(void* event_p);
 
-    bool is_open();
-    bool is_focused();
-    bool is_minimized();
-    bool is_maximized();
-
-    auto get_size() -> vk::Extent2D;
-
-    void poll_events();
     void delay(std::size_t ms);
-    void toggle_window_mode();
-    void set_mouse_capture_mode(bool captured);
+    void set_window_mode(Mode window_mode);
+    void set_mouse_relative(bool relative);
     
     vk::Instance _instance;
     vk::SurfaceKHR _surface;
-    GLFWwindow* _glfw_window_p;
-    // monitors
-    GLFWmonitor** _monitors;
-    int _monitor_count;
-    int _monitor_i = 0;
+    SDL_Window* _sdl_window_p;
     // window state
-    vk::Extent2D _windowed_resolution;
+    vk::Extent2D _size;
+    SDL_DisplayMode _fullscreen__display_mode;
+    Mode _fullscreen_mode;
+    Mode _mode;
+    bool _focused;
+    bool _minimized;
 };
 
 module: private;
-#if __has_include(<GLFW/glfw3.h>)
-void Window::init(unsigned int width, unsigned int height, std::string name){
+void Window::init(std::string name, uint32_t width, uint32_t height, Mode window_mode) {
+    // init only the video subsystem
+    if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) std::println("{}", SDL_GetError());
+
     // dynamic dispatcher init 1/3
     vk::detail::defaultDispatchLoaderDynamic.init();
 
-    // initialize GLFW
-    glfwInitVulkanLoader(vk::detail::defaultDispatchLoaderDynamic.vkGetInstanceProcAddr);
-    if (!glfwInit()) {
-        std::println("Failed to initialize GLFW");
-        exit(1);
-    }
-    glfwSetErrorCallback([](int error, const char* description) {
-        std::println("GLFW error {}: {}", error, description);
-    });
-
-    // check availability of required vulkan instance extensions
-    uint32_t extension_count;
-    const char** extensions_required = glfwGetRequiredInstanceExtensions(&extension_count);
+    // get required extensions for vulkan instance
+    Uint32 extension_count;
+    const char* const* extensions_required = SDL_Vulkan_GetInstanceExtensions(&extension_count);
+    if (extensions_required == nullptr) std::println("{}", SDL_GetError());
+    // check availability of extensions
     auto extensions_available = vk::enumerateInstanceExtensionProperties();
     for (uint32_t i = 0; i < extension_count; i++) {
         bool available = false;
@@ -93,9 +76,9 @@ void Window::init(unsigned int width, unsigned int height, std::string name){
     // create vulkan instance
     vk::ApplicationInfo info_app {
         .pApplicationName = name.c_str(),
-        .applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
-        .pEngineName = "TBD",
-        .engineVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
+        .applicationVersion = vk::makeApiVersion(0, 1, 0, 0),
+        .pEngineName = "CHAD Visualizer",
+        .engineVersion = vk::makeApiVersion(0, 1, 0, 0),
         .apiVersion = vk::ApiVersion13
     };
     vk::InstanceCreateInfo info_instance {
@@ -110,89 +93,74 @@ void Window::init(unsigned int width, unsigned int height, std::string name){
     // dynamic dispatcher init 2/3
     vk::detail::defaultDispatchLoaderDynamic.init(_instance);
 
-    // build list of monitors and video modes of the first (primary) monitor
-    _monitors = glfwGetMonitors(&_monitor_count);
-    
-    // create window for rendering
-    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE);
-    glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
-    _glfw_window_p = glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
-    _windowed_resolution = vk::Extent2D { width, height };
-    if (_glfw_window_p == nullptr) {
-        std::println("Failed to create window");
-        exit(1);
-    }
+    // create SDL window and a corresponding Vulkan surface
+    _sdl_window_p = SDL_CreateWindow(name.c_str(), width, height, 
+        (window_mode == Mode::eWindowed ? SDL_WINDOW_BORDERLESS : 0) |
+        SDL_WINDOW_BORDERLESS |
+        SDL_WINDOW_VULKAN |
+        SDL_WINDOW_RESIZABLE
+    );
+    if (_sdl_window_p == nullptr) std::println("{}", SDL_GetError());
+    if (!SDL_Vulkan_CreateSurface(_sdl_window_p, _instance, nullptr, (VkSurfaceKHR*)&_surface)) std::println("{}", SDL_GetError());
 
-    // enable raw mouse motion
-    if (glfwRawMouseMotionSupported()) glfwSetInputMode(_glfw_window_p, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
-    else std::println("Raw mouse motion not supported");
-    // register callbacks
-    glfwSetKeyCallback(_glfw_window_p, [](GLFWwindow*, int key, int, int action, int) {
-        if (action == GLFW_PRESS) Input::register_key_press(key);
-		else if (action == GLFW_RELEASE) Input::register_key_release(key);
-    });
-    glfwSetMouseButtonCallback(_glfw_window_p, [](GLFWwindow*, int button, int action, int) {
-        if (action == GLFW_PRESS) Input::register_mouse_press(button);
-		else if (action == GLFW_RELEASE) Input::register_mouse_release(button);
-    });
-    glfwSetCursorPosCallback(_glfw_window_p, [](GLFWwindow*, double xpos, double ypos) {
-        Input::register_mouse_move(xpos, ypos);
-    });
-    // set window icon
-    std::vector<unsigned char> icon_data(16 * 16 * 4, 0);
-    GLFWimage icon { 16, 16, icon_data.data() };
-    glfwSetWindowIcon(_glfw_window_p, 1, &icon);
-
-    // create vulkan surface from window
-    VkSurfaceKHR surface;
-    glfwCreateWindowSurface(_instance, _glfw_window_p, nullptr, &surface);
-    _surface = static_cast<vk::SurfaceKHR>(surface);
+    _size = { width, height };
+    _minimized = false;
+    _focused = true;
+    _mode = window_mode;
+    // pick the first display mode for the current display
+    SDL_DisplayID display_id = SDL_GetDisplayForWindow(_sdl_window_p);
+    if (display_id == 0) std::println("{}", SDL_GetError());
+    int display_mode_count;
+    SDL_DisplayMode** display_modes = SDL_GetFullscreenDisplayModes(display_id, &display_mode_count);
+    if (display_modes == nullptr) std::println("{}", SDL_GetError());
+    _fullscreen__display_mode = **display_modes;
+    if (window_mode == Mode::eFullscreen) SDL_SetWindowFullscreenMode(_sdl_window_p, &_fullscreen__display_mode);
 }
-void Window::destroy(){
+void Window::destroy() {
     _instance.destroySurfaceKHR(_surface);
     _instance.destroy();
-    glfwDestroyWindow(_glfw_window_p);
-    glfwTerminate();
+    SDL_DestroyWindow(_sdl_window_p);
 }
-
-bool Window::is_open() {
-    return !glfwWindowShouldClose(_glfw_window_p);
-}
-bool Window::is_focused() {
-    return glfwGetWindowAttrib(_glfw_window_p, GLFW_FOCUSED);
-}
-bool Window::is_minimized() {
-    return glfwGetWindowAttrib(_glfw_window_p, GLFW_ICONIFIED);
-}
-bool Window::is_maximized() {
-    return glfwGetWindowAttrib(_glfw_window_p, GLFW_MAXIMIZED);
-}
-
-auto Window::get_size() -> vk::Extent2D {
-    int width, height;
-    glfwGetFramebufferSize(_glfw_window_p, &width, &height);
-    return { (uint32_t)width, (uint32_t)height };
-}
-void Window::poll_events() {
-    glfwPollEvents();
+void Window::handle_event(void* event_p) {
+    SDL_Event& event = *static_cast<SDL_Event*>(event_p);
+    switch (event.type) {
+        case SDL_EventType::SDL_EVENT_KEY_DOWN: Input::register_key_press(event.key.key); break;
+        case SDL_EventType::SDL_EVENT_KEY_UP: Input::register_key_release(event.key.key); break;
+        case SDL_EventType::SDL_EVENT_MOUSE_BUTTON_DOWN: Input::register_mouse_press(event.button.button); break;
+        case SDL_EventType::SDL_EVENT_MOUSE_BUTTON_UP: Input::register_mouse_release(event.button.button); break;
+        case SDL_EventType::SDL_EVENT_MOUSE_MOTION: Input::register_mouse_delta(event.motion.xrel, event.motion.yrel); break;
+        case SDL_EventType::SDL_EVENT_WINDOW_MINIMIZED: _minimized = true; break;
+        case SDL_EventType::SDL_EVENT_WINDOW_RESTORED: _minimized = false; break;
+        case SDL_EventType::SDL_EVENT_WINDOW_MAXIMIZED: /*TODO*/ break;
+        case SDL_EventType::SDL_EVENT_WINDOW_RESIZED: _size = { (uint32_t)event.window.data1, (uint32_t)event.window.data2 };
+        default: break;
+    }
 }
 void Window::delay(std::size_t ms) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+    SDL_Delay(ms);
 }
-void Window::toggle_window_mode() {
-    if (is_maximized()) {
-        glfwSetWindowAttrib(_glfw_window_p, GLFW_DECORATED, GLFW_TRUE);
-        glfwRestoreWindow(_glfw_window_p);
+void Window::set_window_mode(Mode window_mode) {
+    switch (window_mode) {
+        case Mode::eFullscreen: {
+            SDL_SetWindowFullscreenMode(_sdl_window_p, &_fullscreen__display_mode);
+            SDL_SetWindowFullscreen(_sdl_window_p, true);
+            _fullscreen_mode = window_mode;
+            _mode = window_mode;
+        } break;
+        case Mode::eBorderless: {
+            SDL_SetWindowFullscreenMode(_sdl_window_p, nullptr);
+            SDL_SetWindowFullscreen(_sdl_window_p, true);
+            _fullscreen_mode = window_mode;
+            _mode = window_mode;
+        } break;
+        case Mode::eWindowed: {
+            SDL_SetWindowFullscreen(_sdl_window_p, false);
+            _mode = window_mode;
+        } break;
+        default: break;
     }
-    else {
-        glfwSetWindowAttrib(_glfw_window_p, GLFW_DECORATED, GLFW_FALSE);
-        glfwMaximizeWindow(_glfw_window_p);
-    }
 }
-void Window::set_mouse_capture_mode(bool captured) {
-    glfwSetInputMode(_glfw_window_p, GLFW_CURSOR, captured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
-    Input::register_mouse_capture(captured);
+void Window::set_mouse_relative(bool relative) {
+    SDL_SetWindowRelativeMouseMode(_sdl_window_p, !relative);
+    Input::register_mouse_relative(!relative);
 }
-#endif // __has_include(<GLFW/glfw3.h>)

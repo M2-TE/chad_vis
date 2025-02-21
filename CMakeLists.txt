@@ -26,5 +26,6 @@ set(FETCHCONTENT_UPDATES_DISCONNECTED ON) # speeds up consecutive config runs
 include("cmake/vulkan.cmake")
 include("cmake/vma.cmake")
 include("cmake/shaders.cmake")
-include("cmake/glfw.cmake")
 include("cmake/glm.cmake")
+# window manager (choose one)
+include("cmake/sdl.cmake")

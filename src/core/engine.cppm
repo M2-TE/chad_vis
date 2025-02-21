@@ -18,10 +18,12 @@ import image;
 export struct Engine {
     Engine();
     ~Engine();
-    void run();
+    
+    void handle_iteration();
+    void handle_event(void* event_p);
 
 private:
-    void handle_events();
+    void handle_shortcuts();
     void handle_resize();
 
     Window _window;
@@ -37,7 +39,7 @@ private:
 module: private;
 Engine::Engine() {
     // create and open window
-    _window.init(1280, 720, "CHAD Visualizer");
+    _window.init( "CHAD Visualizer", 1280, 720, Window::eWindowed);
     
     // select physical and create logical device
     vk::PhysicalDeviceMaintenance5FeaturesKHR maintenance5 { .maintenance5 = vk::True };
@@ -84,8 +86,8 @@ Engine::Engine() {
     _swapchain.init(_device, _window);
     _swapchain.set_target_framerate(_fps_foreground);
     _scene.init(_device._vmalloc);
-    _scene._camera.resize(_window.get_size());
-    _renderer.init(_device, _scene, _window.get_size(), _swapchain._manual_srgb_required);
+    _scene._camera.resize(_window._size);
+    _renderer.init(_device, _scene, _window._size, _swapchain._manual_srgb_required);
 }
 Engine::~Engine() {
     // wait for current frame to finish
@@ -99,35 +101,42 @@ Engine::~Engine() {
     _device.destroy();
     _window.destroy();
 }
-void Engine::run() {
-    while (_window.is_open()) {
-        handle_events();
-        if (_window.is_minimized()) _window.delay(50);
-        if (_window.is_minimized()) continue;
-        if (_swapchain._resize_requested) handle_resize();
-        
-        _scene.update_safe();
-        _renderer.wait(_device);
-        _scene.update_unsafe(_device._vmalloc);
-        _renderer.render(_device, _swapchain, _scene);
-    }
-}
-void Engine::handle_events() {
-    // flush inputs from last frame before handling new events
-    Input::flush();
-    _window.poll_events();
 
-    if (!_window.is_focused()) _swapchain.set_target_framerate(_fps_background);
+void Engine::handle_iteration() {
+    handle_shortcuts();
+    if (_window._minimized) _window.delay(50);
+    if (_window._minimized) return;
+    if (_swapchain._resize_requested) handle_resize();
+    
+    _scene.update_safe();
+    _renderer.wait(_device);
+    _scene.update_unsafe(_device._vmalloc);
+    _renderer.render(_device, _swapchain, _scene);
+    Input::flush();
+}
+void Engine::handle_event(void* event_p) {
+    _window.handle_event(event_p);
+}
+void Engine::handle_shortcuts() {
+    if (!_window._focused) _swapchain.set_target_framerate(_fps_background);
     else _swapchain.set_target_framerate(_fps_foreground);
 
     // handle fullscreen controls
-    if (Keys::pressed(Keys::eF11)) _window.toggle_window_mode();
+    if (Keys::pressed(Keys::eF11)) {
+        switch (_window._mode) {
+            case Window::eFullscreen: 
+            case Window::eBorderless: _window.set_window_mode(Window::eWindowed); break;
+            case Window::eWindowed: _window.set_window_mode(_window._fullscreen_mode); break;
+        }
+    }
     // handle mouse grab
-    if (Keys::pressed(Keys::eLeftAlt)) _window.set_mouse_capture_mode(false);
+    if (Keys::pressed(Keys::eLeftAlt)) {
+        _window.set_mouse_relative(true);
+    }
     else {
-        if (Mouse::captured() && Keys::pressed(Keys::eEscape)) _window.set_mouse_capture_mode(false);
-        else if (!Mouse::captured() && !Keys::held(Keys::eLeftAlt) && Mouse::pressed(Mouse::eLeft)) _window.set_mouse_capture_mode(true);
-        else if (!Mouse::captured() && Keys::released(Keys::eLeftAlt)) _window.set_mouse_capture_mode(true);
+        if (Mouse::relative() && Keys::pressed(Keys::eEscape)) _window.set_mouse_relative(true);
+        else if (!Mouse::relative() && !Keys::held(Keys::eLeftAlt) && Mouse::pressed(Mouse::eLeft)) _window.set_mouse_relative(false);
+        else if (!Mouse::relative() && Keys::released(Keys::eLeftAlt)) _window.set_mouse_relative(false);
     }
 }
 void Engine::handle_resize() {
@@ -135,7 +144,7 @@ void Engine::handle_resize() {
     _renderer.wait(_device);
     _device._logical.waitIdle();
 
-    _scene._camera.resize(_window.get_size());
+    _scene._camera.resize(_window._size);
     _swapchain.resize(_device, _window);
-    _renderer.resize(_device, _scene, _window.get_size(), _swapchain._manual_srgb_required);
+    _renderer.resize(_device, _scene, _window._size, _swapchain._manual_srgb_required);
 }

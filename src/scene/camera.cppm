@@ -40,8 +40,8 @@ export struct Camera {
 		if (Keys::held('E')) _pos += q_rot * glm::aligned_vec3(0, -speed, 0);
 
 		// only control camera when mouse is captured
-		if (Mouse::captured()) {
-			_rot += glm::aligned_vec3(-Mouse::delta().y, +Mouse::delta().x, 0) * 0.002f;
+		if (Mouse::relative()) {
+			_rot += glm::aligned_vec3(-Mouse::delta().y, +Mouse::delta().x, 0) * 0.003f;
 		}
 
 		// merge rotation and projection matrices

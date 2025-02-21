@@ -71,7 +71,7 @@ void Swapchain::init(Device& device, Window& window) {
     // query swapchain properties
     auto capabilities = device._physical.getSurfaceCapabilitiesKHR(window._surface);
     // manually clamp extent to capabilities
-    _extent = window.get_size();
+    _extent = window._size;
     _extent.width = std::clamp(_extent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
     _extent.height = std::clamp(_extent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
 
