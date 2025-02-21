@@ -6,49 +6,31 @@ module;
 #include <cstring>
 #include <cstdint>
 #include <vulkan/vulkan_hpp_macros.hpp>
-#include <vulkan/vulkan_core.h>
-#include <GLFW/glfw3.h>
+
+#if __has_include(<GLFW/glfw3.h>)
+#   include <vulkan/vulkan_core.h>
+#   include <GLFW/glfw3.h>
+#endif
+
 export module window;
 import vulkan_hpp;
 import input;
 
-void error_callback(int error, const char* description) {
-    std::println("GLFW error {}: {}", error, description);
-}
 export struct Window {
     void init(unsigned int width, unsigned int height, std::string name);
     void destroy();
-    auto size() -> vk::Extent2D {
-        int width, height;
-        glfwGetFramebufferSize(_glfw_window_p, &width, &height);
-        return { (uint32_t)width, (uint32_t)height };
-    }
-    auto focused() -> bool {
-        return glfwGetWindowAttrib(_glfw_window_p, GLFW_FOCUSED);
-    }
-    auto minimized() -> bool {
-        return glfwGetWindowAttrib(_glfw_window_p, GLFW_ICONIFIED);
-    }
-    auto maximized() -> bool {
-        return glfwGetWindowAttrib(_glfw_window_p, GLFW_MAXIMIZED);
-    }
-    void delay(std::size_t ms) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-    }
-    void toggle_window_mode() {
-        if (maximized()) {
-            glfwSetWindowAttrib(_glfw_window_p, GLFW_DECORATED, GLFW_TRUE);
-            glfwRestoreWindow(_glfw_window_p);
-        }
-        else {
-            glfwSetWindowAttrib(_glfw_window_p, GLFW_DECORATED, GLFW_FALSE);
-            glfwMaximizeWindow(_glfw_window_p);
-        }
-    }
-    void set_mouse_capture_mode(bool captured) {
-        glfwSetInputMode(_glfw_window_p, GLFW_CURSOR, captured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
-        Input::register_mouse_capture(captured);
-    }
+
+    bool is_open();
+    bool is_focused();
+    bool is_minimized();
+    bool is_maximized();
+
+    auto get_size() -> vk::Extent2D;
+
+    void poll_events();
+    void delay(std::size_t ms);
+    void toggle_window_mode();
+    void set_mouse_capture_mode(bool captured);
     
     vk::Instance _instance;
     vk::SurfaceKHR _surface;
@@ -62,6 +44,7 @@ export struct Window {
 };
 
 module: private;
+#if __has_include(<GLFW/glfw3.h>)
 void Window::init(unsigned int width, unsigned int height, std::string name){
     // dynamic dispatcher init 1/3
     vk::detail::defaultDispatchLoaderDynamic.init();
@@ -72,7 +55,9 @@ void Window::init(unsigned int width, unsigned int height, std::string name){
         std::println("Failed to initialize GLFW");
         exit(1);
     }
-    glfwSetErrorCallback(error_callback);
+    glfwSetErrorCallback([](int error, const char* description) {
+        std::println("GLFW error {}: {}", error, description);
+    });
 
     // check availability of required vulkan instance extensions
     uint32_t extension_count;
@@ -171,3 +156,43 @@ void Window::destroy(){
     glfwDestroyWindow(_glfw_window_p);
     glfwTerminate();
 }
+
+bool Window::is_open() {
+    return !glfwWindowShouldClose(_glfw_window_p);
+}
+bool Window::is_focused() {
+    return glfwGetWindowAttrib(_glfw_window_p, GLFW_FOCUSED);
+}
+bool Window::is_minimized() {
+    return glfwGetWindowAttrib(_glfw_window_p, GLFW_ICONIFIED);
+}
+bool Window::is_maximized() {
+    return glfwGetWindowAttrib(_glfw_window_p, GLFW_MAXIMIZED);
+}
+
+auto Window::get_size() -> vk::Extent2D {
+    int width, height;
+    glfwGetFramebufferSize(_glfw_window_p, &width, &height);
+    return { (uint32_t)width, (uint32_t)height };
+}
+void Window::poll_events() {
+    glfwPollEvents();
+}
+void Window::delay(std::size_t ms) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+}
+void Window::toggle_window_mode() {
+    if (is_maximized()) {
+        glfwSetWindowAttrib(_glfw_window_p, GLFW_DECORATED, GLFW_TRUE);
+        glfwRestoreWindow(_glfw_window_p);
+    }
+    else {
+        glfwSetWindowAttrib(_glfw_window_p, GLFW_DECORATED, GLFW_FALSE);
+        glfwMaximizeWindow(_glfw_window_p);
+    }
+}
+void Window::set_mouse_capture_mode(bool captured) {
+    glfwSetInputMode(_glfw_window_p, GLFW_CURSOR, captured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+    Input::register_mouse_capture(captured);
+}
+#endif // __has_include(<GLFW/glfw3.h>)

@@ -1,7 +1,6 @@
 module;
 #include <print>
 #include <cstdint>
-#include <GLFW/glfw3.h>
 export module engine;
 import vulkan_hpp;
 import swapchain;
@@ -33,7 +32,6 @@ private:
     //
     uint32_t _fps_foreground = 0;
     uint32_t _fps_background = 5;
-    bool _rendering;
 };
 
 module: private;
@@ -86,8 +84,8 @@ Engine::Engine() {
     _swapchain.init(_device, _window);
     _swapchain.set_target_framerate(_fps_foreground);
     _scene.init(_device._vmalloc);
-    _scene._camera.resize(_window.size());
-    _renderer.init(_device, _scene, _window.size(), _swapchain._manual_srgb_required);
+    _scene._camera.resize(_window.get_size());
+    _renderer.init(_device, _scene, _window.get_size(), _swapchain._manual_srgb_required);
 }
 Engine::~Engine() {
     // wait for current frame to finish
@@ -102,44 +100,25 @@ Engine::~Engine() {
     _window.destroy();
 }
 void Engine::run() {
-    _rendering = true;
-    while (!glfwWindowShouldClose(_window._glfw_window_p)) {
+    while (_window.is_open()) {
         handle_events();
-        if (!_rendering) _window.delay(50);
-        if (!_rendering) continue;
+        if (_window.is_minimized()) _window.delay(50);
+        if (_window.is_minimized()) continue;
         if (_swapchain._resize_requested) handle_resize();
         
         _scene.update_safe();
         _renderer.wait(_device);
-        _scene.update(_device._vmalloc);
+        _scene.update_unsafe(_device._vmalloc);
         _renderer.render(_device, _swapchain, _scene);
     }
 }
 void Engine::handle_events() {
     // flush inputs from last frame before handling new events
     Input::flush();
+    _window.poll_events();
 
-    // check for changed window size and focus
-    auto window_size = _window.size();
-    auto window_focused = _window.focused();
-    glfwPollEvents();
-
-    // handle window resize
-    if (window_size != _window.size()) handle_resize();
-    // handle window focus
-    if (window_focused != _window.focused()) {
-        if (_window.focused()) {
-            Input::Data::get().mouse_delta = {0, 0};
-            _swapchain.set_target_framerate(_fps_foreground);
-        }
-        else {
-            Input::clear();
-            _swapchain.set_target_framerate(_fps_background);
-        }
-    }
-    // handle minimize (iconify)
-    if (_window.minimized()) _rendering = false;
-    else _rendering = true;
+    if (!_window.is_focused()) _swapchain.set_target_framerate(_fps_background);
+    else _swapchain.set_target_framerate(_fps_foreground);
 
     // handle fullscreen controls
     if (Keys::pressed(Keys::eF11)) _window.toggle_window_mode();
@@ -147,7 +126,7 @@ void Engine::handle_events() {
     if (Keys::pressed(Keys::eLeftAlt)) _window.set_mouse_capture_mode(false);
     else {
         if (Mouse::captured() && Keys::pressed(Keys::eEscape)) _window.set_mouse_capture_mode(false);
-        else if (!Mouse::captured() && !Keys::held(Keys::eLeftAlt) && Mouse::pressed(0)) _window.set_mouse_capture_mode(true);
+        else if (!Mouse::captured() && !Keys::held(Keys::eLeftAlt) && Mouse::pressed(Mouse::eLeft)) _window.set_mouse_capture_mode(true);
         else if (!Mouse::captured() && Keys::released(Keys::eLeftAlt)) _window.set_mouse_capture_mode(true);
     }
 }
@@ -156,7 +135,7 @@ void Engine::handle_resize() {
     _renderer.wait(_device);
     _device._logical.waitIdle();
 
-    _scene._camera.resize(_window.size());
+    _scene._camera.resize(_window.get_size());
     _swapchain.resize(_device, _window);
-    _renderer.resize(_device, _scene, _window.size(), _swapchain._manual_srgb_required);
+    _renderer.resize(_device, _scene, _window.get_size(), _swapchain._manual_srgb_required);
 }

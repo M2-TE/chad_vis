@@ -13,7 +13,7 @@ export struct Scene {
     // update without affecting current frames in flight
     void update_safe();
     // update after buffers are no longer being read
-    void update(vma::Allocator vmalloc);
+    void update_unsafe(vma::Allocator vmalloc);
 
     Camera _camera;
     Plymesh _mesh;
@@ -38,6 +38,6 @@ void Scene::destroy(vma::Allocator vmalloc) {
 void Scene::update_safe() {
     
 }
-void Scene::update(vma::Allocator vmalloc) {
+void Scene::update_unsafe(vma::Allocator vmalloc) {
     _camera.update(vmalloc);
 }
