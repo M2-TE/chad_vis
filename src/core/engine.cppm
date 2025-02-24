@@ -36,7 +36,12 @@ export struct Engine {
 module: private;
 Engine::Engine() {
     // create and open window
-    _window.init( "CHAD Visualizer", 1280, 720, Window::eWindowed);
+    _window.init({
+        .name { "CHAD Visualizer" },
+        .size { 1280, 720 },
+        .window_mode = Window::eWindowed,
+        .fullscreen_mode = Window::eBorderless,
+    });
     
     // select physical and create logical device
     vk::PhysicalDeviceMaintenance5FeaturesKHR maintenance5 { .maintenance5 = vk::True };
@@ -48,10 +53,8 @@ Engine::Engine() {
         ._required_major = 1,
         ._required_minor = 3,
         ._preferred_device_type = vk::PhysicalDeviceType::eIntegratedGpu,
-        ._required_features {
-        },
-        ._required_vk11_features {
-        },
+        ._required_features {},
+        ._required_vk11_features {},
         ._required_vk12_features {
             .timelineSemaphore = true,
             .bufferDeviceAddress = true,
@@ -100,16 +103,15 @@ Engine::~Engine() {
 }
 
 void Engine::handle_iteration() {
-    if (_window._minimized) {
-        _window.delay(50);
-        return;
-    }
-
     handle_shortcuts();
+
+    // handle window focus
     if (_window._focused) _swapchain.set_target_framerate(_fps_foreground);
     else _swapchain.set_target_framerate(_fps_background);
-    if (_window._minimized) return;
-    if (_swapchain._resize_requested) handle_resize();
+    if (_swapchain._resize_requested) {
+        handle_resize();
+        return;
+    }
     
     _scene.update_safe();
     _renderer.wait(_device);
@@ -126,6 +128,7 @@ void Engine::handle_shortcuts() {
             case Window::eWindowed: _window.set_window_mode(_window._fullscreen_mode); break;
         }
     }
+
     // handle mouse grab
     if (Keys::pressed(Keys::eLeftAlt)) {
         _window.set_mouse_relative(true);

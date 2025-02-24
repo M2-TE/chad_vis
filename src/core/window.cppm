@@ -11,8 +11,9 @@ import vulkan_hpp;
 import input;
 
 export struct Window {
+    struct CreateInfo;
     enum Mode { eFullscreen, eBorderless, eWindowed };
-    void init(std::string name, unsigned int width, unsigned int height, Mode window_mode);
+    void init(const CreateInfo& info);
     void destroy();
     void handle_event(void* event);
 
@@ -24,16 +25,23 @@ export struct Window {
     vk::SurfaceKHR _surface;
     SDL_Window* _sdl_window_p;
     // window state
-    vk::Extent2D _size;
-    SDL_DisplayMode _fullscreen__display_mode;
-    Mode _fullscreen_mode;
     Mode _mode;
+    Mode _fullscreen_mode;
+    vk::Extent2D _size;
+    SDL_DisplayMode _fullscreen_display_mode;
     bool _focused;
     bool _minimized; // TODO
 };
 
+struct Window::CreateInfo {
+    std::string name;
+    vk::Extent2D size = { 1280, 720 };
+    Window::Mode window_mode = Window::eWindowed;
+    Window::Mode fullscreen_mode = Window::eBorderless;
+};
+
 module: private;
-void Window::init(std::string name, uint32_t width, uint32_t height, Mode window_mode) {
+void Window::init(const CreateInfo& info) {
     // init only the video subsystem
     SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "wayland");
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) std::println("{}", SDL_GetError());
@@ -76,7 +84,7 @@ void Window::init(std::string name, uint32_t width, uint32_t height, Mode window
 
     // create vulkan instance
     vk::ApplicationInfo info_app {
-        .pApplicationName = name.c_str(),
+        .pApplicationName = info.name.c_str(),
         .applicationVersion = vk::makeApiVersion(0, 1, 0, 0),
         .pEngineName = "CHAD Visualizer",
         .engineVersion = vk::makeApiVersion(0, 1, 0, 0),
@@ -95,8 +103,7 @@ void Window::init(std::string name, uint32_t width, uint32_t height, Mode window
     vk::detail::defaultDispatchLoaderDynamic.init(_instance);
 
     // create SDL window and a corresponding Vulkan surface
-    _sdl_window_p = SDL_CreateWindow(name.c_str(), width, height, 
-        (window_mode == Mode::eWindowed ? SDL_WINDOW_BORDERLESS : 0) |
+    _sdl_window_p = SDL_CreateWindow(info.name.c_str(), info.size.width, info.size.height,
         SDL_WINDOW_BORDERLESS |
         SDL_WINDOW_VULKAN |
         SDL_WINDOW_RESIZABLE
@@ -104,18 +111,20 @@ void Window::init(std::string name, uint32_t width, uint32_t height, Mode window
     if (_sdl_window_p == nullptr) std::println("{}", SDL_GetError());
     if (!SDL_Vulkan_CreateSurface(_sdl_window_p, _instance, nullptr, (VkSurfaceKHR*)&_surface)) std::println("{}", SDL_GetError());
 
-    _size = { width, height };
+    _size = info.size;
     _minimized = false;
     _focused = true;
-    _mode = window_mode;
+    _mode = info.window_mode;
+    _fullscreen_mode = info.fullscreen_mode;
+
     // pick the first display mode for the current display
     SDL_DisplayID display_id = SDL_GetDisplayForWindow(_sdl_window_p);
     if (display_id == 0) std::println("{}", SDL_GetError());
     int display_mode_count;
     SDL_DisplayMode** display_modes = SDL_GetFullscreenDisplayModes(display_id, &display_mode_count);
     if (display_modes == nullptr) std::println("{}", SDL_GetError());
-    _fullscreen__display_mode = **display_modes;
-    if (window_mode == Mode::eFullscreen) SDL_SetWindowFullscreenMode(_sdl_window_p, &_fullscreen__display_mode);
+    _fullscreen_display_mode = **display_modes;
+    if (_mode == Mode::eFullscreen) SDL_SetWindowFullscreenMode(_sdl_window_p, &_fullscreen_display_mode);
 }
 void Window::destroy() {
     _instance.destroySurfaceKHR(_surface);
@@ -132,8 +141,8 @@ void Window::handle_event(void* event_p) {
         case SDL_EventType::SDL_EVENT_MOUSE_MOTION: Input::register_mouse_delta(event.motion.xrel, event.motion.yrel); break;
         //
         case SDL_EventType::SDL_EVENT_WINDOW_MINIMIZED: _minimized = true; std::println("Minimized"); break;
-        case SDL_EventType::SDL_EVENT_WINDOW_FOCUS_LOST: _focused = false; std::println("Focus lost"); break;
-        case SDL_EventType::SDL_EVENT_WINDOW_FOCUS_GAINED: _focused = true; std::println("Focus gained"); break;
+        case SDL_EventType::SDL_EVENT_WINDOW_FOCUS_LOST: _focused = false; break;
+        case SDL_EventType::SDL_EVENT_WINDOW_FOCUS_GAINED: _focused = true; break;
         case SDL_EventType::SDL_EVENT_WINDOW_MAXIMIZED: _mode = _fullscreen_mode; break;
         case SDL_EventType::SDL_EVENT_WINDOW_RESTORED: _mode = Mode::eWindowed; break;
         case SDL_EventType::SDL_EVENT_WINDOW_RESIZED: _size = { (uint32_t)event.window.data1, (uint32_t)event.window.data2 };
@@ -146,7 +155,7 @@ void Window::delay(uint32_t ms) {
 void Window::set_window_mode(Mode window_mode) {
     switch (window_mode) {
         case Mode::eFullscreen: {
-            SDL_SetWindowFullscreenMode(_sdl_window_p, &_fullscreen__display_mode);
+            SDL_SetWindowFullscreenMode(_sdl_window_p, &_fullscreen_display_mode);
             SDL_SetWindowFullscreen(_sdl_window_p, true);
             _fullscreen_mode = window_mode;
             _mode = window_mode;
