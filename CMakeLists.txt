@@ -21,11 +21,10 @@ target_sources(${PROJECT_NAME} PUBLIC FILE_SET CXX_MODULES FILES "${CPPM_SOURCE_
 
 # add dependencies
 include(FetchContent)
-set(FETCHCONTENT_QUIET ON) # disables git output for FetchContent steps
-set(FETCHCONTENT_UPDATES_DISCONNECTED ON) # speeds up consecutive config runs
+set(FETCHCONTENT_QUIET OFF) # enable git output for FetchContent steps
+set(FETCHCONTENT_UPDATES_DISCONNECTED ON) # speed up consecutive config runs
 include("cmake/vulkan.cmake")
 include("cmake/vma.cmake")
 include("cmake/shaders.cmake")
 include("cmake/glm.cmake")
-# window manager (choose one)
 include("cmake/sdl.cmake")

@@ -20,9 +20,6 @@ export struct Engine {
     ~Engine();
     
     void handle_iteration();
-    void handle_event(void* event_p);
-
-private:
     void handle_shortcuts();
     void handle_resize();
 
@@ -103,8 +100,14 @@ Engine::~Engine() {
 }
 
 void Engine::handle_iteration() {
+    if (_window._minimized) {
+        _window.delay(50);
+        return;
+    }
+
     handle_shortcuts();
-    if (_window._minimized) _window.delay(50);
+    if (_window._focused) _swapchain.set_target_framerate(_fps_foreground);
+    else _swapchain.set_target_framerate(_fps_background);
     if (_window._minimized) return;
     if (_swapchain._resize_requested) handle_resize();
     
@@ -114,13 +117,7 @@ void Engine::handle_iteration() {
     _renderer.render(_device, _swapchain, _scene);
     Input::flush();
 }
-void Engine::handle_event(void* event_p) {
-    _window.handle_event(event_p);
-}
 void Engine::handle_shortcuts() {
-    if (!_window._focused) _swapchain.set_target_framerate(_fps_background);
-    else _swapchain.set_target_framerate(_fps_foreground);
-
     // handle fullscreen controls
     if (Keys::pressed(Keys::eF11)) {
         switch (_window._mode) {

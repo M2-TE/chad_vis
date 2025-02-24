@@ -2,7 +2,6 @@ module;
 #include <set>
 #include <cctype>
 #include <SDL3/SDL_keycode.h>
-#include <print>
 export module input;
 
 export namespace Input {
@@ -93,8 +92,8 @@ export namespace Input {
 		Data::get().buttons_released.insert(button);
 		Data::get().buttons_held.erase(button);
 	}
-	void register_mouse_relative(bool captured) {
-		Data::get().mouse_relative = captured;
+	void register_mouse_relative(bool relative_enabled) {
+		Data::get().mouse_relative = relative_enabled;
 	}
 	void register_mouse_pos(double xpos, double ypos) {
 		Data::get().mouse_delta.x += xpos - Data::get().mouse_position.x;
