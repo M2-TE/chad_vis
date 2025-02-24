@@ -32,7 +32,6 @@ export struct Window {
     bool _focused;
     bool _minimized; // TODO
 };
-
 struct Window::CreateInfo {
     std::string name;
     vk::Extent2D size = { 1280, 720 };
@@ -104,7 +103,6 @@ void Window::init(const CreateInfo& info) {
 
     // create SDL window and a corresponding Vulkan surface
     _sdl_window_p = SDL_CreateWindow(info.name.c_str(), info.size.width, info.size.height,
-        SDL_WINDOW_BORDERLESS |
         SDL_WINDOW_VULKAN |
         SDL_WINDOW_RESIZABLE
     );
