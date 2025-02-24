@@ -14,9 +14,9 @@ export struct Window {
     enum Mode { eFullscreen, eBorderless, eWindowed };
     void init(std::string name, unsigned int width, unsigned int height, Mode window_mode);
     void destroy();
-    void handle_event(void* event_p);
+    void handle_event(void* event);
 
-    void delay(std::size_t ms);
+    void delay(uint32_t ms);
     void set_window_mode(Mode window_mode);
     void set_mouse_relative(bool relative);
     
@@ -29,12 +29,13 @@ export struct Window {
     Mode _fullscreen_mode;
     Mode _mode;
     bool _focused;
-    bool _minimized;
+    bool _minimized; // TODO
 };
 
 module: private;
 void Window::init(std::string name, uint32_t width, uint32_t height, Mode window_mode) {
     // init only the video subsystem
+    SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "wayland");
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) std::println("{}", SDL_GetError());
 
     // dynamic dispatcher init 1/3
@@ -129,14 +130,17 @@ void Window::handle_event(void* event_p) {
         case SDL_EventType::SDL_EVENT_MOUSE_BUTTON_DOWN: Input::register_mouse_press(event.button.button); break;
         case SDL_EventType::SDL_EVENT_MOUSE_BUTTON_UP: Input::register_mouse_release(event.button.button); break;
         case SDL_EventType::SDL_EVENT_MOUSE_MOTION: Input::register_mouse_delta(event.motion.xrel, event.motion.yrel); break;
-        case SDL_EventType::SDL_EVENT_WINDOW_MINIMIZED: _minimized = true; break;
-        case SDL_EventType::SDL_EVENT_WINDOW_RESTORED: _minimized = false; break;
-        case SDL_EventType::SDL_EVENT_WINDOW_MAXIMIZED: /*TODO*/ break;
+        //
+        case SDL_EventType::SDL_EVENT_WINDOW_MINIMIZED: _minimized = true; std::println("Minimized"); break;
+        case SDL_EventType::SDL_EVENT_WINDOW_FOCUS_LOST: _focused = false; std::println("Focus lost"); break;
+        case SDL_EventType::SDL_EVENT_WINDOW_FOCUS_GAINED: _focused = true; std::println("Focus gained"); break;
+        case SDL_EventType::SDL_EVENT_WINDOW_MAXIMIZED: _mode = _fullscreen_mode; break;
+        case SDL_EventType::SDL_EVENT_WINDOW_RESTORED: _mode = Mode::eWindowed; break;
         case SDL_EventType::SDL_EVENT_WINDOW_RESIZED: _size = { (uint32_t)event.window.data1, (uint32_t)event.window.data2 };
         default: break;
     }
 }
-void Window::delay(std::size_t ms) {
+void Window::delay(uint32_t ms) {
     SDL_Delay(ms);
 }
 void Window::set_window_mode(Mode window_mode) {
