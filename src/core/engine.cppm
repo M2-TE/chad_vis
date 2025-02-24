@@ -19,6 +19,7 @@ export struct Engine {
     Engine();
     ~Engine();
     
+    void handle_event(void* event_p);
     void handle_iteration();
     void handle_shortcuts();
     void handle_resize();
@@ -102,6 +103,10 @@ Engine::~Engine() {
     _window.destroy();
 }
 
+void Engine::handle_event(void* event_p) {
+    bool resize_requested = _window.handle_event(event_p);
+    if (resize_requested) _swapchain._resize_requested = true;
+}
 void Engine::handle_iteration() {
     handle_shortcuts();
 

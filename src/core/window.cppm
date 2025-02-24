@@ -15,7 +15,7 @@ export struct Window {
     enum Mode { eFullscreen, eBorderless, eWindowed };
     void init(const CreateInfo& info);
     void destroy();
-    void handle_event(void* event);
+    bool handle_event(void* event);
 
     void delay(uint32_t ms);
     void set_window_mode(Mode window_mode);
@@ -30,7 +30,6 @@ export struct Window {
     vk::Extent2D _size;
     SDL_DisplayMode _fullscreen_display_mode;
     bool _focused;
-    bool _minimized; // TODO
 };
 struct Window::CreateInfo {
     std::string name;
@@ -104,13 +103,13 @@ void Window::init(const CreateInfo& info) {
     // create SDL window and a corresponding Vulkan surface
     _sdl_window_p = SDL_CreateWindow(info.name.c_str(), info.size.width, info.size.height,
         SDL_WINDOW_VULKAN |
-        SDL_WINDOW_RESIZABLE
+        SDL_WINDOW_RESIZABLE |
+        SDL_WINDOW_BORDERLESS
     );
     if (_sdl_window_p == nullptr) std::println("{}", SDL_GetError());
     if (!SDL_Vulkan_CreateSurface(_sdl_window_p, _instance, nullptr, (VkSurfaceKHR*)&_surface)) std::println("{}", SDL_GetError());
 
     _size = info.size;
-    _minimized = false;
     _focused = true;
     _mode = info.window_mode;
     _fullscreen_mode = info.fullscreen_mode;
@@ -129,7 +128,7 @@ void Window::destroy() {
     _instance.destroy();
     SDL_DestroyWindow(_sdl_window_p);
 }
-void Window::handle_event(void* event_p) {
+bool Window::handle_event(void* event_p) {
     SDL_Event& event = *static_cast<SDL_Event*>(event_p);
     switch (event.type) {
         case SDL_EventType::SDL_EVENT_KEY_DOWN: Input::register_key_press(event.key.key); break;
@@ -138,14 +137,17 @@ void Window::handle_event(void* event_p) {
         case SDL_EventType::SDL_EVENT_MOUSE_BUTTON_UP: Input::register_mouse_release(event.button.button); break;
         case SDL_EventType::SDL_EVENT_MOUSE_MOTION: Input::register_mouse_delta(event.motion.xrel, event.motion.yrel); break;
         //
-        case SDL_EventType::SDL_EVENT_WINDOW_MINIMIZED: _minimized = true; std::println("Minimized"); break;
         case SDL_EventType::SDL_EVENT_WINDOW_FOCUS_LOST: _focused = false; break;
         case SDL_EventType::SDL_EVENT_WINDOW_FOCUS_GAINED: _focused = true; break;
-        case SDL_EventType::SDL_EVENT_WINDOW_MAXIMIZED: _mode = _fullscreen_mode; break;
-        case SDL_EventType::SDL_EVENT_WINDOW_RESTORED: _mode = Mode::eWindowed; break;
-        case SDL_EventType::SDL_EVENT_WINDOW_RESIZED: _size = { (uint32_t)event.window.data1, (uint32_t)event.window.data2 };
+        case SDL_EventType::SDL_EVENT_WINDOW_MAXIMIZED: _mode = _fullscreen_mode;
+        case SDL_EventType::SDL_EVENT_WINDOW_RESTORED: _mode = Mode::eWindowed;
+        case SDL_EventType::SDL_EVENT_WINDOW_RESIZED: {
+            _size = { (uint32_t)event.window.data1, (uint32_t)event.window.data2 };
+            return true;
+        }
         default: break;
     }
+    return false;
 }
 void Window::delay(uint32_t ms) {
     SDL_Delay(ms);
