@@ -4,6 +4,7 @@ module;
 #include <chrono>
 #include <thread>
 #include <cstdint>
+#include <vulkan/vulkan_to_string.hpp>
 export module swapchain;
 import render_semaphore;
 import vulkan_hpp;

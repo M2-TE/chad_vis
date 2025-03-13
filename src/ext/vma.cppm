@@ -8,7 +8,6 @@ export namespace vma {
     using vma::operator&;
     using vma::operator^;
     using vma::operator~;
-    using vma::to_string;
     using vma::functionsFromDispatcher;
     using vma::AllocatorCreateFlagBits;
     using vma::AllocatorCreateFlags;
