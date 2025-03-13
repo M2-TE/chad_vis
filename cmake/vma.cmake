@@ -9,7 +9,7 @@ FetchContent_Declare(vulkanmemoryallocator-hpp
     GIT_REPOSITORY "https://github.com/YaaZ/VulkanMemoryAllocator-Hpp.git"
     GIT_TAG "4fcfec043b12629f934f4d542aedeedaa12a101e"
     GIT_SHALLOW ON
-    GIT_SUBMODULES "VulkanMemoryAllocator"
+    GIT_SUBMODULES ""
     OVERRIDE_FIND_PACKAGE
     EXCLUDE_FROM_ALL
     SYSTEM)

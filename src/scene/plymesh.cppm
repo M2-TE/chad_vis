@@ -1,5 +1,6 @@
 module;
 #include <print>
+#include <array>
 #include <string>
 #include <vector>
 #include <fstream>
