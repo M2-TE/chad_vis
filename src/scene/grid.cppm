@@ -4,7 +4,7 @@ module;
 #include <fstream>
 #include <glm/glm.hpp>
 export module grid;
-import vk_mem_alloc_hpp;
+import vma_hpp;
 import mesh;
 
 export struct Grid {

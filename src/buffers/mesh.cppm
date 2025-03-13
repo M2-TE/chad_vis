@@ -2,7 +2,7 @@ module;
 #include <span>
 #include <cstdint>
 export module mesh;
-import vk_mem_alloc_hpp;
+import vma_hpp;
 import device_buffer;
 import vulkan_hpp;
 

@@ -5,7 +5,7 @@ module;
 #include <cstring>
 export module image;
 import vulkan_hpp;
-import vk_mem_alloc_hpp;
+import vma_hpp;
 import device;
 
 export struct Image {

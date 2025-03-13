@@ -1,7 +1,7 @@
 module;
 #include <glm/glm.hpp>
 export module scene;
-import vk_mem_alloc_hpp;
+import vma_hpp;
 import plymesh;
 import camera;
 import grid;

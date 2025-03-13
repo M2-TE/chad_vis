@@ -12,7 +12,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::HppModule)
 target_compile_definitions(Vulkan-HppModule PUBLIC
     "VK_NO_PROTOTYPES"
     "VULKAN_HPP_TYPESAFE_CONVERSION"
-    "VULKAN_HPP_DISPATCH_LOADER_DYNAMIC"
     "VULKAN_HPP_NO_SETTERS"
     # "VULKAN_HPP_NO_TO_STRING"
     "VULKAN_HPP_NO_PROTOTYPES"

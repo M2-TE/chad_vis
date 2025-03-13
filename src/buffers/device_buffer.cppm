@@ -3,7 +3,7 @@ module;
 #include <print>
 export module device_buffer;
 import vulkan_hpp;
-import vk_mem_alloc_hpp;
+import vma_hpp;
 
 export struct DeviceBuffer {
 	struct CreateInfo {

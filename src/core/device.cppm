@@ -9,8 +9,8 @@ module;
 #include <algorithm>
 #include <vulkan/vulkan_hpp_macros.hpp>
 export module device;
-import vk_mem_alloc_hpp;
 import vulkan_hpp;
+import vma_hpp;
 
 export enum class QueueType { eUniversal, eGraphics, eCompute, eTransfer };
 export struct Device {
