@@ -1,5 +1,6 @@
 module;
 #include <print>
+#include <string>
 #include <vector>
 #include <fstream>
 #include <cstdint>

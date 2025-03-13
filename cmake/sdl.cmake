@@ -1,4 +1,4 @@
-find_package(SDL3 REQUIRED)
+find_package(SDL3 QUIET)
 if (NOT TARGET SDL3::SDL3)
     FetchContent_Declare(sdl
         GIT_REPOSITORY "https://github.com/libsdl-org/SDL.git"

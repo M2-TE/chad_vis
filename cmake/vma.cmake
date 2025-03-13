@@ -14,9 +14,3 @@ FetchContent_MakeAvailable(vulkanmemoryallocator-hpp)
 
 target_link_libraries(VulkanMemoryAllocator-HppModule PUBLIC Vulkan::HppModule)
 target_link_libraries(${PROJECT_NAME} PRIVATE VulkanMemoryAllocator::HppModule)
-
-set(VMA_BUILD_EXAMPLE OFF)
-set(VMA_BUILD_CXX_MODULE ON)
-set(VMA_BUILD_WITH_STD_MODULE OFF)
-set(VMA_BUILD_WITH_VULKAN_MODULE OFF)
-set(VMA_BUILD_MODULE_VULKAN_DYNAMIC ON)

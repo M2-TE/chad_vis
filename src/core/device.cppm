@@ -6,6 +6,7 @@ module;
 #include <string>
 #include <cstring>
 #include <cstdint>
+#include <algorithm>
 #include <vulkan/vulkan_hpp_macros.hpp>
 export module device;
 import vk_mem_alloc_hpp;
