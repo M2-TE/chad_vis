@@ -1,8 +1,8 @@
 set(VULKAN_HEADERS_ENABLE_MODULE ON)
 set(VULKAN_HEADERS_ENABLE_MODULE_STD OFF)
 FetchContent_Declare(vulkan-headers
-    GIT_REPOSITORY "https://github.com/M2-TE/Vulkan-Headers.git"
-    GIT_TAG "cmake-vulkan-hpp"
+    GIT_REPOSITORY "https://github.com/KhronosGroup/Vulkan-Headers.git"
+    GIT_TAG "main"
     GIT_SHALLOW ON
     OVERRIDE_FIND_PACKAGE
     EXCLUDE_FROM_ALL
