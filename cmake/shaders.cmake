@@ -27,14 +27,14 @@ FetchContent_Declare(smaa
     SYSTEM)
 FetchContent_MakeAvailable(smaa)
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE "${smaa_SOURCE_DIR}/Textures")
-file(COPY "${smaa_SOURCE_DIR}/SMAA.hlsl" DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/assets/shaders/smaa/")
 
 # SPVRC for shader compilation and embedding
 set(SPVRC_SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets/shaders/")
 set(SPVRC_SHADER_ENV "vulkan1.3")
+set(SPVRC_SHADER_INCLUDE_DIRS "${smaa_SOURCE_DIR}")
 FetchContent_Declare(spvrc
     GIT_REPOSITORY "https://github.com/M2-TE/spvrc.git"
-    GIT_TAG "v1.0.2"
+    GIT_TAG "v1.0.3"
     GIT_SHALLOW ON
     OVERRIDE_FIND_PACKAGE
     EXCLUDE_FROM_ALL
