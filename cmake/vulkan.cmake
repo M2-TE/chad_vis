@@ -23,4 +23,4 @@ target_compile_definitions(Vulkan-HppModule PUBLIC
 
 # copy vk_layer_settings.txt next to executable
 get_target_property(VALIDATION_LAYER_OVERRIDE_DIR ${PROJECT_NAME} RUNTIME_OUTPUT_DIRECTORY)
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets/misc/vk_layer_settings.txt DESTINATION ${VALIDATION_LAYER_OVERRIDE_DIR})
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/assets/misc/vk_layer_settings.txt" DESTINATION "${VALIDATION_LAYER_OVERRIDE_DIR}")
