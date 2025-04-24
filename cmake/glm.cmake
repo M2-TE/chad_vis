@@ -1,6 +1,6 @@
 # use either system or FetchContent package
 find_package(glm 1.0.1 QUIET)
-if (NOT TARGET glm::glm)
+if (NOT glm_FOUND)
     # standard glm options
     if(${CMAKE_CXX_STANDARD} GREATER_EQUAL 23)
         set(GLM_ENABLE_CXX_23 ON)
@@ -18,15 +18,11 @@ if (NOT TARGET glm::glm)
     set(GLM_BUILD_LIBRARY ON)
     set(GLM_BUILD_TEST OFF)
     set(GLM_BUILD_INSTALL OFF)
-    if(${CROSS_PLATFORM_DETERMINISTIC})
-        set(GLM_ENABLE_FAST_MATH OFF)
-    else()
-        set(GLM_ENABLE_FAST_MATH ON)
-    endif()
     set(GLM_ENABLE_LANG_EXTENSIONS ${CMAKE_CXX_EXTENSIONS})
     set(GLM_DISABLE_AUTO_DETECTION OFF)
     set(GLM_FORCE_PURE OFF)
 
+    include(FetchContent)
     FetchContent_Declare(glm
         GIT_REPOSITORY "https://github.com/g-truc/glm.git"
         GIT_TAG "1.0.1"

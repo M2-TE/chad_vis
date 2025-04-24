@@ -1,3 +1,5 @@
+include(FetchContent)
+
 # SPIR-V for shader reflection
 set(SPIRV_REFLECT_EXECUTABLE     OFF)
 set(SPIRV_REFLECT_STATIC_LIB     ON)
@@ -6,7 +8,7 @@ set(SPIRV_REFLECT_ENABLE_ASSERTS OFF)
 set(SPIRV_REFLECT_ENABLE_ASAN    OFF)
 FetchContent_Declare(spirv-reflect
     GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Reflect.git"
-    GIT_TAG "vulkan-sdk-1.4.304.0"
+    GIT_TAG "vulkan-sdk-1.4.309.0"
     GIT_SHALLOW ON
     GIT_SUBMODULES ""
     OVERRIDE_FIND_PACKAGE
@@ -19,7 +21,10 @@ target_link_libraries(${PROJECT_NAME} PRIVATE spirv-reflect-static)
 FetchContent_Declare(smaa
     GIT_REPOSITORY "https://github.com/iryoku/smaa.git"
     GIT_TAG "master"
-    GIT_SHALLOW ON)
+    GIT_SHALLOW ON
+    OVERRIDE_FIND_PACKAGE
+    EXCLUDE_FROM_ALL
+    SYSTEM)
 FetchContent_MakeAvailable(smaa)
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE "${smaa_SOURCE_DIR}/Textures")
 

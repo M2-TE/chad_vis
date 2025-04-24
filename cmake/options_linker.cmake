@@ -1,0 +1,5 @@
+if (MSVC)
+    add_link_options("/SUBSYSTEM:CONSOLE")
+elseif (UNIX)
+    add_link_options("-pthread")
+endif()
