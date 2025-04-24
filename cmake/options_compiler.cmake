@@ -23,7 +23,7 @@ elseif (UNIX)
         "-march=native"
         "-Wall"
         "-Wextra"
-        # "-Wpedantic"
+        "-Wpedantic"
         "-fno-strict-aliasing") # as recommended by Vulkan-Hpp
     if (USE_STRICT_COMPILATION)
         add_compile_options("-Werror")
