@@ -215,7 +215,7 @@ void Renderer::execute_pipes(vk::CommandBuffer cmd, Scene& scene) {
         .dst_stage = vk::PipelineStageFlagBits2::eComputeShader,
         .dst_access = vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite
     });
-    uint32_t nx = std::ceil(_storage._extent.width / 8.0);
-    uint32_t ny = std::ceil(_storage._extent.height / 8.0);
+    uint32_t nx = (uint32_t)std::ceil(_storage._extent.width / 8.0);
+    uint32_t ny = (uint32_t)std::ceil(_storage._extent.height / 8.0);
     _pipe_tone.execute(cmd, nx, ny, 1);
 }

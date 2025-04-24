@@ -177,7 +177,7 @@ void SMAA::init_pipelines(Device& device, vk::Extent2D extent, Image& color, Dep
         vk::SpecializationMapEntry { .constantID = 3, .offset = 12, .size = 4 }
     };
     vk::SpecializationInfo smaa_spec_info = {
-        .mapEntryCount = smaa_spec_entries.size(),
+        .mapEntryCount = (uint32_t)smaa_spec_entries.size(),
         .pMapEntries = smaa_spec_entries.data(),
         .dataSize = sizeof(SMAA_RT_METRICS),
         .pData = &SMAA_RT_METRICS
