@@ -3,11 +3,10 @@ module;
 #include <vector>
 #include <cstdint>
 export module renderer;
-import pipeline_graphics;
-import pipeline_compute;
 import render_semaphore;
 import vulkan_hpp;
 import swapchain;
+import pipeline;
 import device;
 import image;
 import scene;

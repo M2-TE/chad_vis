@@ -11,8 +11,8 @@ import input;
 import scene;
 
 // temporary:
-import pipeline_base;
 import device_buffer;
+import pipeline;
 import image;
 
 export struct Engine {
