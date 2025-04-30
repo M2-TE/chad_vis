@@ -1,5 +1,6 @@
 module;
 #include <span>
+#include <cstdint>
 #include <cstddef>
 #include "AreaTex.h"
 #include "SearchTex.h"
