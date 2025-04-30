@@ -1,8 +1,8 @@
 module;
-#define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
 #include "vk_mem_alloc.hpp"
 export module vma_hpp;
+
 export namespace vma {
     using vma::operator|;
     using vma::operator&;
