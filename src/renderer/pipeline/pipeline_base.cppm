@@ -5,6 +5,7 @@ module;
 #include <cassert>
 #include <cstdint>
 #include <cstring>
+#include <algorithm>
 #include <string_view>
 #include <spirv_reflect.h>
 #include <spvrc/spvrc.hpp>
@@ -330,7 +331,7 @@ auto PipelineBase::reflect(vk::Device device, const vk::ArrayProxy<std::string_v
 
 	// stop when there are no bindings
 	uint32_t binding_count = 0;
-	for (auto& reflection: reflections) binding_count += get_reflected_bindings(reflection).size();
+	for (auto& reflection: reflections) binding_count += (uint32_t)get_reflected_bindings(reflection).size();
 	if (binding_count == 0) return std::make_pair(vertex_input_desc, attr_descs);
 
 	// create samplers and descriptor sets
