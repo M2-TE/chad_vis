@@ -1,13 +1,8 @@
 module;
-// TODO: remove unnecessary ones
-#include <print>
 #include <vector>
-#include <cassert>
 #include <cstdint>
 #include <cstring>
 #include <string_view>
-#include <spirv_reflect.h>
-#include <spvrc/spvrc.hpp>
 export module pipeline;
 import device_buffer;
 import vulkan_hpp;
