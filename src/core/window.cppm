@@ -40,8 +40,11 @@ struct Window::CreateInfo {
 
 module: private;
 void Window::init(const CreateInfo& info) {
+    // force wayland driver for now
+    #ifdef __unix__
+        SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "wayland");
+    #endif
     // init only the video subsystem
-    SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "wayland");
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) std::println("{}", SDL_GetError());
 
     // dynamic dispatcher init 1/3
