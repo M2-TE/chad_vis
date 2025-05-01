@@ -30,24 +30,50 @@ protected:
 };
 
 export struct Compute: public PipelineBase {
-	struct CreateInfo;
+	struct CreateInfo {
+		const Device& device;
+		std::string_view cs_path; vk::SpecializationInfo spec_info = {};
+		SamplerInfos sampler_infos = {};
+	};
 	void init(const CreateInfo& info);
 	void execute(vk::CommandBuffer cmd, uint32_t nx, uint32_t ny, uint32_t nz);
 };
-struct Compute::CreateInfo {
-	const Device& device;
-	std::string_view cs_path; vk::SpecializationInfo spec_info = {};
-	SamplerInfos sampler_infos = {};
-};
 
 export struct Graphics: public PipelineBase {
-	struct CreateInfo;
+	struct CreateInfo {
+		const Device& device;
+		vk::Extent2D extent;
+		//
+		std::string_view vs_path; vk::SpecializationInfo vs_spec = {};
+		std::string_view fs_path; vk::SpecializationInfo fs_spec = {};
+		//
+		struct Color {
+			vk::ArrayProxy<vk::Format> formats;
+			vk::Bool32 blend = false;
+		} color = {};
+		struct Depth {
+			vk::Format format = vk::Format::eUndefined;
+			vk::Bool32 write = false;
+			vk::Bool32 test = false;
+		} depth = {};
+		struct Stencil {
+			vk::Format format = vk::Format::eUndefined;
+			vk::Bool32 test = false;
+			vk::StencilOpState front = {};
+			vk::StencilOpState back = {};
+		} stencil = {};
+		//
+		vk::ArrayProxy<vk::DynamicState> dynamic_states = {};
+		// TODO: deprecate this one
+		SamplerInfos sampler_infos = {};
+	};
+
 	void init(const CreateInfo& info);
 	
 	// draw fullscreen triangle with color and depth attachments
 	void execute(vk::CommandBuffer cmd,
-				 Image& color, vk::AttachmentLoadOp color_load,
-				 DepthStencil& depth_stencil, vk::AttachmentLoadOp depth_stencil_load);
+			Image& color, vk::AttachmentLoadOp color_load,
+			DepthStencil& depth_stencil, vk::AttachmentLoadOp depth_stencil_load);
 	// draw fullscreen  triangle with only color attachment
 	void execute(vk::CommandBuffer cmd, Image& color_dst, vk::AttachmentLoadOp color_load);
 
@@ -143,31 +169,4 @@ private:
 	vk::Rect2D _render_area;
 	bool _depth_enabled;
 	bool _stencil_enabled;
-};
-struct Graphics::CreateInfo {
-	const Device& device;
-	vk::Extent2D extent;
-	//
-	std::string_view vs_path; vk::SpecializationInfo vs_spec = {};
-	std::string_view fs_path; vk::SpecializationInfo fs_spec = {};
-	//
-	struct Color {
-		vk::ArrayProxy<vk::Format> formats;
-		vk::Bool32 blend = false;
-	} color = {};
-	struct Depth {
-		vk::Format format = vk::Format::eUndefined;
-		vk::Bool32 write = false;
-		vk::Bool32 test = false;
-	} depth = {};
-	struct Stencil {
-		vk::Format format = vk::Format::eUndefined;
-		vk::Bool32 test = false;
-		vk::StencilOpState front = {};
-		vk::StencilOpState back = {};
-	} stencil = {};
-	//
-	vk::ArrayProxy<vk::DynamicState> dynamic_states = {};
-	// TODO: deprecate this one
-	SamplerInfos sampler_infos = {};
 };
