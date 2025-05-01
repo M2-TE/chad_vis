@@ -4,7 +4,7 @@ module;
 #include <cstdint>
 export module renderer.renderer;
 import core.device;
-import core.swapchain;
+import renderer.swapchain;
 import renderer.pipeline;
 import renderer.semaphore;
 import buffers.image;

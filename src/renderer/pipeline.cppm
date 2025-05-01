@@ -15,20 +15,6 @@ export struct PipelineBase {
     void destroy(Device& device);
     void write_descriptor(Device& device, uint32_t set, uint32_t binding, Image& image, vk::DescriptorType type, vk::Sampler sampler = nullptr);
     void write_descriptor(Device& device, uint32_t set, uint32_t binding, DeviceBuffer& buffer, vk::DescriptorType type, size_t offset = 0);
-    auto static get_module_deprecation() -> bool& {
-        static bool _shader_modules_deprecated = true;
-        return _shader_modules_deprecated;
-    }
-    void static set_module_deprecation(vk::PhysicalDevice physical_device) {
-        auto available_extensions = physical_device.enumerateDeviceExtensionProperties();
-        for (auto& available: available_extensions) {
-            if (strcmp(vk::KHRMaintenance5ExtensionName, available.extensionName) == 0) {
-                get_module_deprecation() = false;
-                return;
-            }
-        }
-        get_module_deprecation() = true;
-    }
     
 protected:
     auto reflect(vk::Device device, const vk::ArrayProxy<std::string_view>& shaderPaths, const SamplerInfos& sampler_infos)

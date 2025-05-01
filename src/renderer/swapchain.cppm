@@ -5,7 +5,7 @@ module;
 #include <thread>
 #include <cstdint>
 #include <vulkan/vulkan_to_string.hpp>
-export module core.swapchain;
+export module renderer.swapchain;
 import core.device;
 import core.window;
 import buffers.image;

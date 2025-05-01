@@ -328,15 +328,12 @@ void Compute::init(const CreateInfo& info) {
 		.codeSize = cs_size * sizeof(uint32_t),
 		.pCode = cs_code,
 	};
-	// optionally create shader module in the deprecated way
-	vk::ShaderModule cs_module = nullptr;
-	if (get_module_deprecation()) cs_module = info.device._logical.createShaderModule(info_cs);
-
+	// create shader module
+	vk::ShaderModule cs_module =  info.device._logical.createShaderModule(info_cs);
 	vk::ComputePipelineCreateInfo info_compute_pipe {
 		.stage = {
-			.pNext = get_module_deprecation() ? nullptr : &info_cs,
 			.stage = vk::ShaderStageFlagBits::eCompute,
-			.module = get_module_deprecation() ? cs_module : nullptr,
+			.module = cs_module,
 			.pName = "main",
 			.pSpecializationInfo = info.spec_info.dataSize > 0 ? &info.spec_info : nullptr,
 		},
@@ -345,8 +342,7 @@ void Compute::init(const CreateInfo& info) {
 	auto [result, pipeline] = info.device._logical.createComputePipeline(nullptr, info_compute_pipe);
 	if (result != vk::Result::eSuccess) std::println("error creating compute pipeline");
 	_pipeline = pipeline;
-	// destroy shader module if previously created
-	if (get_module_deprecation()) info.device._logical.destroyShaderModule(cs_module);
+	info.device._logical.destroyShaderModule(cs_module);
 }
 void Compute::execute(vk::CommandBuffer cmd, uint32_t nx, uint32_t ny, uint32_t nz) {
 	cmd.bindPipeline(vk::PipelineBindPoint::eCompute, _pipeline);
@@ -376,23 +372,19 @@ void Graphics::init(const CreateInfo& info) {
 		.codeSize = fs_size * sizeof(uint32_t),
 		.pCode = fs_code,
 	};
-	// optionally create shader modules in the deprecated way
-	vk::ShaderModule vs_module = nullptr;
-	vk::ShaderModule fs_module = nullptr;
-	if (get_module_deprecation()) vs_module = info.device._logical.createShaderModule(info_vs);
-	if (get_module_deprecation()) fs_module = info.device._logical.createShaderModule(info_fs);
+	// create shader modules
+	vk::ShaderModule vs_module = info.device._logical.createShaderModule(info_vs);
+	vk::ShaderModule fs_module = info.device._logical.createShaderModule(info_fs);
 	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages {{
 		vk::PipelineShaderStageCreateInfo {
-			.pNext = get_module_deprecation() ? nullptr : &info_vs,
 			.stage = vk::ShaderStageFlagBits::eVertex,
-			.module = get_module_deprecation() ? vs_module : nullptr,
+			.module = vs_module,
 			.pName = "main",
 			.pSpecializationInfo = info.vs_spec.dataSize > 0 ? &info.vs_spec : nullptr,
 		},
 		vk::PipelineShaderStageCreateInfo {
-			.pNext = get_module_deprecation() ? nullptr : &info_fs,
 			.stage = vk::ShaderStageFlagBits::eFragment,
-			.module = get_module_deprecation() ? fs_module : nullptr,
+			.module = fs_module,
 			.pName = "main",
 			.pSpecializationInfo = info.fs_spec.dataSize > 0 ? &info.fs_spec : nullptr,
 		}
@@ -506,9 +498,8 @@ void Graphics::init(const CreateInfo& info) {
 	_render_area = vk::Rect2D({ 0,0 }, info.extent);
 	_depth_enabled = info.depth.test || info.depth.write;
 	_stencil_enabled = info.stencil.test;
-	// destroy shader modules if previously created
-	if (get_module_deprecation()) info.device._logical.destroyShaderModule(vs_module);
-	if (get_module_deprecation()) info.device._logical.destroyShaderModule(fs_module);
+	info.device._logical.destroyShaderModule(vs_module);
+	info.device._logical.destroyShaderModule(fs_module);
 }
 void Graphics::execute(vk::CommandBuffer cmd, Image& color, vk::AttachmentLoadOp color_load, DepthStencil& depth_stencil, vk::AttachmentLoadOp depth_stencil_load) {
 	vk::RenderingAttachmentInfo info_color {

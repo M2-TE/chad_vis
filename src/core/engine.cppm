@@ -2,18 +2,15 @@ module;
 #include <print>
 #include <cstdint>
 export module core.engine;
-import core.swapchain;
-import core.window;
-import core.device;
 import core.input;
-import scene.scene;
-import renderer.renderer;
-import vulkan_hpp;
-
-// temporary:
-import buffers.device;
-import renderer.pipeline;
+import core.device;
+import core.window;
 import buffers.image;
+import buffers.device;
+import renderer.swapchain;
+import renderer.renderer;
+import scene.scene;
+import vulkan_hpp;
 
 export struct Engine {
     Engine();
@@ -82,7 +79,6 @@ Engine::Engine() {
     DepthBuffer::set_format(_device._physical);
     DepthStencil::set_format(_device._physical);
     DeviceBuffer::set_staging_requirement(_device._vmalloc);
-    PipelineBase::set_module_deprecation(_device._physical);
 
     _swapchain.init(_device, _window);
     _swapchain.set_target_framerate(_fps_foreground);
