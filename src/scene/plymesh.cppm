@@ -8,9 +8,9 @@ module;
 #include <optional>
 #include <string_view>
 #include <glm/glm.hpp>
-export module plymesh;
-import vma_hpp;
-import mesh;
+export module scene.plymesh;
+import buffers.mesh;
+import vulkan_ma_hpp;
 
 export struct Plymesh {
     void init(vma::Allocator vmalloc, std::string_view path_rel, std::optional<glm::vec3> color = std::nullopt) {

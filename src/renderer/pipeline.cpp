@@ -8,11 +8,11 @@ module;
 #include <string_view>
 #include <spirv_reflect.h>
 #include <spvrc/spvrc.hpp>
-module pipeline;
-import device_buffer;
+module renderer.pipeline;
+import core.device;
+import buffers.image;
+import buffers.device;
 import vulkan_hpp;
-import device;
-import image;
 
 auto get_reflections(const vk::ArrayProxy<std::string_view>& shader_paths)
 -> std::vector<spv_reflect::ShaderModule> {

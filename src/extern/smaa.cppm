@@ -5,11 +5,11 @@ module;
 #include "AreaTex.h"
 #include "SearchTex.h"
 export module smaa;
+import core.device;
+import buffers.image;
+import renderer.pipeline;
 import vulkan_hpp;
-import pipeline;
-import vma_hpp;
-import device;
-import image;
+import vulkan_ma_hpp;
 
 export struct SMAA {
     void init(Device& device, vk::Extent2D extent, Image& color, DepthStencil& depth_stencil);

@@ -1,19 +1,19 @@
 module;
 #include <print>
 #include <cstdint>
-export module engine;
+export module core.engine;
+import core.swapchain;
+import core.window;
+import core.device;
+import core.input;
+import scene.scene;
+import renderer.renderer;
 import vulkan_hpp;
-import swapchain;
-import renderer;
-import window;
-import device;
-import input;
-import scene;
 
 // temporary:
-import device_buffer;
-import pipeline;
-import image;
+import buffers.device;
+import renderer.pipeline;
+import buffers.image;
 
 export struct Engine {
     Engine();

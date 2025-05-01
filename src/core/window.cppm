@@ -6,9 +6,9 @@ module;
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 #include <vulkan/vulkan_hpp_macros.hpp>
-export module window;
+export module core.window;
+import core.input;
 import vulkan_hpp;
-import input;
 
 export struct Window {
     struct CreateInfo;

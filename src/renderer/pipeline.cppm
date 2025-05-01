@@ -3,12 +3,12 @@ module;
 #include <cstdint>
 #include <cstring>
 #include <string_view>
-export module pipeline;
-import device_buffer;
+export module renderer.pipeline;
+import core.device;
+import buffers.mesh;
+import buffers.image;
+import buffers.device;
 import vulkan_hpp;
-import device;
-import image;
-import mesh;
 
 export struct PipelineBase {
     typedef std::vector<std::tuple<uint32_t /*set*/, uint32_t /*binding*/, vk::SamplerCreateInfo>> SamplerInfos;

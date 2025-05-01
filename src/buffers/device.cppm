@@ -1,9 +1,9 @@
 module;
 #include <tuple>
 #include <print>
-export module device_buffer;
+export module buffers.device;
 import vulkan_hpp;
-import vma_hpp;
+import vulkan_ma_hpp;
 
 export struct DeviceBuffer {
 	struct CreateInfo {

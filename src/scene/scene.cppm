@@ -1,10 +1,10 @@
 module;
 #include <glm/glm.hpp>
-export module scene;
-import vma_hpp;
-import plymesh;
-import camera;
-import grid;
+export module scene.scene;
+import scene.grid;
+import scene.camera;
+import scene.plymesh;
+import vulkan_ma_hpp;
 
 export struct Scene {
     void init(vma::Allocator vmalloc);

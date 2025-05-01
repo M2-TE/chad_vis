@@ -3,10 +3,10 @@ module;
 #include <tuple>
 #include <vector>
 #include <cstring>
-export module image;
+export module buffers.image;
+import core.device;
 import vulkan_hpp;
-import vma_hpp;
-import device;
+import vulkan_ma_hpp;
 
 export struct Image {
     struct CreateInfo;

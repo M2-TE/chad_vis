@@ -1,4 +1,4 @@
-import engine;
+import core.engine;
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL_main.h>
 

@@ -2,11 +2,11 @@ module;
 #include <glm/glm.hpp>
 #include <glm/gtc/type_aligned.hpp>
 #include <glm/gtc/quaternion.hpp>
-export module camera;
-import device_buffer;
+export module scene.camera;
+import core.input;
+import buffers.device;
 import vulkan_hpp;
-import vma_hpp;
-import input;
+import vulkan_ma_hpp;
 
 export struct Camera {
     void init(vma::Allocator vmalloc) {

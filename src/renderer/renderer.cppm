@@ -2,14 +2,14 @@ module;
 #include <cmath>
 #include <vector>
 #include <cstdint>
-export module renderer;
-import render_semaphore;
+export module renderer.renderer;
+import core.device;
+import core.swapchain;
+import renderer.pipeline;
+import renderer.semaphore;
+import buffers.image;
+import scene.scene;
 import vulkan_hpp;
-import swapchain;
-import pipeline;
-import device;
-import image;
-import scene;
 import smaa;
 
 export struct Renderer {
@@ -30,7 +30,7 @@ private:
 
 private:
     // synchronization
-    RenderSemaphore _synchronization;
+    RendererSemaphore _synchronization;
     // command recording
     vk::CommandPool _command_pool;
     vk::CommandBuffer _command_buffer;

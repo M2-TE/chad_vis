@@ -2,7 +2,7 @@ module;
 #include <set>
 #include <cctype>
 #include <SDL3/SDL_keycode.h>
-export module input;
+export module core.input;
 
 export namespace Input {
 	struct MouseVec2 { double x, y; };

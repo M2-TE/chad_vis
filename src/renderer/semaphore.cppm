@@ -1,10 +1,10 @@
 module;
 #include <cstdint>
-export module render_semaphore;
+export module renderer.semaphore;
+import core.device;
 import vulkan_hpp;
-import device;
 
-export struct RenderSemaphore {
+export struct RendererSemaphore {
     void init(Device& device) {
         vk::StructureChain<vk::SemaphoreCreateInfo, vk::SemaphoreTypeCreateInfo> chain_timeline {
             {}, { .semaphoreType = vk::SemaphoreType::eTimeline, .initialValue = 0 }

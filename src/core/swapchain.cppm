@@ -5,19 +5,19 @@ module;
 #include <thread>
 #include <cstdint>
 #include <vulkan/vulkan_to_string.hpp>
-export module swapchain;
-import render_semaphore;
+export module core.swapchain;
+import core.device;
+import core.window;
+import buffers.image;
+import renderer.semaphore;
 import vulkan_hpp;
-import device;
-import window;
-import image;
 
 export struct Swapchain {
     void init(Device& device, Window& window);
     void destroy(Device& device);
     void resize(Device& device, Window& window);
     void set_target_framerate(uint32_t fps);
-    void present(Device& device, Image& src_image, RenderSemaphore& render_semaphore);
+    void present(Device& device, Image& src_image, RendererSemaphore& render_semaphore);
 
     vk::SwapchainKHR _swapchain;
     std::vector<Image> _images;
@@ -184,7 +184,7 @@ void Swapchain::set_target_framerate(uint32_t frames_per_second) {
     }
     _target_frame_time = std::chrono::nanoseconds(static_cast<int64_t>(ns));
 }
-void Swapchain::present(Device& device, Image& src_image, RenderSemaphore& render_semaphore) {
+void Swapchain::present(Device& device, Image& src_image, RendererSemaphore& render_semaphore) {
     // wait for this frame's fence to be signaled and reset it
     SyncFrame& frame = _sync_frames[_sync_frame_i++ % _sync_frames.size()];
     while (vk::Result::eTimeout == device._logical.waitForFences(frame._ready_to_record, vk::True, UINT64_MAX));

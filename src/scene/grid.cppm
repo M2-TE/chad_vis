@@ -3,9 +3,9 @@ module;
 #include <print>
 #include <fstream>
 #include <glm/glm.hpp>
-export module grid;
-import vma_hpp;
-import mesh;
+export module scene.grid;
+import buffers.mesh;
+import vulkan_ma_hpp;
 
 export struct Grid {
     void init(vma::Allocator vmalloc, std::string_view path_rel) {
