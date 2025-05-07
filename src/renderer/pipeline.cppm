@@ -69,7 +69,6 @@ export struct Graphics: public PipelineBase {
 	};
 
 	void init(const CreateInfo& info);
-	
 	// draw fullscreen triangle with color and depth attachments
 	void execute(vk::CommandBuffer cmd,
 			Image& color, vk::AttachmentLoadOp color_load,
