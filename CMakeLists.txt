@@ -8,7 +8,6 @@ option(USE_FAST_MATH "Enable aggressive math optimizations, disables cross-platf
 option(USE_STRICT_COMPILATION "Force all warnings to emit errors" OFF)
 include("cmake/options_global.cmake")
 include("cmake/options_compiler.cmake")
-include("cmake/options_linker.cmake")
 
 # create executable
 add_executable(${PROJECT_NAME})

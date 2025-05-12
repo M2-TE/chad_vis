@@ -1,3 +1,4 @@
+# compiler options
 if (MSVC)
     add_compile_options(
         "/diagnostics:classic"
@@ -39,4 +40,11 @@ elseif (UNIX)
     elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         # none so far
     endif()
+endif()
+
+# linker options
+if (MSVC)
+    add_link_options("/SUBSYSTEM:CONSOLE")
+elseif (UNIX)
+    add_link_options("-pthread")
 endif()
