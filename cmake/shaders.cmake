@@ -1,6 +1,6 @@
 include(FetchContent)
 
-# SPIR-V for shader reflection
+# SPIR-V shader reflection
 set(SPIRV_REFLECT_EXECUTABLE     OFF)
 set(SPIRV_REFLECT_STATIC_LIB     ON)
 set(SPIRV_REFLECT_BUILD_TESTS    OFF)
