@@ -6,8 +6,8 @@ void Scene::init(vma::Allocator vmalloc) {
     _camera.init(vmalloc);
 
     // load mesh and grid objects
-    _mesh.init(vmalloc, "datasets/v2/mesh.ply", glm::vec3{.5, .5, .5});
-    _grid.init(vmalloc, "datasets/v2/hashgrid.grid");
+    _mesh.init(vmalloc, "datasets/v3/mesh.ply", glm::vec3{.5, .5, .5});
+    _grid.init(vmalloc, "datasets/v3/hashgrid.grid");
 }
 void Scene::destroy(vma::Allocator vmalloc) {
     _camera.destroy(vmalloc);

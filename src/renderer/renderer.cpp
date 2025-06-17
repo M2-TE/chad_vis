@@ -145,8 +145,9 @@ void Renderer::execute_pipes(vk::CommandBuffer cmd, Scene& scene) {
         .new_layout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
         .dst_stage = vk::PipelineStageFlagBits2::eEarlyFragmentTests,
         .dst_access = vk::AccessFlagBits2::eDepthStencilAttachmentRead | vk::AccessFlagBits2::eDepthStencilAttachmentWrite});
-    cmd.setCullMode(vk::CullModeFlagBits::eNone); // no culling needed here
+    cmd.setCullMode(vk::CullModeFlagBits::eNone); // want to see both front and back faces
     _pipe_default.execute(cmd, _color, vk::AttachmentLoadOp::eClear, _depth_stencil, vk::AttachmentLoadOp::eClear, scene._mesh._mesh);
+    // _pipe_default.execute(cmd, _color, vk::AttachmentLoadOp::eClear, _depth_stencil, vk::AttachmentLoadOp::eClear, scene._grid._query_points);
 
     // optionally run SMAA
     if (_smaa_enabled) _smaa.execute(cmd, _color, _depth_stencil);
