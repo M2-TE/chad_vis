@@ -1,5 +1,3 @@
-module;
-#include <print>
 module core.engine;
 import core.input;
 import buffers.image;

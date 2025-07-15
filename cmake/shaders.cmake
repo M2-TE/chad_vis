@@ -4,8 +4,7 @@ include(FetchContent)
 set(SPIRV_REFLECT_EXECUTABLE     OFF)
 set(SPIRV_REFLECT_STATIC_LIB     ON)
 set(SPIRV_REFLECT_BUILD_TESTS    OFF)
-set(SPIRV_REFLECT_ENABLE_ASSERTS OFF)
-set(SPIRV_REFLECT_ENABLE_ASAN    OFF)
+set(SPIRV_REFLECT_EXAMPLES       OFF)
 FetchContent_Declare(spirv-reflect
     GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Reflect.git"
     GIT_TAG "vulkan-sdk-1.4.313.0"

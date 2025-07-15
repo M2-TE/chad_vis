@@ -2,7 +2,7 @@ include(FetchContent)
 
 FetchContent_Declare(vulkanmemoryallocator
     GIT_REPOSITORY "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git"
-    GIT_TAG "v3.2.1"
+    GIT_TAG "v3.3.0"
     GIT_SHALLOW ON
     OVERRIDE_FIND_PACKAGE
     EXCLUDE_FROM_ALL

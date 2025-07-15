@@ -1,4 +1,4 @@
-find_package(SDL3 3.2.10 QUIET)
+find_package(SDL3 QUIET)
 if (NOT SDL3_FOUND)
     set(SDL_STATIC ON)
     set(SDL_SHARED OFF)
