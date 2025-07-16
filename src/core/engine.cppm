@@ -1,5 +1,3 @@
-module;
-#include <cstdint>
 export module core.engine;
 import core.window;
 import core.device;

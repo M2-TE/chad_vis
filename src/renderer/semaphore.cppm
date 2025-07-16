@@ -1,5 +1,3 @@
-module;
-#include <cstdint>
 export module renderer.semaphore;
 import core.device;
 import vulkan_hpp;

@@ -1,13 +1,3 @@
-module;
-#include <set>
-#include <map>
-#include <print>
-#include <vector>
-#include <string>
-#include <cstring>
-#include <cstdint>
-#include <algorithm>
-#include <vulkan/vulkan_hpp_macros.hpp>
 module core.device;
 
 bool check_extensions(std::set<std::string> required_extensions, vk::PhysicalDevice physical_device) {

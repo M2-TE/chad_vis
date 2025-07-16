@@ -1,7 +1,3 @@
-module;
-#include <span>
-#include <tuple>
-#include <cstring>
 module buffers.image;
 
 void Image::init(const CreateInfo& info) {

@@ -1,7 +1,5 @@
 module;
-#include <string>
-#include <cstdint>
-#include <SDL3/SDL.h>
+#include <SDL3/SDL_video.h>
 export module core.window;
 import core.input;
 import vulkan_hpp;

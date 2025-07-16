@@ -1,6 +1,3 @@
-module;
-#include <vector>
-#include <cstdint>
 export module core.device;
 import vulkan_hpp;
 import vulkan_ma_hpp;

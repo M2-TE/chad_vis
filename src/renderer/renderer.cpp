@@ -1,7 +1,3 @@
-module;
-#include <cmath>
-#include <vector>
-#include <cstdint>
 module renderer.renderer;
 
 void Renderer::init(Device& device, Scene& scene, vk::Extent2D extent, bool srgb_output) {

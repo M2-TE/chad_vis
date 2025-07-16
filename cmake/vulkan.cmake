@@ -1,12 +1,12 @@
 set(VULKAN_HEADERS_ENABLE_MODULE      ON)
 set(VULKAN_HEADERS_ENABLE_MODULE_STD OFF)
 
-# find_package(Vulkan 1.4.314 QUIET)
+# find_package(Vulkan 1.4.322 QUIET)
 if (NOT Vulkan_FOUND)
     include(FetchContent)
     FetchContent_Declare(vulkan-headers
         GIT_REPOSITORY "https://github.com/KhronosGroup/Vulkan-Headers.git"
-        GIT_TAG "v1.4.314"
+        GIT_TAG "v1.4.322"
         GIT_SHALLOW ON
         OVERRIDE_FIND_PACKAGE
         EXCLUDE_FROM_ALL

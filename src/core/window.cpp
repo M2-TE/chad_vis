@@ -1,11 +1,6 @@
 module;
-#include <print>
-#include <string>
-#include <cstring>
-#include <cstdint>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
-#include <vulkan/vulkan_hpp_macros.hpp>
 module core.window;
 
 void Window::init(const CreateInfo& info) {

@@ -1,12 +1,4 @@
 module;
-#include <print>
-#include <array>
-#include <string>
-#include <vector>
-#include <fstream>
-#include <cstdint>
-#include <optional>
-#include <string_view>
 #include <glm/glm.hpp>
 export module scene.plymesh;
 import buffers.mesh;

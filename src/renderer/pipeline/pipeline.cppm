@@ -1,8 +1,3 @@
-module;
-#include <vector>
-#include <cstdint>
-#include <cstring>
-#include <string_view>
 export module renderer.pipeline;
 import core.device;
 import buffers.mesh;

@@ -1,6 +1,4 @@
 module;
-#include <print>
-#include <cstdint>
 #include <spvrc/spvrc.hpp>
 module renderer.pipeline;
 

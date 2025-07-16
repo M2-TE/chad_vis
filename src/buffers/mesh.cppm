@@ -1,6 +1,3 @@
-module;
-#include <span>
-#include <cstdint>
 export module buffers.mesh;
 import buffers.device;
 import vulkan_hpp;

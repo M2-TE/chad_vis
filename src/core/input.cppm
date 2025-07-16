@@ -1,6 +1,4 @@
 module;
-#include <set>
-#include <cctype>
 #include <SDL3/SDL_keycode.h>
 export module core.input;
 

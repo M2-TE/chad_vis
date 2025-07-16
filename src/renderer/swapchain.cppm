@@ -1,7 +1,3 @@
-module;
-#include <vector>
-#include <chrono>
-#include <cstdint>
 export module renderer.swapchain;
 import core.device;
 import core.window;

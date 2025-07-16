@@ -1,11 +1,4 @@
 module;
-#include <map>
-#include <print>
-#include <vector>
-#include <cassert>
-#include <cstdint>
-#include <cstring>
-#include <string_view>
 #include <spirv_reflect.h>
 #include <spvrc/spvrc.hpp>
 module renderer.pipeline;

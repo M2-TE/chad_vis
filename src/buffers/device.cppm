@@ -1,6 +1,3 @@
-module;
-#include <tuple>
-#include <print>
 export module buffers.device;
 import vulkan_hpp;
 import vulkan_ma_hpp;

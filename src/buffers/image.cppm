@@ -1,6 +1,3 @@
-module;
-#include <span>
-#include <vector>
 export module buffers.image;
 import core.device;
 import vulkan_hpp;

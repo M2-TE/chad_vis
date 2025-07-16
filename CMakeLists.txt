@@ -19,13 +19,14 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_BINARY_DIR}/bin/")
 
 # add source files
-file(GLOB_RECURSE CPP_SOURCE_FILES  CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
-file(GLOB_RECURSE CPPM_SOURCE_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cppm")
+file(GLOB_RECURSE CPP_SOURCE_FILES  CONFIGURE_DEPENDS "src/*.cpp")
+file(GLOB_RECURSE CPPM_SOURCE_FILES CONFIGURE_DEPENDS "src/*.cppm")
 target_sources(${PROJECT_NAME} PRIVATE ${CPP_SOURCE_FILES})
 target_sources(${PROJECT_NAME} PRIVATE
     FILE_SET cxx_module_files
     TYPE CXX_MODULES
     FILES "${CPPM_SOURCE_FILES}")
+target_precompile_headers(${PROJECT_NAME} PRIVATE "src/ext/pch.hpp")
 
 # add dependencies
 include("cmake/vulkan.cmake")
