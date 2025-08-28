@@ -2,10 +2,8 @@ cmake_minimum_required(VERSION 4.0)
 project(chad_vis LANGUAGES CXX)
 
 # settings
-option(PREFER_MOLD "Prefer to use mold linker (Linux only)" ON)
-option(PREFER_CCACHE "Prefer to use ccache (Linux only)" ON)
-option(USE_FAST_MATH "Enable aggressive math optimizations, disables cross-platform determinism" ON)
 option(USE_STRICT_COMPILATION "Force all warnings to emit errors" OFF)
+option(USE_FAST_MATH "Enable aggressive math optimizations, disables cross-platform determinism" ON)
 include("cmake/options_global.cmake")
 include("cmake/options_compiler.cmake")
 
@@ -22,10 +20,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 file(GLOB_RECURSE CPP_SOURCE_FILES  CONFIGURE_DEPENDS "src/*.cpp")
 file(GLOB_RECURSE CPPM_SOURCE_FILES CONFIGURE_DEPENDS "src/*.cppm")
 target_sources(${PROJECT_NAME} PRIVATE ${CPP_SOURCE_FILES})
-target_sources(${PROJECT_NAME} PRIVATE
-    FILE_SET cxx_module_files
-    TYPE CXX_MODULES
-    FILES "${CPPM_SOURCE_FILES}")
+target_sources(${PROJECT_NAME} PRIVATE FILE_SET "cxx_module_files" TYPE CXX_MODULES FILES ${CPPM_SOURCE_FILES})
 target_precompile_headers(${PROJECT_NAME} PRIVATE "src/ext/pch.hpp")
 
 # add dependencies
@@ -34,3 +29,4 @@ include("cmake/vma.cmake")
 include("cmake/shaders.cmake")
 include("cmake/glm.cmake")
 include("cmake/sdl.cmake")
+include("cmake/cme.cmake")

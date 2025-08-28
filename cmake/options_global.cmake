@@ -26,14 +26,14 @@ if (MSVC)
 elseif (UNIX)
     # enable mold linker if present
     find_program(MOLD_FOUND mold)
-    if (PREFER_MOLD AND MOLD_FOUND)
+    if (MOLD_FOUND)
         message(STATUS "Using mold linker")
         set(CMAKE_LINKER_TYPE MOLD)
     endif()
 
     # enable ccache if present
     find_program(CCACHE_FOUND ccache)
-    if (PREFER_CCACHE AND CCACHE_FOUND)
+    if (CCACHE_FOUND)
         message(STATUS "Using ccache")
         set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
     endif()

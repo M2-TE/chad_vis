@@ -15,5 +15,5 @@ export struct Scene {
 
     Camera _camera;
     Plymesh _mesh;
-    Grid _grid;
+    // Grid _grid;
 };

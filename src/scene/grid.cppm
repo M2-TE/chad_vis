@@ -1,8 +1,9 @@
 module;
 #include <glm/glm.hpp>
 export module scene.grid;
-import buffers.mesh;
 import vulkan_ma_hpp;
+import buffers.mesh;
+import cme.datasets;
 
 export struct Grid {
     void init(vma::Allocator vmalloc, std::string_view path_rel) {
