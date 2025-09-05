@@ -1,7 +1,6 @@
 module;
 #include <SDL3/SDL_keycode.h>
 export module core.input;
-import std;
 
 export namespace Input {
 	struct MouseVec2 { double x, y; };

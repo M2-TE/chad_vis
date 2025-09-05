@@ -10,7 +10,6 @@ include("cmake/options_compiler.cmake")
 # create project after settings to properly compile std module
 project(chad_vis LANGUAGES CXX)
 
-
 # create executable
 add_executable(${PROJECT_NAME})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS})
