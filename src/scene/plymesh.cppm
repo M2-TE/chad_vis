@@ -2,6 +2,7 @@ module;
 #include <glm/glm.hpp>
 #include <cme/detail/asset.hpp>
 export module scene.plymesh;
+import std;
 import vulkan.allocator;
 import buffers.mesh;
 import cme.datasets;

@@ -1,4 +1,5 @@
 export module core.device;
+import std;
 import vulkan_hpp;
 import vulkan.allocator;
 

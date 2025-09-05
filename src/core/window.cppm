@@ -1,6 +1,7 @@
 module;
 #include <SDL3/SDL_video.h>
 export module core.window;
+import std;
 import vulkan_hpp;
 import core.input;
 

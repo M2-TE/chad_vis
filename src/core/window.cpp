@@ -1,8 +1,8 @@
 module;
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
-import vulkan_hpp;
 module core.window;
+import vulkan_hpp;
 
 void Window::init(const CreateInfo& info) {
     // force wayland driver for now
