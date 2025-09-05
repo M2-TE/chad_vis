@@ -1,6 +1,7 @@
 module;
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
+import vulkan_hpp;
 module core.window;
 
 void Window::init(const CreateInfo& info) {

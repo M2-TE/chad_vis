@@ -1,7 +1,7 @@
 export module buffers.image;
-import core.device;
 import vulkan_hpp;
-import vulkan_ma_hpp;
+import vulkan.allocator;
+import core.device;
 
 export struct Image {
     struct CreateInfo;

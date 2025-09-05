@@ -1,9 +1,9 @@
 export module renderer.swapchain;
+import vulkan_hpp;
 import core.device;
 import core.window;
 import buffers.image;
 import renderer.semaphore;
-import vulkan_hpp;
 
 export struct Swapchain {
     void init(Device& device, Window& window);

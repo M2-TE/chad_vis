@@ -1,7 +1,7 @@
 module;
 #include <vk_mem_alloc.h>
 #include "vk_mem_alloc.hpp"
-export module vulkan_ma_hpp;
+export module vulkan.allocator;
 
 export namespace vma {
     using vma::operator|;

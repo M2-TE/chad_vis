@@ -1,7 +1,7 @@
 export module buffers.mesh;
-import buffers.device;
 import vulkan_hpp;
-import vulkan_ma_hpp;
+import vulkan.allocator;
+import buffers.device;
 
 export template<typename Index> struct Indices {
     void init(vma::Allocator vmalloc, std::span<Index> index_data) {

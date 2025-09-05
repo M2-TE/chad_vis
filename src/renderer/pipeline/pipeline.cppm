@@ -1,9 +1,9 @@
 export module renderer.pipeline;
+import vulkan_hpp;
 import core.device;
 import buffers.mesh;
 import buffers.image;
 import buffers.device;
-import vulkan_hpp;
 
 export struct PipelineBase {
     typedef std::vector<std::tuple<uint32_t /*set*/, uint32_t /*binding*/, vk::SamplerCreateInfo>> SamplerInfos;

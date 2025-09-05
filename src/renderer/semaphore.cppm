@@ -1,6 +1,6 @@
 export module renderer.semaphore;
-import core.device;
 import vulkan_hpp;
+import core.device;
 
 export struct RendererSemaphore {
     void init(Device& device) {

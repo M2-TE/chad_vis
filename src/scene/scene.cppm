@@ -1,8 +1,8 @@
 export module scene.scene;
+import vulkan.allocator;
 import scene.grid;
 import scene.camera;
 import scene.plymesh;
-import vulkan_ma_hpp;
 
 export struct Scene {
     void init(vma::Allocator vmalloc);

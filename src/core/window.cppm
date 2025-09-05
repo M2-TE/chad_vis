@@ -1,8 +1,8 @@
 module;
 #include <SDL3/SDL_video.h>
 export module core.window;
-import core.input;
 import vulkan_hpp;
+import core.input;
 
 export struct Window {
     struct CreateInfo;

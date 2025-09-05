@@ -1,5 +1,5 @@
-set(VULKAN_HEADERS_ENABLE_MODULE      ON)
-set(VULKAN_HEADERS_ENABLE_MODULE_STD OFF)
+set(VULKAN_HEADERS_ENABLE_MODULE      OFF)
+set(VULKAN_HEADERS_ENABLE_MODULE_STD  OFF)
 
 find_package(Vulkan 1.4.322 QUIET)
 if (NOT Vulkan_FOUND)
@@ -12,7 +12,9 @@ if (NOT Vulkan_FOUND)
         EXCLUDE_FROM_ALL
         SYSTEM)
     FetchContent_MakeAvailable(vulkan-headers)
-elseif(NOT TARGET Vulkan::HppModule)
+    set(Vulkan_INCLUDE_DIR "${vulkan-headers_SOURCE_DIR}/include")
+endif()
+if(NOT TARGET Vulkan::HppModule)
     add_library(Vulkan-HppModule)
     add_library(Vulkan::HppModule ALIAS Vulkan-HppModule)
     target_sources(Vulkan-HppModule
@@ -26,6 +28,7 @@ endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::HppModule)
 target_compile_definitions(Vulkan-HppModule PUBLIC
     "VK_NO_PROTOTYPES"
+    "VULKAN_HPP_ENABLE_STD_MODULE"
     "VULKAN_HPP_TYPESAFE_CONVERSION"
     "VULKAN_HPP_NO_SETTERS"
     "VULKAN_HPP_NO_TO_STRING"

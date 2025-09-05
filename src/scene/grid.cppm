@@ -1,7 +1,7 @@
 module;
 #include <glm/glm.hpp>
 export module scene.grid;
-import vulkan_ma_hpp;
+import vulkan.allocator;
 import buffers.mesh;
 import cme.datasets;
 

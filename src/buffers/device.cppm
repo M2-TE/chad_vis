@@ -1,6 +1,6 @@
 export module buffers.device;
 import vulkan_hpp;
-import vulkan_ma_hpp;
+import vulkan.allocator;
 
 export struct DeviceBuffer {
 	struct CreateInfo {

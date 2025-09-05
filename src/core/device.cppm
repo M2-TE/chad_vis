@@ -1,6 +1,6 @@
 export module core.device;
 import vulkan_hpp;
-import vulkan_ma_hpp;
+import vulkan.allocator;
 
 export enum class QueueType { eUniversal, eGraphics, eCompute, eTransfer };
 export struct Device {

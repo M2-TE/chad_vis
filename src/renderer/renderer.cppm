@@ -1,12 +1,12 @@
 export module renderer.renderer;
+import vulkan_hpp;
 import core.device;
 import renderer.swapchain;
 import renderer.pipeline;
 import renderer.semaphore;
 import buffers.image;
 import scene.scene;
-import vulkan_hpp;
-import smaa;
+import ext.smaa;
 
 export struct Renderer {
     void init(Device& device, Scene& scene, vk::Extent2D extent, bool srgb_output);
